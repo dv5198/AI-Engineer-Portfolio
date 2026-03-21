@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resume - {{ profile.name }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.5;
+            color: #333;
+            margin: 40px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28pt;
+            text-transform: uppercase;
+        }
+        .header .role {
+            font-size: 14pt;
+            color: #666;
+            margin-top: 5px;
+        }
+        .contact-info {
+            text-align: center;
+            font-size: 10pt;
+            margin-top: 10px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .item {
+            margin-bottom: 10px;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .item-sub {
+            display: flex;
+            justify-content: space-between;
+            font-style: italic;
+            color: #555;
+            font-size: 11pt;
+        }
+        .description {
+            margin-top: 5px;
+            font-size: 11pt;
+            text-align: justify;
+        }
+        .skills-list {
+            font-size: 11pt;
+        }
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ profile.name }}</h1>
+        <div class="role">{{ profile.role }}</div>
+        <div class="contact-info">
+            {{ profile.email }} | {{ profile.linkedin }} | {{ profile.github }}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Professional Summary</div>
+        <div class="description">
+            {{ profile.bio }}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Technical Skills</div>
+        <div class="skills-list">
+            <strong>Skills:</strong> {{ skills | join(', ') }}
+        </div>
+    </div>
+
+    {% if experience %}
+    <div class="section">
+        <div class="section-title">Work Experience</div>
+        {% for job in experience %}
+        <div class="item">
+            <div class="item-header">
+                <span>{{ job.position }}</span>
+                <span>{{ job.start }} – {{ job.end }}</span>
+            </div>
+            <div class="item-sub">
+                <span>{{ job.company }}</span>
+                <span>{{ job.location }}</span>
+            </div>
+            <div class="description">
+                {{ job.description }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if education %}
+    <div class="section">
+        <div class="section-title">Education</div>
+        {% for edu in education %}
+        <div class="item">
+            <div class="item-header">
+                <span>{{ edu.degree }}</span>
+                <span>{{ edu.year }}</span>
+            </div>
+            <div class="item-sub">
+                <span>{{ edu.institution }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if achievements %}
+    <div class="section">
+        <div class="section-title">Achievements</div>
+        {% for achievement in achievements %}
+        <div class="item">
+            <div class="item-header">
+                <span>{{ achievement.title }}</span>
+            </div>
+            <div class="description">
+                {{ achievement.description }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <div class="section-title">Additional Information</div>
+        <div class="description">
+            Born on 05-01-1998. Nationality: Indian. Currently based in Surat, Gujarat, India.
+        </div>
+    </div>
+</body>
+</html>
