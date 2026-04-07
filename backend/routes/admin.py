@@ -1,6 +1,12 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
-from services.groq_service import rewrite_text, execute_admin_command
+from typing import List
+from services.grok import (
+    rewrite_text, 
+    execute_admin_command,
+    call_grok,
+    summarize_about
+)
 from database import load_data, save_data
 from services.github import fetch_github_projects
 import shutil
@@ -22,13 +28,13 @@ class RewriteRequest(BaseModel):
 ADMIN_PASSWORD = "admin123"
 SESSION_TOKEN = "admin_secret_token_42"
 
-@router.post("/login")
+@router.post("/login/")
 def login(req: LoginRequest):
     if req.password == ADMIN_PASSWORD:
         return {"token": SESSION_TOKEN}
     raise HTTPException(status_code=401, detail="Invalid password")
 
-@router.post("/command")
+@router.post("/command/")
 async def process_command(req: CommandRequest):
     current_data = load_data()
     # Execute command using Claude to get structural changes
@@ -51,17 +57,49 @@ async def process_command(req: CommandRequest):
     
     return {"message": "Command executed successfully", "changes_applied": changes, "new_data": updated}
 
-@router.post("/rewrite-bio")
+@router.post("/rewrite-bio/")
 async def rewrite_bio_route(req: RewriteRequest):
     new_text = await rewrite_text(req.text, req.instruction)
     return {"rewritten": new_text}
     
-@router.post("/rewrite-about")
+@router.post("/rewrite-about/")
 async def rewrite_about_route(req: RewriteRequest):
     new_text = await rewrite_text(req.text, req.instruction)
     return {"rewritten": new_text}
     
-@router.get("/projects/all")
+class GrokTestRequest(BaseModel):
+    message: str
+
+@router.post("/test-grok/")
+async def test_grok_route(req: GrokTestRequest):
+    res = await call_grok(req.message)
+    return {"response": res}
+
+class SummarizeRequest(BaseModel):
+    about_list: List[str]
+
+@router.post("/rewrite-summary/")
+async def rewrite_summary_route(req: SummarizeRequest):
+    res = await summarize_about(req.about_list)
+    return {"rewritten": res}
+
+class GenerateBulletsRequest(BaseModel):
+    role: str
+    company: str
+    description: str
+
+@router.post("/generate-bullets/")
+async def generate_bullets_route(req: GenerateBulletsRequest):
+    prompt = f"Generate 3 professional, action-oriented resume bullets for a {req.role} at {req.company} based on this description: {req.description}. Return ONLY the bullets starting with a dash (-). No introductory text."
+    res = await call_grok(prompt)
+    # Llama/Groq often uses '*' or '-' and might still include empty lines
+    bullets = [b.strip().lstrip('-').lstrip('*').strip() for b in res.split('\n') if b.strip() and (b.strip().startswith('-') or b.strip().startswith('*'))]
+    if not bullets:
+        # Fallback if the model didn't use list markers
+        bullets = [b.strip() for b in res.split('\n') if b.strip() and len(b.strip()) > 15]
+    return {"bullets": bullets}
+    
+@router.get("/projects/all/")
 async def get_all_projects_admin():
     data = load_data()
     github_handle = data.get("profile", {}).get("github", "")
@@ -78,7 +116,7 @@ async def get_all_projects_admin():
         })
     return formatted
 
-@router.post("/achievement-image")
+@router.post("/achievement-image/")
 async def upload_achievement_image(file: UploadFile = File(...)):
     UPLOAD_DIR = "uploads"
     if not os.path.exists(UPLOAD_DIR):
@@ -88,4 +126,16 @@ async def upload_achievement_image(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    return {"url": "http://localhost:8000/uploads/award.jpg"}
+    return {"url": "http://localhost:8001/uploads/award.jpg"}
+
+@router.post("/profile-photo/")
+async def upload_profile_photo(file: UploadFile = File(...)):
+    UPLOAD_DIR = "uploads"
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+    
+    file_path = os.path.join(UPLOAD_DIR, "profile_photo.jpg")
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    return {"url": "http://localhost:8001/uploads/profile_photo.jpg"}

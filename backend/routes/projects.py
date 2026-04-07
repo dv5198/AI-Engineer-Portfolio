@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from services.github import fetch_github_projects
-from services.groq_service import generate_project_summary
 from database import load_data
+from services.github import fetch_github_projects
 
 router = APIRouter()
 
@@ -42,7 +41,4 @@ async def get_projects():
         
     return formatted
 
-@router.post("/summary")
-async def get_project_summary(req: SummaryRequest):
-    summary = await generate_project_summary(req.repo_name, req.description)
-    return {"summary": summary}
+    return formatted

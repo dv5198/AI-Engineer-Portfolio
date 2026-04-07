@@ -7,7 +7,7 @@ export const AdminProvider = ({ children }) => {
 
   const login = async (password) => {
     try {
-      const res = await fetch('http://localhost:8000/api/admin/login', {
+      const res = await fetch('http://localhost:8001/api/admin/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })

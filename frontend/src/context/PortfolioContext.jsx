@@ -9,13 +9,13 @@ export const PortfolioProvider = ({ children }) => {
 
   // Dark mode state removed to stay in Antigravity light theme
   const isDarkMode = false;
-  const toggleDarkMode = () => {};
+  const toggleDarkMode = () => { };
 
   const fetchPortfolio = async () => {
     try {
       setLoading(true);
       // In production, configure API base URL properly (.env)
-      const res = await fetch('http://localhost:8000/api/portfolio');
+      const res = await fetch('http://localhost:8001/api/portfolio/');
       if (!res.ok) throw new Error('Failed to fetch portfolio data');
       const json = await res.json();
       setData(json);
@@ -26,12 +26,12 @@ export const PortfolioProvider = ({ children }) => {
       // Optional: Add Fallback Data here if backend is completely down
       setData({
         profile: {
-          name: "Alex Sharma",
+          name: "Divya Nirankari",
           role: "Software Engineer & AI/ML Engineer",
           bio: "I build scalable web applications and intelligent machine learning models.",
-          github: "https://github.com/alexsharma",
-          linkedin: "https://linkedin.com/in/alexsharma",
-          email: "alex@example.com"
+          github: "https://github.com/dv5198",
+          linkedin: "https://linkedin.com/in/divya-nirankari",
+          email: "dvnirankari@gmail.com"
         },
         about: ["Fallback about section"],
         stats: { projects_count: "10+", years_experience: "3", ml_models: "5", fun_stat: "Lots of code" },
@@ -50,7 +50,7 @@ export const PortfolioProvider = ({ children }) => {
 
   const updatePortfolio = async (newData) => {
     try {
-      const res = await fetch('http://localhost:8000/api/portfolio', {
+      const res = await fetch('http://localhost:8001/api/portfolio/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newData)

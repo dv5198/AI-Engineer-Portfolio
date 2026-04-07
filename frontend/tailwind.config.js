@@ -7,12 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#faf7f0', // Warm ivory
-        textPrimary: '#1a1510', // Dark contrast
-        textSecondary: '#5a5a5a', // Gray for meta info
-        accent: '#111111', 
-        skillsBg: '#f2ede0', // Skills section background
-        contactBg: '#1a1510', // Contact/Footer dark background
+        ivory: '#f0ebe0',
+        ivoryDeep: '#e8e0d0',
+        ivoryDark: '#ddd4c0',
+        warmBrown: '#4a3a28',
+        warmMid: '#7a6a55',
+        warmLight: '#a09878',
+        accent: '#b89868',
+        accentDeep: '#8a6a45',
+        background: '#f0ebe0', // Updated from #faf7f0
+        textPrimary: '#1a1510', 
+        textSecondary: '#5a5a5a', 
+        skillsBg: '#e8e0d0', // Updated from #f2ede0
+        contactBg: '#1a1510', 
         gridLine: 'rgba(0, 0, 0, 0.04)', 
       },
       fontFamily: {

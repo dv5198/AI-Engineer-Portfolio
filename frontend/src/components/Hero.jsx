@@ -1,7 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
-import { DownloadIcon, GithubIcon, LinkedinIcon, ArrowUpRight } from 'lucide-react';
+import { GithubIcon, LinkedinIcon, Download } from 'lucide-react';
+import { useTypewriter } from '../hooks/useTypewriter';
+import HeroCanvas from './HeroCanvas';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -13,107 +15,120 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 1.2, ease: [0.33, 1, 0.68, 1] } 
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 1.2, ease: [0.33, 1, 0.68, 1] }
   }
 };
 
 const Hero = () => {
   const { data } = useContext(PortfolioContext);
+  const [regionInfo, setRegionInfo] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:8001/api/resume/detect')
+      .then(r => r.json())
+      .then(info => setRegionInfo(info))
+      .catch(() => setRegionInfo({
+        detectedRegion: 'international',
+        label: 'International (ATS)',
+        includesPhoto: false
+      }));
+  }, []);
+
+  const titles = data?.profile?.titles || ["Python Software Engineer", "AI/ML Engineer", "Backend Developer", "Deep Learning Engineer"];
+  const typewriterText = useTypewriter(titles);
+
   if (!data) return <div className="min-h-[80vh] flex items-center justify-center">Loading...</div>;
   const { profile } = data;
 
-  const handleResumeDownload = () => {
-    window.location.href = 'http://localhost:8000/api/resume/download';
-  };
 
   return (
-    <section className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-background px-6" id="hero">
-      {/* Structural Editorial Lines */}
-      <div className="absolute top-0 left-[10%] w-px h-full bg-textPrimary/5 pointer-events-none" />
-      <div className="absolute top-0 left-[40%] w-px h-full bg-textPrimary/5 pointer-events-none" />
-      <div className="absolute top-[30%] left-0 w-full h-px bg-textPrimary/5 pointer-events-none" />
-      
-      {/* Levitating Decorative Wireframe Circles */}
-      <motion.div 
-        className="absolute top-[15%] right-[10%] w-64 h-64 border border-textPrimary/10 rounded-full pointer-events-none hidden md:block"
-        animate={{ y: [0, -20, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div 
-        className="absolute bottom-[20%] left-[5%] w-32 h-32 border border-textPrimary/10 rounded-full pointer-events-none hidden md:block"
-        animate={{ y: [0, -15, 0], scale: [1, 1.1, 1] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      />
+    <section className="min-h-screen flex flex-col pt-[20vh] relative overflow-hidden bg-background px-6" id="hero">
+      {/* Structural Editorial Lines - Removed to avoid visual collisions */}
 
-      <motion.div 
-        variants={containerVariants} 
-        initial="hidden" 
+      {/* 3D Background */}
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+        {data.settings?.hero3d !== false && <HeroCanvas />}
+      </div>
+
+      <motion.div
+        className="max-w-5xl mx-auto relative z-10 w-full"
+        variants={containerVariants}
+        initial="hidden"
         animate="visible"
-        className="max-w-5xl mx-auto relative z-10"
       >
         <motion.div variants={itemVariants} className="mb-10">
-          <p className="font-mono text-textPrimary/60 uppercase tracking-[0.4em] text-[10px] flex items-center gap-3">
-            <span className="w-8 h-px bg-textPrimary/20"></span>
-            Currently Building
-          </p>
-        </motion.div>
-        
-        <motion.h1 variants={itemVariants} className="text-[12vw] md:text-[8vw] font-serif font-medium text-textPrimary leading-[1] tracking-tighter mb-8 italic">
-          {profile.name}
-        </motion.h1>
-        
-        <div className="grid md:grid-cols-2 gap-12 items-baseline">
-          <motion.h2 variants={itemVariants} className="text-3xl md:text-5xl font-serif text-textPrimary leading-tight">
-            {profile.role.split(' ').map((word, i) => (
-              <span key={i} className={i % 2 !== 0 ? 'italic font-serif opacity-70 block md:inline' : ''}>
-                {word}{' '}
+          <div className="flex items-center gap-4">
+            <span className="w-12 h-px bg-textPrimary/10"></span>
+            <div className="flex items-center gap-3 bg-emerald-500/5 px-4 py-1.5 border border-emerald-500/10">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-            ))}
-          </motion.h2>
-          
-          <motion.div variants={itemVariants} className="flex flex-col gap-8">
-            <p className="text-xl md:text-2xl font-sans text-textPrimary opacity-80 leading-relaxed font-light">
-              {profile.bio}
-            </p>
+              <p className="font-mono text-emerald-700/80 uppercase tracking-[0.3em] text-[10px] font-medium">
+                Active: {data.experience?.find(e => e.endDate === "Present")?.role || "Synthesizing Systems"}
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
-            <div className="flex flex-wrap gap-8 items-center pt-4">
-              <a href="#projects" className="group flex items-center gap-4 font-mono text-xs uppercase tracking-[0.2em] text-textPrimary">
-                <span className="group-hover:w-20 w-12 h-px bg-textPrimary transition-all duration-500"></span>
+        <h1 className="text-[12vw] md:text-[8vw] font-serif font-medium text-textPrimary leading-[1] tracking-tighter mb-8 italic">
+          {profile.name}
+        </h1>
+
+        <div className="grid md:grid-cols-2 gap-12 items-baseline border-t border-textPrimary/5 pt-12">
+          <motion.div variants={itemVariants} className="flex flex-col gap-6">
+            <div className="w-24 h-px bg-accent/30" />
+            <h2 className="text-3xl md:text-5xl font-serif text-textPrimary leading-tight min-h-[3.6rem] md:min-h-[6rem]">
+              - {typewriterText}
+              <span className="animate-pulse ml-1 inline-block w-[2px] h-[0.8em] bg-accent align-middle">|</span>
+            </h2>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="flex flex-col gap-8">
+            <div className="w-full h-px bg-textPrimary/5" />
+            {/* <p className="text-xl md:text-2xl font-sans text-textPrimary opacity-80 leading-relaxed font-light">
+               {profile.bio}
+            </p> */}
+
+            <div className="flex flex-col lg:flex-row lg:items-center gap-8 pt-4 w-full">
+              <a href="#projects" className="group flex items-center gap-4 font-mono text-xs uppercase tracking-[0.2em] text-textPrimary whitespace-nowrap">
+                <span className="w-12 h-px bg-textPrimary transition-all duration-500"></span>
                 Explore Work
               </a>
-              
-              <div className="flex gap-6 items-center">
+
+              <div className="flex items-center gap-6 lg:ml-auto">
                 <a href={profile.github} target="_blank" rel="noopener noreferrer" className="text-textPrimary/60 hover:text-textPrimary transition-colors">
                   <GithubIcon size={18} />
                 </a>
                 <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-textPrimary/60 hover:text-textPrimary transition-colors">
                   <LinkedinIcon size={18} />
                 </a>
+                
+                {/* Auto-Detecting Resume Download */}
+                <a
+                  href="http://localhost:8001/api/resume/download"
+                  download
+                  onClick={(e) => {
+                    if (regionInfo) {
+                      const location = regionInfo.detectedCountryName || regionInfo.detectedCountry || 'Unknown';
+                      alert(`Detected Location: ${location}\nRegion: ${regionInfo.label}\nServing optimized regional format.`);
+                    }
+                  }}
+                  className="flex items-center gap-4 bg-textPrimary text-white px-8 py-5 hover:bg-accent transition-all duration-500 group whitespace-nowrap"
+                >
+                  <Download size={16} />
+                  <span className="font-mono text-xs uppercase tracking-[0.2em]">Resume</span>
+                </a>
               </div>
-
-              <button 
-                onClick={handleResumeDownload}
-                className="font-mono text-[10px] uppercase tracking-[0.2em] border border-textPrimary/20 px-6 py-3 hover:bg-textPrimary hover:text-background transition-all"
-              >
-                Get Resume
-              </button>
             </div>
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Signature Bobbing Anchor */}
-      <motion.div 
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-textPrimary/30"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <div className="w-px h-24 bg-gradient-to-b from-textPrimary/40 to-transparent" />
-        <span className="font-mono text-[8px] uppercase tracking-widest">Antigravity</span>
-      </motion.div>
+      {/* Signature Bobbing Anchor - Removed to prevent collisions with UI elements */}
     </section>
   );
 };

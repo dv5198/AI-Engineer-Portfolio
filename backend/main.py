@@ -1,21 +1,30 @@
 import json
 import os
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import httpx
+from datetime import datetime
+import hashlib
 from dotenv import load_dotenv
 
 from routes.portfolio import router as portfolio_router
 from routes.projects import router as projects_router
-from routes.resume import router as resume_router
 from routes.admin import router as admin_router
+from routes.dynamic_sections import router as dynamic_sections_router
+from routes.platform import router as platform_router
+from routes.resume import router as resume_router
 from fastapi.staticfiles import StaticFiles
+from database import load_data, save_data
 
-load_dotenv()
+app = FastAPI(title="Divya Nirankari Portfolio API")
 
-app = FastAPI(title="Alex Sharma Portfolio API")
+# Mount static files
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,8 +36,9 @@ app.add_middleware(
 
 from database import load_data
 
-UPLOAD_DIR = "uploads"
-RESUME_FILE = os.path.join(UPLOAD_DIR, "resume.pdf")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+
 
 @app.on_event("startup")
 def startup_event():
@@ -38,14 +48,14 @@ def startup_event():
 
 app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
 app.include_router(projects_router, prefix="/api/projects", tags=["projects"])
-app.include_router(resume_router, prefix="/api/resume", tags=["resume"])
 app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.include_router(dynamic_sections_router, prefix="/api/dynamic", tags=["dynamic"])
+app.include_router(platform_router, prefix="/api/platform", tags=["platform"])
+app.include_router(resume_router, prefix="/api/resume", tags=["resume"])
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-@app.get("/")
-def read_root():
-    return {"message": "Portfolio API is running"}
+# Dynamic resume download is handled in routes/resume.py via resume_router
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

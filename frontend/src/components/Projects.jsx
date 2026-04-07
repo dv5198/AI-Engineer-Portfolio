@@ -14,19 +14,15 @@ const ProjectCard = ({ project, idx }) => {
   return (
     <motion.div
       className="group relative flex flex-col bg-background border border-textPrimary/5 overflow-hidden shadow-none hover:shadow-2xl transition-all duration-700 h-full"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       animate={{ y: [0, -12, 0] }}
       transition={{
-        y: {
-          duration: 5 + (idx % 3) * 1.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: idx * 0.2
-        },
-        opacity: { duration: 0.8 },
-        layout: { duration: 0.3 }
+        duration: 5 + (idx % 3) * 1.5,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: idx * 0.2
       }}
     >
       <div className="h-56 overflow-hidden relative border-b border-textPrimary/5">
@@ -57,19 +53,19 @@ const ProjectCard = ({ project, idx }) => {
 
         <div className="mt-auto pt-6 flex items-center justify-between border-t border-textPrimary/5">
           <div className="flex gap-4">
-            {project.language && (
+            {project.techStack && (
               <span className="font-mono text-[9px] uppercase tracking-widest text-textPrimary/50">
-                {project.language}
+                {project.techStack}
               </span>
             )}
           </div>
           
           <div className="flex gap-6">
-            <a href={project.html_url} target="_blank" rel="noopener noreferrer" className="text-textPrimary/40 hover:text-textPrimary transition-colors">
+            <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-textPrimary/40 hover:text-textPrimary transition-colors">
               <GithubIcon size={16} />
             </a>
-            {project.homepage && (
-              <a href={project.homepage} target="_blank" rel="noopener noreferrer" className="text-textPrimary/40 hover:text-textPrimary transition-colors">
+            {project.demo && (
+              <a href={project.demo} target="_blank" rel="noopener noreferrer" className="text-textPrimary/40 hover:text-textPrimary transition-colors">
                 <ExternalLinkIcon size={16} />
               </a>
             )}
@@ -88,27 +84,46 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/projects');
+        const res = await fetch('http://localhost:8001/api/projects/');
         if (!res.ok) throw new Error();
-        const json = await res.json();
-        setProjects(json);
+        const githubRepos = await res.json();
+        
+        // Combine Admin Projects with GitHub Repos
+        // Priority: Admin Manual Projects > GitHub Repos
+        const adminProjects = data.projects || [];
+        const combined = [...adminProjects];
+        
+        // Add repos that aren't already in manual projects
+        githubRepos.forEach(repo => {
+          if (!combined.some(p => p.name === repo.name)) {
+            combined.push({
+              name: repo.name,
+              description: repo.description,
+              techStack: repo.language,
+              github: repo.html_url,
+              demo: repo.homepage,
+              visible: true
+            });
+          }
+        });
+
+        setProjects(combined);
       } catch (err) {
-        setProjects([
-          { name: 'antigravity-core', description: 'Deep learning vision model.', html_url: '#', language: 'Python' },
-          { name: 'ivory-systems', description: 'React FastAPI dynamic portfolio.', html_url: '#', language: 'JavaScript' },
-          { name: 'monolith-db', description: 'Blazing fast system metrics tool.', html_url: '#', language: 'Rust' }
+        setProjects(data.projects || [
+          { name: 'antigravity-core', description: 'Deep learning vision model.', github: '#', techStack: 'Python' },
+          { name: 'ivory-systems', description: 'React FastAPI dynamic portfolio.', github: '#', techStack: 'JavaScript' }
         ]);
       } finally {
         setLoading(false);
       }
     };
-    fetchProjects();
-  }, []);
+    if (data) fetchProjects();
+  }, [data]);
 
   if (!data || !data.sections_visibility?.projects) return null;
 
   return (
-    <section id="projects" className="py-32 px-6">
+    <section id="projects" className="pt-32 pb-12 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="max-w-2xl">
@@ -126,7 +141,7 @@ const Projects = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {projects.map((proj, idx) => (
+            {projects.filter(proj => proj.visible !== false && data.project_visibility?.[proj.name] !== false).map((proj, idx) => (
               <ProjectCard key={proj.name} project={proj} idx={idx} />
             ))}
           </div>

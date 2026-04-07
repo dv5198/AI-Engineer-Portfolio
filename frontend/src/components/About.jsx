@@ -2,6 +2,8 @@ import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
 
+import LanguageSkills from './LanguageSkills';
+
 const About = () => {
   const { data } = useContext(PortfolioContext);
   if (!data || !data.sections_visibility?.about) return null;
@@ -16,7 +18,7 @@ const About = () => {
   ];
 
   return (
-    <section id="about" className="py-32 px-6 bg-background relative overflow-hidden">
+    <section id="about" className="pt-32 pb-12 px-6 bg-background relative overflow-hidden">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-20 items-center">
         
         {/* Left Column: Text */}
@@ -57,6 +59,10 @@ const About = () => {
               </span>
             </motion.div>
           ))}
+          
+          <div className="col-span-2">
+            <LanguageSkills />
+          </div>
           
           {/* Abstract background element */}
           <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full border border-textPrimary/5 rounded-full pointer-events-none" />

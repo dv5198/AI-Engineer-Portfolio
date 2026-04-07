@@ -3,12 +3,26 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --ivory: #f0ebe0;
+    --ivory-deep: #e8e0d0;
+    --ivory-dark: #ddd4c0;
+    --warm-brown: #4a3a28;
+    --warm-mid: #7a6a55;
+    --warm-light: #a09878;
+    --accent: #b89868;
+    --accent-deep: #8a6a45;
+    --warm-black: #1a1510;
+    --bg-glass: rgba(240, 235, 224, 0.88);
+  }
+
   * {
     cursor: none !important;
   }
 
   body {
     @apply bg-background text-textPrimary font-body antialiased;
+    background-color: var(--ivory);
   }
 
   h1, h2, h3, h4, h5, h6 {

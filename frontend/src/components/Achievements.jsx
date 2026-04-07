@@ -4,7 +4,7 @@ import { PortfolioContext } from '../context/PortfolioContext';
 
 const Achievements = () => {
   const { data } = useContext(PortfolioContext);
-  if (!data || !data.sections_visibility?.achievements || !data.achievements) return null;
+  if (!data || !data.sections_visibility?.achievements) return null;
 
   const { achievement_image } = data;
 
@@ -21,10 +21,12 @@ const Achievements = () => {
         {/* Featured Achievement Image Card */}
         {achievement_image && achievement_image.url && (
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            whileHover={{ y: -10 }}
+            animate={{ y: [0, -12, 0] }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
             className="mb-20 bg-white border border-textPrimary/5 shadow-none hover:shadow-2xl transition-all duration-700 overflow-hidden"
           >
             <img 
@@ -43,13 +45,16 @@ const Achievements = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {data.achievements.map((achievement, idx) => (
+          {data.achievements.filter(ach => ach.visible !== false).map((achievement, idx) => (
             <motion.div 
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
+              animate={{ y: [0, -12, 0] }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                delay: idx * 0.4,
+                ease: "easeInOut"
+              }}
               className="p-10 border border-textPrimary/5 hover:border-textPrimary/20 transition-colors bg-white/50 backdrop-blur-sm"
             >
               <h3 className="text-2xl font-serif text-textPrimary mb-4">{achievement.title}</h3>

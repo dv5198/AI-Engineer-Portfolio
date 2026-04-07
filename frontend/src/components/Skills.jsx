@@ -16,24 +16,36 @@ const Skills = () => {
           <h2 className="text-5xl md:text-7xl font-serif text-textPrimary italic">Core Competencies</h2>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-6 max-w-4xl">
-          {skills.map((skill, idx) => (
-            <motion.div
-              key={idx}
-              className="px-8 py-3 bg-white/60 backdrop-blur-sm border border-textPrimary/5 rounded-full flex items-center gap-3 transition-colors duration-500 hover:bg-textPrimary group shadow-none hover:shadow-xl"
-              animate={{ y: [0, -12, 0] }}
-              transition={{
-                duration: 4 + (idx % 4) * 1.2,
-                repeat: Infinity,
-                delay: idx * 0.1,
-                ease: "easeInOut"
-              }}
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-textPrimary/30 group-hover:bg-background transition-colors" />
-              <span className="font-mono text-xs uppercase tracking-widest text-textPrimary group-hover:text-background transition-colors">
-                {skill}
-              </span>
-            </motion.div>
+        <div className="w-full max-w-5xl space-y-20">
+          {(data.skillCategories || []).filter(cat => cat.visible !== false).sort((a,b) => a.order - b.order).map((category, catIdx) => (
+            <div key={catIdx} className="space-y-8">
+              <div className="flex items-center gap-6">
+                <span className="font-mono text-[10px] text-accent/40">{catIdx.toString().padStart(2, '0')}</span>
+                <h3 className="text-2xl font-serif text-textPrimary italic">{category.label}</h3>
+                <div className="h-[1px] flex-grow bg-textPrimary/5" />
+              </div>
+              
+              <div className="flex flex-wrap gap-4">
+                {(Array.isArray(category.items) ? category.items : (category.items || "").split(',').map(s => s.trim())).map((skill, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="px-6 py-2 bg-white/40 backdrop-blur-md border border-textPrimary/5 rounded-full flex items-center gap-3 transition-all duration-500 hover:bg-textPrimary group shadow-sm hover:shadow-xl"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      duration: 0.5,
+                      delay: (catIdx * 0.2) + (idx * 0.05)
+                    }}
+                  >
+                    <div className="w-1 h-1 rounded-full bg-accent group-hover:bg-background transition-colors" />
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-textPrimary group-hover:text-background transition-colors">
+                      {skill}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

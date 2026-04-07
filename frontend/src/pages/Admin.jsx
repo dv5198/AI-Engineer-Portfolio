@@ -1,477 +1,866 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AdminContext } from '../context/AdminContext';
 import { PortfolioContext } from '../context/PortfolioContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
+
+import MessageInbox from '../components/MessageInbox';
+import CollectionEditor from '../components/CollectionEditor';
+import { Layout, FileText, BarChart3, ListTree, Settings as SettingsIcon, ShieldCheck, X } from 'lucide-react';
 
 const Admin = () => {
-  const { isAuthenticated, login, logout, token } = useContext(AdminContext);
-  const { data, fetchPortfolio, updatePortfolio } = useContext(PortfolioContext);
-  
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [command, setCommand] = useState('');
-  const [cmdResult, setCmdResult] = useState(null);
-  
-  // Local state for edits
-  const [formData, setFormData] = useState(null);
-  const [resumeFile, setResumeFile] = useState(null);
-  const [allProjects, setAllProjects] = useState([]);
+    const { isAuthenticated, login, logout, token } = useContext(AdminContext);
+    const { data, fetchPortfolio, updatePortfolio } = useContext(PortfolioContext);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    if (data) {
-      setFormData(JSON.parse(JSON.stringify(data))); // deep copy
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [command, setCommand] = useState('');
+    const [cmdResult, setCmdResult] = useState(null);
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [editingItem, setEditingItem] = useState(null); // { type, item }
+
+    // Local state for edits
+    const [formData, setFormData] = useState(null);
+    const [resumeFile, setResumeFile] = useState(null);
+    const [allProjects, setAllProjects] = useState([]);
+
+    useEffect(() => {
+        if (data) {
+            setFormData(JSON.parse(JSON.stringify(data))); // deep copy
+        }
+    }, [data]);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetch('http://localhost:8001/api/admin/projects/all/')
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch projects');
+                    return res.json();
+                })
+                .then(data => setAllProjects(data))
+                .catch(err => {
+                    console.error(err);
+                    setAllProjects([]); // Fallback to empty
+                });
+        }
+    }, [isAuthenticated]);
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        const success = await login(password);
+        if (!success) setError('Invalid password');
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
+
+    const saveChanges = async () => {
+        const success = await updatePortfolio(formData);
+        if (success) {
+            alert('Artifacts Deposited Successfully');
+            // Refresh to ensure we have the latest server state (including IDs)
+            await fetchPortfolio();
+        } else {
+            alert('Failed to deposit artifacts. Check backend logs.');
+        }
+    };
+
+    const handleChange = (section, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            [section]: { ...prev[section], [field]: value }
+        }));
+    };
+
+    const handleAboutChange = (idx, value) => {
+        const newAbout = [...formData.about];
+        newAbout[idx] = value;
+        setFormData(prev => ({ ...prev, about: newAbout }));
+    };
+
+    const handleSkillsChange = (val) => {
+        const newSkills = val.split(',').map(s => s.trim()).filter(s => s);
+        setFormData(prev => ({ ...prev, skills: newSkills }));
+    };
+
+    const handleCommand = async (e) => {
+        e.preventDefault();
+        setCmdResult('Processing...');
+        try {
+            const res = await fetch('http://localhost:8001/api/admin/command/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command })
+            });
+            const resData = await res.json();
+            setCmdResult(JSON.stringify(resData.changes_applied, null, 2));
+            await fetchPortfolio(); // refresh to show changes
+        } catch (err) {
+            setCmdResult('Error executing command');
+        }
+    };
+
+    const handleAIAction = async (endpoint, payload, callback) => {
+        try {
+            const res = await fetch(`http://localhost:8001/api/admin/${endpoint}/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            const result = data.rewritten || data.summary || data.bio || data.bullets;
+            if (result) callback(result);
+            else throw new Error("No result found");
+        } catch (err) {
+            alert('AI Action failed: ' + err.message);
+        }
+    };
+
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-ivory flex flex-col items-center justify-center relative z-20">
+                <form onSubmit={handleLogin} className="bg-white p-12 border border-warmBrown/5 shadow-2xl flex flex-col gap-8 max-w-sm w-full">
+                    <div className="text-center">
+                        <h2 className="text-4xl font-serif italic mb-2">Vault Entry</h2>
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Secure Signal Required</p>
+                    </div>
+                    {error && <p className="text-red-500 text-[10px] text-center font-mono uppercase tracking-tighter">{error}</p>}
+                    <input
+                        type="password"
+                        placeholder="DIGITAL KEY"
+                        className="border-b border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-mono text-center text-sm placeholder:opacity-20 transition-colors"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button type="submit" className="bg-warmBrown text-ivory py-4 font-mono text-xs tracking-[0.4em] uppercase hover:bg-black transition-all">
+                        Decrypt
+                    </button>
+                </form>
+            </div>
+        );
     }
-  }, [data]);
+    if (!formData) return <div className="min-h-screen bg-ivory flex items-center justify-center font-mono text-[10px] text-warmBrown/40 italic">Synchronizing State...</div>;
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetch('http://localhost:8000/api/admin/projects/all')
-        .then(res => res.json())
-        .then(data => setAllProjects(data))
-        .catch(err => console.error(err));
-    }
-  }, [isAuthenticated]);
+    const tabs = [
+        { id: 'dashboard', label: 'Monitor', icon: <BarChart3 size={14} /> },
+        { id: 'content', label: 'Identity', icon: <FileText size={14} /> },
+        { id: 'collections', label: 'Artifacts', icon: <ListTree size={14} /> },
+        { id: 'settings', label: 'Core', icon: <SettingsIcon size={14} /> }
+    ];
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const success = await login(password);
-    if (!success) setError('Invalid password');
-  };
-
-  const saveChanges = async () => {
-    await updatePortfolio(formData);
-    alert('Changes saved successfully!');
-  };
-
-  const handleChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: { ...prev[section], [field]: value }
-    }));
-  };
-
-  const handleAboutChange = (idx, value) => {
-    const newAbout = [...formData.about];
-    newAbout[idx] = value;
-    setFormData(prev => ({ ...prev, about: newAbout }));
-  };
-  
-  const handleSkillsChange = (val) => {
-    const newSkills = val.split(',').map(s => s.trim()).filter(s => s);
-    setFormData(prev => ({ ...prev, skills: newSkills }));
-  };
-
-  const handleCommand = async (e) => {
-    e.preventDefault();
-    setCmdResult('Processing...');
-    try {
-      const res = await fetch('http://localhost:8000/api/admin/command', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command })
-      });
-      const resData = await res.json();
-      setCmdResult(JSON.stringify(resData.changes_applied, null, 2));
-      await fetchPortfolio(); // refresh to show changes
-    } catch (err) {
-      setCmdResult('Error executing command');
-    }
-  };
-
-  const handleAIAction = async (endpoint, payload, callback) => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/admin/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      callback(data.rewritten);
-    } catch (err) {
-      alert('AI Action failed');
-    }
-  };
-
-  const uploadResume = async () => {
-    if (!resumeFile) return;
-    const body = new FormData();
-    body.append("file", resumeFile);
-    try {
-      await fetch('http://localhost:8000/api/resume', { method: 'POST', body });
-      alert('Resume Uploaded');
-    } catch (err) {
-      alert('Upload failed');
-    }
-  };
-
-  const deleteResume = async () => {
-    try {
-      await fetch('http://localhost:8000/api/resume', { method: 'DELETE' });
-      alert('Resume Deleted');
-    } catch (err) {
-      alert('Delete failed');
-    }
-  };
-
-  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center relative z-20">
-        <form onSubmit={handleLogin} className="bg-white p-8 border border-gray-200 shadow-sm flex flex-col gap-4 max-w-sm w-full">
-          <h2 className="text-2xl font-serif text-center mb-4">Admin Access</h2>
-          {error && <p className="text-red-500 text-sm text-center font-mono">{error}</p>}
-          <input 
-            type="password" 
-            placeholder="Passphrase" 
-            className="border-b border-gray-300 p-2 focus:outline-none focus:border-accent font-mono text-center"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button type="submit" className="bg-textPrimary text-white py-3 mt-4 font-mono text-sm tracking-widest uppercase hover:bg-black transition-colors">
-            Enter
-          </button>
-        </form>
-      </div>
-    );
-  }
+        <div className="min-h-screen bg-ivory pt-8 pb-24 px-6 relative z-20">
+            <div className="max-w-6xl mx-auto">
 
-  if (!formData) return <div>Loading...</div>;
-
-  return (
-    <div className="min-h-screen bg-background pt-12 pb-24 px-6 relative z-20">
-      <div className="max-w-5xl mx-auto space-y-12">
-        
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-gray-200 pb-6">
-          <h1 className="text-4xl font-serif">Command Center</h1>
-          <button onClick={logout} className="text-sm font-mono tracking-widest border border-textPrimary px-4 py-2 hover:bg-textPrimary hover:text-white transition-colors">
-            LOGOUT
-          </button>
-        </div>
-
-        {/* AI Command Line */}
-        <div className="bg-white p-6 border border-gray-200 shadow-sm">
-          <h3 className="font-mono text-sm mb-4 tracking-widest text-accent font-bold">Terminal_AI</h3>
-          <form onSubmit={handleCommand} className="flex gap-4">
-            <input 
-              type="text" 
-              placeholder="e.g. 'Turn off the contact section' or 'Update years experience to 5'" 
-              className="flex-1 border bg-gray-50 border-gray-200 p-3 font-mono text-sm focus:outline-none focus:border-accent"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-            />
-            <button type="submit" className="bg-textPrimary text-white px-6 font-mono text-sm hover:bg-black">Execute</button>
-          </form>
-          {cmdResult && (
-            <pre className="mt-4 p-4 bg-gray-900 text-green-400 font-mono text-xs overflow-x-auto">
-              {cmdResult}
-            </pre>
-          )}
-        </div>
-
-        {/* Editors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
-          {/* Profile Editor */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
-            <h3 className="font-serif text-xl border-b pb-2">Profile</h3>
-            {['name', 'role', 'email', 'github', 'linkedin'].map(field => (
-              <div key={field}>
-                <label className="block text-xs font-mono text-gray-500 mb-1 uppercase bg-white">{field}</label>
-                <input 
-                  className="w-full border-b border-gray-200 py-1 focus:outline-none focus:border-accent font-body"
-                  value={formData.profile[field]} 
-                  onChange={e => handleChange('profile', field, e.target.value)} 
-                />
-              </div>
-            ))}
-            <div>
-              <label className="block text-xs font-mono text-gray-500 mb-1 uppercase flex justify-between">
-                Bio 
-                <button 
-                  onClick={() => handleAIAction('rewrite-bio', {text: formData.profile.bio}, (newText) => handleChange('profile', 'bio', newText))}
-                  className="text-accent hover:underline"
-                >✦ AI Magic</button>
-              </label>
-              <textarea 
-                className="w-full border border-gray-200 p-2 focus:outline-none focus:border-accent font-body h-24"
-                value={formData.profile.bio} 
-                onChange={e => handleChange('profile', 'bio', e.target.value)} 
-              />
-            </div>
-            <button onClick={saveChanges} className="w-full py-2 bg-textPrimary text-white font-mono text-xs">SAVE PROFILE</button>
-          </div>
-
-          {/* About Editor */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
-            <h3 className="font-serif text-xl border-b pb-2 flex justify-between items-center">
-              About Text
-              <button 
-                onClick={() => handleAIAction('rewrite-about', {text: formData.about.join('\n')}, (newText) => setFormData(p => ({...p, about: newText.split('\n')})))}
-                className="text-accent font-mono text-xs hover:underline"
-              >✦ Enrich All</button>
-            </h3>
-            {formData.about.map((para, idx) => (
-              <textarea 
-                key={idx}
-                className="w-full border border-gray-200 p-2 focus:outline-none focus:border-accent font-body text-sm h-24"
-                value={para} 
-                onChange={e => handleAboutChange(idx, e.target.value)} 
-              />
-            ))}
-            <button onClick={saveChanges} className="w-full py-2 bg-textPrimary text-white font-mono text-xs">SAVE ABOUT</button>
-          </div>
-
-          {/* Stats & Skills */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-6">
-            <div>
-              <h3 className="font-serif text-xl border-b pb-2 mb-4">Stats</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.keys(formData.stats).map(stat => (
-                  <div key={stat}>
-                    <label className="block text-xs font-mono text-gray-500 mb-1 uppercase truncate">{stat.replace('_', ' ')}</label>
-                    <input 
-                      className="w-full border-b border-gray-200 py-1 focus:outline-none focus:border-accent font-mono text-center"
-                      value={formData.stats[stat]} 
-                      onChange={e => handleChange('stats', stat, e.target.value)} 
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="font-serif text-xl border-b pb-2 mb-4">Skills (Comma Separated)</h3>
-              <textarea 
-                className="w-full border border-gray-200 p-2 focus:outline-none focus:border-accent font-mono text-sm h-24"
-                value={formData.skills.join(', ')} 
-                onChange={e => handleSkillsChange(e.target.value)} 
-              />
-            </div>
-            <button onClick={saveChanges} className="w-full py-2 bg-textPrimary text-white font-mono text-xs">SAVE STATS & SKILLS</button>
-          </div>
-
-          {/* Visibility & Resume */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-8">
-            <div>
-              <h3 className="font-serif text-xl border-b pb-2 mb-4">Section Visibility</h3>
-              <div className="space-y-3">
-                {Object.keys(formData.sections_visibility).map(sec => (
-                  <div key={sec} className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="font-mono text-sm capitalize">{sec}</span>
-                    <button 
-                      onClick={() => {
-                        const newVal = !formData.sections_visibility[sec];
-                        handleChange('sections_visibility', sec, newVal);
-                        updatePortfolio({...formData, sections_visibility: {...formData.sections_visibility, [sec]: newVal}});
-                      }}
-                      className={`px-3 py-1 text-xs font-mono w-16 ${formData.sections_visibility[sec] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                    >
-                      {formData.sections_visibility[sec] ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-serif text-xl border-b pb-2 mb-4">Project Visibility</h3>
-              <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                {allProjects.map(proj => {
-                   // By default it is ON if not explicitly set to false
-                   const isVisible = formData.project_visibility[proj.name] !== false;
-                   return (
-                  <div key={proj.name} className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="font-mono text-sm max-w-[150px] truncate" title={proj.name}>{proj.name}</span>
-                    <button 
-                      onClick={() => {
-                        const newVal = !isVisible;
-                        handleChange('project_visibility', proj.name, newVal);
-                        updatePortfolio({...formData, project_visibility: {...formData.project_visibility, [proj.name]: newVal}});
-                      }}
-                      className={`px-3 py-1 text-xs font-mono w-16 ${isVisible ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                    >
-                      {isVisible ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                )})}
-                {allProjects.length === 0 && <p className="text-xs font-mono text-gray-500">No projects found. Check GitHub handle.</p>}
-              </div>
-            </div>
-            
-            <div className="border border-gray-100 p-6 bg-white space-y-6">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="font-serif text-xl">Experience</h3>
-                <button 
-                  onClick={() => {
-                    const newVal = !formData.sections_visibility?.experience;
-                    setFormData({...formData, sections_visibility: {...formData.sections_visibility, experience: newVal}});
-                  }}
-                  className={`px-3 py-1 text-[10px] font-mono rounded ${formData.sections_visibility?.experience ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                >
-                  SECTION {formData.sections_visibility?.experience ? 'VISIBLE' : 'HIDDEN'}
-                </button>
-              </div>
-              <div className="space-y-4">
-                {formData.experience?.map((job, idx) => (
-                  <div key={idx} className="p-4 border border-gray-100 space-y-2">
-                    <input 
-                      placeholder="Company" 
-                      className="w-full border-b text-xs font-mono p-1"
-                      value={job.company} 
-                      onChange={e => {
-                        const newExp = [...formData.experience];
-                        newExp[idx].company = e.target.value;
-                        setFormData({...formData, experience: newExp});
-                      }}
-                    />
-                    <input 
-                      placeholder="Position" 
-                      className="w-full border-b text-xs font-mono p-1"
-                      value={job.position} 
-                      onChange={e => {
-                        const newExp = [...formData.experience];
-                        newExp[idx].position = e.target.value;
-                        setFormData({...formData, experience: newExp});
-                      }}
-                    />
-                    <div className="flex gap-2">
-                      <input 
-                        placeholder="Start" 
-                        className="flex-1 border-b text-xs font-mono p-1"
-                        value={job.start} 
-                        onChange={e => {
-                          const newExp = [...formData.experience];
-                          newExp[idx].start = e.target.value;
-                          setFormData({...formData, experience: newExp});
-                        }}
-                      />
-                      <input 
-                        placeholder="End (e.g. Present)" 
-                        className="flex-1 border-b text-xs font-mono p-1"
-                        value={job.end} 
-                        onChange={e => {
-                          const newExp = [...formData.experience];
-                          newExp[idx].end = e.target.value;
-                          setFormData({...formData, experience: newExp});
-                        }}
-                      />
-                      <button 
-                        onClick={() => {
-                          const newExp = formData.experience.filter((_, i) => i !== idx);
-                          setFormData({...formData, experience: newExp});
-                        }}
-                        className="px-2 text-red-500 hover:bg-red-50 transition-colors"
-                        title="Delete Experience"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                      </button>
+                {/* Superior Header */}
+                <div className="flex flex-col md:flex-row justify-between items-center bg-white border border-warmBrown/5 p-8 shadow-sm mb-12">
+                    <div className="flex items-center gap-4 mb-4 md:mb-0">
+                        <div className="w-12 h-12 bg-warmBlack text-ivory flex items-center justify-center">
+                            <ShieldCheck size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-serif italic text-warmBrown leading-none">Command Center</h1>
+                            <p className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/30 mt-1">Authorized Access Only // Port 8001</p>
+                        </div>
                     </div>
-                  </div>
-                ))}
-                <button 
-                  onClick={() => setFormData({...formData, experience: [...(formData.experience || []), {company:'', position:'', start:'', end:'', description:''}]})}
-                  className="w-full py-2 border border-dashed border-gray-300 text-gray-400 font-mono text-[10px] hover:border-accent hover:text-accent"
-                >+ ADD JOB</button>
-              </div>
-            </div>
 
-            <div className="border border-gray-100 p-6 bg-white space-y-6">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="font-serif text-xl">Achievements</h3>
-                <button 
-                  onClick={() => {
-                    const newVal = !formData.sections_visibility?.achievements;
-                    setFormData({...formData, sections_visibility: {...formData.sections_visibility, achievements: newVal}});
-                  }}
-                  className={`px-3 py-1 text-[10px] font-mono rounded ${formData.sections_visibility?.achievements ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                >
-                  SECTION {formData.sections_visibility?.achievements ? 'VISIBLE' : 'HIDDEN'}
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 border border-gray-200">
-                  <label className="block text-[10px] font-mono text-gray-400 uppercase mb-2">Achievement Photo (optional)</label>
-                  {formData.achievement_image?.url ? (
-                    <div className="relative group">
-                      <img src={formData.achievement_image.url} className="w-full h-32 object-cover border border-gray-200" />
-                      <button 
-                         onClick={() => setFormData({...formData, achievement_image: {url: '', caption: ''}})}
-                         className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                      </button>
+                    <div className="flex items-center gap-4">
+                        <div className="flex bg-ivory p-1">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-6 py-2 font-mono text-[10px] uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white text-accent shadow-sm' : 'text-warmBrown/40 hover:text-warmBrown'}`}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={handleLogout} className="ml-4 w-10 h-10 flex items-center justify-center border border-warmBrown/10 text-warmBrown/20 hover:text-red-500 hover:border-red-500/20 transition-all" title="Terminate Session">
+                            <ShieldCheck size={16} />
+                        </button>
                     </div>
-                  ) : (
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-                        const body = new FormData();
-                        body.append('file', file);
-                        const res = await fetch('http://localhost:8000/api/admin/achievement-image', { method: 'POST', body });
-                        const resData = await res.json();
-                        setFormData({...formData, achievement_image: { ...formData.achievement_image, url: resData.url }});
-                      }}
-                      className="font-mono text-[10px]"
-                    />
-                  )}
-                  <input 
-                    placeholder="Photo Caption" 
-                    className="w-full border-b bg-transparent text-[10px] font-mono mt-2 p-1"
-                    value={formData.achievement_image?.caption || ''} 
-                    onChange={e => setFormData({...formData, achievement_image: {...formData.achievement_image, caption: e.target.value}})}
-                  />
                 </div>
-                {formData.achievements?.map((ach, idx) => (
-                  <div key={idx} className="p-4 border border-gray-100 space-y-2 relative group-item">
-                    <div className="flex justify-between items-center bg-white">
-                      <input 
-                        placeholder="Achievement Title" 
-                        className="flex-1 border-b text-xs font-mono p-1"
-                        value={ach.title} 
-                        onChange={e => {
-                          const newAch = [...formData.achievements];
-                          newAch[idx].title = e.target.value;
-                          setFormData({...formData, achievements: newAch});
-                        }}
-                      />
-                      <button 
-                        onClick={() => {
-                          const newAch = formData.achievements.filter((_, i) => i !== idx);
-                          setFormData({...formData, achievements: newAch});
-                        }}
-                        className="ml-2 text-red-500 hover:bg-red-50 p-1"
-                        title="Delete Achievement"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                      </button>
-                    </div>
-                    <textarea 
-                      placeholder="Description" 
-                      className="w-full border p-2 text-xs font-mono h-16"
-                      value={ach.description} 
-                      onChange={e => {
-                        const newAch = [...formData.achievements];
-                        newAch[idx].description = e.target.value;
-                        setFormData({...formData, achievements: newAch});
-                      }}
-                    />
-                  </div>
-                ))}
-                <button 
-                  onClick={() => setFormData({...formData, achievements: [...(formData.achievements || []), {title:'', description:''}]})}
-                  className="w-full py-2 border border-dashed border-gray-300 text-gray-400 font-mono text-[10px] hover:border-accent hover:text-accent"
-                >+ ADD ACHIEVEMENT</button>
-              </div>
-            </div>
-            
-            <button onClick={saveChanges} className="w-full py-3 bg-accent text-white font-mono text-xs tracking-widest uppercase">SAVE CHANGES</button>
-          </div>
 
+                {/* Tab Content Rendering */}
+                <div className="space-y-12 min-h-[600px]">
+                    {activeTab === 'dashboard' && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <AnalyticsDashboard />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                                <MessageInbox />
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'content' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            {/* Profile Editor */}
+                            <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Identity Matrix</h3>
+                                {['name', 'role', 'email', 'phone', 'location', 'github', 'linkedin'].map(field => (
+                                    <div key={field}>
+                                        <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field}</label>
+                                        <input
+                                            className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif bg-transparent"
+                                            value={formData.profile[field] || ''}
+                                            onChange={e => handleChange('profile', field, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+
+                                <div className="pt-4 border-t border-warmBrown/5 space-y-4">
+                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Regional Metadata</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {['dateOfBirth', 'gender', 'nationality', 'maritalStatus', 'visaStatus', 'timezone'].map(field => (
+                                            <div key={field}>
+                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.replace(/([A-Z])/g, ' $1')}</label>
+                                                <input
+                                                    className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
+                                                    value={formData.profile[field] || ''}
+                                                    placeholder={`Enter ${field}`}
+                                                    onChange={e => handleChange('profile', field, e.target.value)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-warmBrown/5 space-y-4">
+                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Professional Photo</h4>
+                                    <div className="flex items-center gap-6 bg-ivory/20 p-4 border border-warmBrown/5">
+                                        <div className="w-20 h-24 bg-white border border-warmBrown/10 overflow-hidden flex items-center justify-center">
+                                            {formData.profile.photo ? (
+                                                <img src={`http://localhost:8001/${formData.profile.photo}?t=${Date.now()}`} alt="Profile" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-[8px] font-mono text-warmBrown/20 uppercase text-center p-2">No Photo Signal</span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            <p className="text-[10px] font-sans text-warmBrown/60">Upload used for Korea, Japan, China, Germany, and Middle East resumes.</p>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                id="photo-upload"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+                                                    const uploadData = new FormData();
+                                                    uploadData.append('file', file);
+                                                    const res = await fetch('http://localhost:8001/api/admin/profile-photo/', {
+                                                        method: 'POST',
+                                                        body: uploadData
+                                                    });
+                                                    const resJson = await res.json();
+                                                    if (resJson.url) {
+                                                        handleChange('profile', 'photo', 'uploads/profile_photo.jpg');
+                                                        alert('Photo Decanted Successfully');
+                                                    }
+                                                }}
+                                            />
+                                            <label htmlFor="photo-upload" className="inline-block px-4 py-2 border border-warmBrown/20 font-mono text-[9px] uppercase tracking-widest cursor-pointer hover:bg-warmBrown hover:text-ivory transition-all">
+                                                Upload New Signal
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest flex justify-between">
+                                        Professional Summary (For Resume)
+                                        <button
+                                            onClick={() => handleAIAction('rewrite-summary', { about_list: formData.about }, (newText) => handleChange('profile', 'summary', newText))}
+                                            className="text-accent hover:underline lowercase italic"
+                                        >✦ auto-gen from narrative</button>
+                                    </label>
+                                    <textarea
+                                        className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-sans text-xs h-20 bg-ivory/20"
+                                        value={formData.profile.summary || ''}
+                                        onChange={e => handleChange('profile', 'summary', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest">Typewriter Titles (Comma Separated)</label>
+                                    <textarea
+                                        className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-mono text-[10px] h-20 bg-ivory/20"
+                                        value={(formData.profile.titles || []).join(', ')}
+                                        onChange={e => {
+                                            const newTitles = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                                            setFormData(prev => ({ ...prev, profile: { ...prev.profile, titles: newTitles } }));
+                                        }}
+                                    />
+                                </div>
+                                <button onClick={saveChanges} className="w-full py-4 bg-warmBrown text-ivory font-mono text-[10px] uppercase tracking-[0.3em] hover:bg-black transition-all">Preserve Identity</button>
+                            </div>
+
+                            {/* About & Stats */}
+                            <div className="space-y-8">
+                                <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                    <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 flex justify-between items-center italic">
+                                        Narrative sequence
+                                        <button
+                                            onClick={() => handleAIAction('rewrite-about', { text: formData.about.join('\n') }, (newText) => setFormData(p => ({ ...p, about: newText.split('\n') })))}
+                                            className="text-accent font-mono text-[9px] hover:underline uppercase tracking-widest"
+                                        >✦ enrich sequence</button>
+                                    </h3>
+                                    {formData.about.map((para, idx) => (
+                                        <textarea
+                                            key={idx}
+                                            className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-sans text-sm h-24 bg-ivory/20 mb-2"
+                                            value={para}
+                                            onChange={e => handleAboutChange(idx, e.target.value)}
+                                        />
+                                    ))}
+                                    <button onClick={saveChanges} className="w-full py-4 bg-warmBrown text-ivory font-mono text-[10px] uppercase tracking-[0.3em] hover:bg-black transition-all">Commit Narrative</button>
+                                </div>
+
+                                <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                    <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Metric Flux</h3>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        {Object.keys(formData.stats || {}).map(stat => (
+                                            <div key={stat}>
+                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest truncate">{stat.replace('_', ' ')}</label>
+                                                <input
+                                                    className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-center text-accent"
+                                                    value={formData.stats[stat]}
+                                                    onChange={e => handleChange('stats', stat, e.target.value)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={saveChanges} className="w-full py-4 bg-accent text-ivory font-mono text-[10px] uppercase tracking-[0.3em] hover:bg-warmBlack transition-all">Sync Metrics</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'collections' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                {/* Experience */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Experience</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.experience?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="experience"
+                                        items={formData.experience || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, experience: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'experience', item })}
+                                    />
+                                </div>
+
+                                {/* Education */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Education</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.education?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="education"
+                                        items={formData.education || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, education: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'education', item })}
+                                    />
+                                </div>
+
+                                {/* Certifications */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Certifications</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.certifications?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="certifications"
+                                        items={formData.certifications || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, certifications: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'certifications', item })}
+                                    />
+                                </div>
+
+                                {/* Achievements */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Achievements</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.achievements?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="achievements"
+                                        items={formData.achievements || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, achievements: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'achievements', item })}
+                                    />
+                                </div>
+
+                                {/* Projects */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <div className="flex items-center gap-4">
+                                            <h3 className="font-serif text-2xl italic">Project Artifacts</h3>
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); handleCommand(e, "Sync my latest projects from GitHub"); }}
+                                                className="text-[9px] font-mono text-accent hover:border-b border-accent uppercase tracking-widest pt-1"
+                                            >( Sync Pulse )</button>
+                                        </div>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.projects?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="projects"
+                                        items={formData.projects || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, projects: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'projects', item })}
+                                    />
+
+                                    {/* GitHub Sync List (Visibility Only) */}
+                                    <div className="mt-8 bg-ivory/30 p-6 border border-warmBrown/5">
+                                        <h4 className="font-serif text-sm italic mb-4 flex justify-between items-center">
+                                            GitHub Repository Visibility
+                                            <span className="font-mono text-[8px] uppercase tracking-widest opacity-30">Dynamic Source</span>
+                                        </h4>
+                                        <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                            {allProjects.map(repo => (
+                                                <div key={repo.name} className="flex justify-between items-center bg-white p-3 border border-warmBrown/5">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-serif text-xs">{repo.name}</span>
+                                                        <span className="font-mono text-[8px] text-warmBrown/40 uppercase">{repo.language || 'Unknown Stack'}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const currentVisibility = formData.project_visibility || {};
+                                                            const isVisible = currentVisibility[repo.name] !== false;
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                project_visibility: {
+                                                                    ...currentVisibility,
+                                                                    [repo.name]: !isVisible
+                                                                }
+                                                            }));
+                                                        }}
+                                                        className={`font-mono text-[9px] uppercase tracking-tighter px-3 py-1 border transition-all ${formData.project_visibility?.[repo.name] !== false
+                                                            ? 'border-accent/20 text-accent hover:bg-accent hover:text-white'
+                                                            : 'border-warmBrown/10 text-warmBrown/30 hover:bg-warmBrown hover:text-ivory'
+                                                            }`}
+                                                    >
+                                                        {formData.project_visibility?.[repo.name] !== false ? '[ VISIBLE ]' : '[ HIDDEN ]'}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {allProjects.length === 0 && (
+                                                <p className="text-center font-mono text-[10px] text-warmBrown/20 py-8 italic uppercase tracking-widest">Awaiting GitHub Signal...</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Testimonials */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Testimonials</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.testimonials?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="testimonials"
+                                        items={formData.testimonials || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, testimonials: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'testimonials', item })}
+                                    />
+                                </div>
+
+                                {/* Research */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Research Lab</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.researchInterests?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="research"
+                                        items={formData.researchInterests || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, researchInterests: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'research', item })}
+                                    />
+                                </div>
+
+                                {/* Languages */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Languages</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.languages?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="languages"
+                                        items={formData.languages || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, languages: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'languages', item })}
+                                    />
+                                </div>
+
+                                {/* Skill Categories */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Skill Framework</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.skillCategories?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="skills"
+                                        items={formData.skillCategories || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, skillCategories: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'skills', item })}
+                                    />
+                                </div>
+
+                                {/* Activity Signal (Read-Only) */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Signal History</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.activityLog?.length || 0} nodes</span>
+                                    </div>
+                                    <div className="flex flex-col gap-2 max-h-96 overflow-y-auto pr-2">
+                                        {(formData.activityLog || []).slice(0, 100).map((act, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 border border-warmBrown/5 bg-white">
+                                                <div className="flex flex-col">
+                                                    <span className="font-mono text-[10px] uppercase text-warmBrown">{act.action}</span>
+                                                    <span className="font-mono text-[9px] uppercase tracking-widest text-warmBrown/40 mt-1">{act.description}</span>
+                                                </div>
+                                                <span className="font-mono text-[9px] text-warmBrown/30">{act.date}</span>
+                                            </div>
+                                        ))}
+                                        {(!formData.activityLog || formData.activityLog.length === 0) && (
+                                            <div className="py-8 text-center text-warmBrown/30 font-mono text-[10px] uppercase tracking-widest border border-dashed border-warmBrown/10">No signals detected</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Blog */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic text-center w-full">Thought Canvas</h3>
+                                    </div>
+                                    <CollectionEditor
+                                        type="blog"
+                                        items={formData.blogPosts || []}
+                                        setItems={(newItems) => setFormData({ ...formData, blogPosts: newItems })}
+                                        onEdit={(item) => setEditingItem({ type: 'blog', item })}
+                                    />
+                                </div>
+                            </div>
+                            <button onClick={saveChanges} className="fixed bottom-8 right-8 w-48 py-4 bg-accent text-white font-mono text-xs shadow-2xl z-50 hover:bg-warmBlack transition-all uppercase tracking-widest">Deposit Artifacts</button>
+                        </div>
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+                            <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-8">
+                                <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Visibility Map</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {Object.keys(formData.sections_visibility).map(sec => (
+                                        <div key={sec} className="flex justify-between items-center bg-ivory/20 p-4 border border-warmBrown/5 hover:border-accent/20 transition-colors">
+                                            <span className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/60">{sec}</span>
+                                            <button
+                                                onClick={() => {
+                                                    const newVal = !formData.sections_visibility[sec];
+                                                    handleChange('sections_visibility', sec, newVal);
+                                                }}
+                                                className={`px-3 py-1 text-[9px] font-mono tracking-tighter transition-colors ${formData.sections_visibility[sec] ? 'text-accent font-bold' : 'text-warmBrown/20'}`}
+                                            >
+                                                {formData.sections_visibility[sec] ? '[ ENABLED ]' : '[ DISABLED ]'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-8">
+                                <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                    <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Core Presentation</h3>
+                                    <div className="flex justify-between items-center bg-ivory/20 p-4 border border-warmBrown/5 hover:border-accent/20 transition-colors">
+                                        <span className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/60">3D Particle Hero (Canvas Effect)</span>
+                                        <button
+                                            onClick={() => {
+                                                const newVal = formData.settings?.hero3d !== false ? false : true;
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    settings: {
+                                                        ...(prev.settings || {}),
+                                                        hero3d: newVal
+                                                    }
+                                                }));
+                                            }}
+                                            className={`px-3 py-1 text-[9px] font-mono tracking-tighter transition-colors ${formData.settings?.hero3d !== false ? 'text-accent font-bold' : 'text-warmBrown/20'}`}
+                                        >
+                                            {formData.settings?.hero3d !== false ? '[ ENABLED ]' : '[ DISABLED ]'}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                    <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Resume Engine Settings</h3>
+                                    <div>
+                                        <label className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest">Default Detection Fallback</label>
+                                        <select
+                                            className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px] bg-transparent uppercase tracking-widest"
+                                            value={formData.resumeSettings?.defaultRegion || 'international'}
+                                            onChange={e => setFormData(prev => ({
+                                                ...prev,
+                                                resumeSettings: { ...prev.resumeSettings, defaultRegion: e.target.value }
+                                            }))}
+                                        >
+                                            <option value="international">International (ATS)</option>
+                                            <option value="korea">South Korea</option>
+                                            <option value="japan">Japan</option>
+                                            <option value="china">China</option>
+                                            <option value="germany">Germany</option>
+                                            <option value="middleeast">Middle East</option>
+                                        </select>
+                                        <p className="mt-4 text-[9px] font-mono text-warmBrown/30 leading-relaxed uppercase tracking-widest border-l border-accent/20 pl-4 py-2 italic font-bold">
+                                            Note: Photo is NEVER included in International/ATS format regardless of upload status.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                    <h3 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Terminal_AI</h3>
+                                    <form onSubmit={handleCommand} className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Awaiting command sequence..."
+                                            className="flex-1 border-b border-warmBrown/10 p-3 font-mono text-xs focus:outline-none focus:border-accent bg-transparent"
+                                            value={command}
+                                            onChange={(e) => setCommand(e.target.value)}
+                                        />
+                                        <button type="submit" className="bg-warmBlack text-ivory px-6 font-mono text-[10px] uppercase hover:bg-black">Run</button>
+                                    </form>
+                                    {cmdResult && (
+                                        <pre className="mt-4 p-6 bg-warmBlack text-accent font-mono text-[10px] overflow-x-auto leading-relaxed border border-accent/20">
+                                            {`> Execution Successful\n> Result Output:\n${cmdResult}`}
+                                        </pre>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-2 bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
+                                <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic flex justify-between items-center">
+                                    Live Resume Preview
+                                    <a href={`http://localhost:8001/api/resume/download?region=${formData.resumeSettings?.defaultRegion || 'international'}`} target="_blank" rel="noreferrer" className="text-accent font-mono text-[9px] uppercase tracking-widest hover:underline">Open Full PDF</a>
+                                </h3>
+                                <div className="w-full h-[600px] bg-ivory/50 flex items-center justify-center border border-warmBrown/10">
+                                    <iframe
+                                        src={`http://localhost:8001/api/resume/download?region=${formData.resumeSettings?.defaultRegion || 'international'}#toolbar=0&navpanes=0&scrollbar=0`}
+                                        width="100%"
+                                        height="100%"
+                                        className="bg-transparent"
+                                        title="Resume PDF Preview"
+                                    />
+                                </div>
+                            </div>
+                            <button onClick={saveChanges} className="w-full py-4 bg-warmBrown text-ivory font-mono text-[10px] uppercase tracking-[0.3em] lg:col-span-2">Initialize Core Settings</button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Edit Modal */}
+            <AnimatePresence>
+                {editingItem && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingItem(null)} className="absolute inset-0 bg-warmBlack/80 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-2xl relative z-10 p-12 shadow-2xl max-h-[90vh] overflow-y-auto">
+                            <button onClick={() => setEditingItem(null)} className="absolute top-8 right-8 text-warmBrown/20 hover:text-accent">
+                                <X size={20} />
+                            </button>
+                            <h3 className="text-3xl font-serif italic mb-8 capitalize">{editingItem.type} Editor</h3>
+
+                            <div className="space-y-6">
+                                {editingItem.type === 'experience' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Company" value={editingItem.item.company || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, company: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Role/Title" value={editingItem.item.role || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, role: e.target.value } })} />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Start Date (e.g. Jan 2023)" value={editingItem.item.startDate || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, startDate: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="End Date (e.g. Present)" value={editingItem.item.endDate || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, endDate: e.target.value } })} />
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Description for AI (e.g. what you did)" value={editingItem.item.description || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, description: e.target.value } })} />
+
+                                        <div className="flex justify-between items-center mt-2">
+                                            <label className="text-[9px] font-mono text-warmBrown/40 uppercase tracking-widest">Bullets</label>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleAIAction('generate-bullets', {
+                                                        role: editingItem.item.role || '',
+                                                        company: editingItem.item.company || '',
+                                                        description: editingItem.item.description || ''
+                                                    }, (newBullets) => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: newBullets } }));
+                                                }}
+                                                className="text-accent hover:underline lowercase italic"
+                                            >✦ generate bullets</button>
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Bullets (One per line)" value={(editingItem.item.bullets || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'education' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="University" defaultValue={editingItem.item.university} onChange={e => editingItem.item.university = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Degree" defaultValue={editingItem.item.degree} onChange={e => editingItem.item.degree = e.target.value} />
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Year (e.g. 2020 - 2022)" defaultValue={editingItem.item.year} onChange={e => editingItem.item.year = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Awarded" defaultValue={editingItem.item.awarded} onChange={e => editingItem.item.awarded = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GPA" defaultValue={editingItem.item.gpa} onChange={e => editingItem.item.gpa = e.target.value} />
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32 mt-4" placeholder="Notes (Optional)" defaultValue={editingItem.item.notes} onChange={e => editingItem.item.notes = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'certifications' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Certification Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Issuer (e.g. Coursera)" defaultValue={editingItem.item.issuer} onChange={e => editingItem.item.issuer = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Year" defaultValue={editingItem.item.year} onChange={e => editingItem.item.year = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'projects' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Project Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Tech Stack (Comma Separated)" defaultValue={editingItem.item.techStack?.join(', ')} onChange={e => editingItem.item.techStack = e.target.value.split(',').map(s => s.trim()).filter(s => s)} />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GitHub Link" defaultValue={editingItem.item.github} onChange={e => editingItem.item.github = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Live Link" defaultValue={editingItem.item.demo} onChange={e => editingItem.item.demo = e.target.value} />
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Project Description" defaultValue={editingItem.item.description} onChange={e => editingItem.item.description = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'achievements' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Achievement Title" defaultValue={editingItem.item.title} onChange={e => editingItem.item.title = e.target.value} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Brief Summary" defaultValue={editingItem.item.description} onChange={e => editingItem.item.description = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'testimonials' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Role" defaultValue={editingItem.item.role} onChange={e => editingItem.item.role = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Company" defaultValue={editingItem.item.company} onChange={e => editingItem.item.company = e.target.value} />
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Quote" defaultValue={editingItem.item.quote} onChange={e => editingItem.item.quote = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'research' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Topic" defaultValue={editingItem.item.topic} onChange={e => editingItem.item.topic = e.target.value} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-mono text-[10px] uppercase h-32" placeholder="Description (Compact)" defaultValue={editingItem.item.description} onChange={e => editingItem.item.description = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'languages' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Language Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" defaultValue={editingItem.item.level} onChange={e => editingItem.item.level = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage" defaultValue={editingItem.item.percentage} onChange={e => editingItem.item.percentage = Number(e.target.value)} />
+                                        </div>
+                                    </>
+                                )}
+
+                                {editingItem.type === 'skills' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Category Label (e.g. ML & AI)" defaultValue={editingItem.item.label} onChange={e => editingItem.item.label = e.target.value} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Skills (Comma Separated)" defaultValue={editingItem.item.items?.join(', ')} onChange={e => editingItem.item.items = e.target.value.split(',').map(s => s.trim()).filter(s => s)} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'activity' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Date (YYYY-MM-DD)" defaultValue={editingItem.item.date} onChange={e => editingItem.item.date = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Activity (e.g. Commited to Portfolio)" defaultValue={editingItem.item.activity} onChange={e => editingItem.item.activity = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Count" defaultValue={editingItem.item.count} onChange={e => editingItem.item.count = Number(e.target.value)} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'blog' && (
+                                    <>
+                                        <input
+                                            className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif"
+                                            placeholder="Post Title"
+                                            defaultValue={editingItem.item.title}
+                                            onChange={e => {
+                                                editingItem.item.title = e.target.value;
+                                                // Auto slug injection
+                                                if (!editingItem.item.id) {
+                                                    editingItem.item.slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+                                                }
+                                            }}
+                                        />
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Category" defaultValue={editingItem.item.category} onChange={e => editingItem.item.category = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="date" defaultValue={editingItem.item.date} onChange={e => editingItem.item.date = e.target.value} />
+                                            <div className="flex items-center justify-end">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        const isDraft = editingItem.item.isDraft !== false; // default true
+                                                        setEditingItem({ ...editingItem, item: { ...editingItem.item, isDraft: !isDraft, visible: isDraft } });
+                                                    }}
+                                                    className={`font-mono text-[9px] uppercase tracking-widest px-4 py-2 border transition-all ${editingItem.item.isDraft === false ? 'border-green-600/30 text-green-600 bg-green-50' : 'border-warmBrown/20 text-warmBrown/50 hover:bg-warmBrown/5'}`}
+                                                >
+                                                    {editingItem.item.isDraft === false ? '[ PUBLISHED ]' : '[ DRAFT ]'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px] text-warmBrown/40" placeholder="Slug (Auto-generated)" value={editingItem.item.slug || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, slug: e.target.value } })} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-mono text-xs h-64" placeholder="Content (Markdown Supported)" defaultValue={editingItem.item.content} onChange={e => editingItem.item.content = e.target.value} />
+                                    </>
+                                )}
+
+                                <button
+                                    onClick={() => {
+                                        const keyMap = {
+                                            experience: 'experience',
+                                            education: 'education',
+                                            certifications: 'certifications',
+                                            achievements: 'achievements',
+                                            testimonials: 'testimonials',
+                                            research: 'researchInterests',
+                                            languages: 'languages',
+                                            blog: 'blogPosts',
+                                            projects: 'projects',
+                                            skills: 'skillCategories',
+                                            activity: 'activityLog'
+                                        };
+                                        const key = keyMap[editingItem.type];
+                                        if (!editingItem.item.id) {
+                                            // It's a new item (no ID assigned yet)
+                                            const newItems = [...(formData[key] || []), { ...editingItem.item, id: Date.now().toString(), visible: true, order: (formData[key]?.length || 0) }];
+                                            setFormData(prev => ({ ...prev, [key]: newItems }));
+                                        } else {
+                                            // It's an update - we already mutated the item in the modal, 
+                                            // but we should trigger a state update to ensure persistence
+                                            setFormData(prev => ({ ...prev }));
+                                        }
+                                        setEditingItem(null);
+                                    }}
+                                    className="w-full py-4 bg-warmBrown text-ivory font-mono text-xs uppercase tracking-[0.4em] hover:bg-black transition-all"
+                                >
+                                    Index Artifact
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Admin;
