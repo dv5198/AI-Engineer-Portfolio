@@ -45,6 +45,8 @@ const SortableItem = ({ id, item, type, onEdit, onDelete, onToggleVisibility }) 
              type === 'projects' ? item.name : 
              type === 'blog' ? item.title : 
              type === 'testimonials' ? item.name : 
+             type === 'connections' ? item.platform :
+             type === 'extracurriculars' ? item.title :
              type === 'research' ? item.topic : (item.name || item.title || 'Untitled Artifact')}
         </h4>
         <p className="font-mono text-[9px] text-warmBrown/40 uppercase tracking-widest truncate">
@@ -54,6 +56,8 @@ const SortableItem = ({ id, item, type, onEdit, onDelete, onToggleVisibility }) 
              type === 'projects' ? item.techStack?.[0] || 'Portfolio Project' : 
              type === 'blog' ? item.category : 
              type === 'testimonials' ? item.role : 
+             type === 'extracurriculars' ? item.duration :
+             type === 'connections' ? (item.handle || item.url || 'No Link') :
              type === 'research' ? item.description : (item.level || item.id || 'Active Node')}
         </p>
       </div>

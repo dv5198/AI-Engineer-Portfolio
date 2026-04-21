@@ -9,7 +9,7 @@ const Achievements = () => {
   const { achievement_image } = data;
 
   return (
-    <section id="achievements" className="py-32 px-6">
+    <section id="achievements" className="py-16 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-20 flex flex-col md:flex-row justify-between items-end gap-8">
           <div>

@@ -9,7 +9,7 @@ const Research = () => {
   const interests = data.researchInterests?.filter(i => i.visible !== false) || [];
 
   return (
-    <section id="research" className="py-32 px-6">
+    <section id="research" className="py-16 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-20 text-center">
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-warmBrown/40 mb-4 italic">Next Frontier // 07</p>
@@ -20,13 +20,10 @@ const Research = () => {
             {interests.length > 0 ? interests.map((item, idx) => (
                 <motion.div
                     key={item.id || idx}
-                    animate={{ y: [0, -15, 0], rotate: [0, idx % 2 === 0 ? 1 : -1, 0] }}
-                    transition={{
-                        duration: 4 + (idx % 3),
-                        repeat: Infinity,
-                        delay: idx * 0.3,
-                        ease: "easeInOut"
-                    }}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
                     className="bg-ivory-deep/30 border border-accent/20 p-8 rounded-sm max-w-sm hover:border-accent transition-colors duration-500"
                 >
                     <h3 className="text-xl font-serif italic text-warmBrown mb-2">{item.topic}</h3>

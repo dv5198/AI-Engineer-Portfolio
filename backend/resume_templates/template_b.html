@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ base_css }}">
+    <link rel="stylesheet" href="{{ specific_css }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="header">
+            <div class="header-content">
+                <h1>{{ profile.name }}</h1>
+                <div class="subtitle">{{ profile.role }}</div>
+                {% include 'sections/contact.html' %}
+                
+                <div class="personal-info" style="margin-top: 10px; font-size: 11px; color: #555;">
+                    {% set info = [] %}
+                    {% if profile.dateOfBirth %}
+                        {% if region == 'japan' %}
+                            {# Age is more common in Japan #}
+                            {% if profile.age %}
+                                {% do info.append("Age: " ~ profile.age) %}
+                            {% endif %}
+                        {% else %}
+                            {% do info.append("DOB: " ~ profile.dateOfBirth) %}
+                        {% endif %}
+                    {% endif %}
+
+                    {% if profile.gender and region == 'korea' %}
+                        {% do info.append("Gender: " ~ profile.gender) %}
+                    {% endif %}
+
+                    {% if profile.nationality and region != 'international' %}
+                        {% do info.append("Nationality: " ~ profile.nationality) %}
+                    {% endif %}
+
+                    {% if profile.maritalStatus and region == 'china' %}
+                        {% do info.append("Marital Status: " ~ profile.maritalStatus) %}
+                    {% endif %}
+
+                    {% if profile.visaStatus and region == 'middleeast' %}
+                        {% do info.append("Visa Status: " ~ profile.visaStatus) %}
+                    {% endif %}
+
+                    {{ info | join(' | ') }}
+                </div>
+            </div>
+            {% if profile.photo and profile.photo != "" %}
+            <img class="header-photo photo-{{ region }}" src="{{ profile.photo }}" alt="Profile Photo">
+            {% endif %}
+        </div>
+
+        {% include 'sections/about.html' %}
+        {% include 'sections/experience.html' %}
+        {% include 'sections/projects.html' %}
+        {% include 'sections/research.html' %}
+        {% include 'sections/skills.html' %}
+        {% include 'sections/achievements.html' %}
+        {% include 'sections/certifications.html' %}
+    </div>
+</body>
+</html>

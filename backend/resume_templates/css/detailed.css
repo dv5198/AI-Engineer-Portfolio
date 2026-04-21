@@ -1,0 +1,99 @@
+/* detailed.css: Elegant, photo-inclusive, styled, for modern European/ME roles */
+body {
+    padding: 30px 40px;
+    background-color: #fafafa; /* Will print as white on PDF, but good for local dev if viewed in browser */
+}
+
+.page-wrapper {
+    background: #fff;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 20px;
+}
+
+.header-content {
+    flex: 1;
+}
+
+.header h1 {
+    font-size: 32px;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.header .subtitle {
+    font-size: 16px;
+    color: #7f8c8d;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+.contact-info {
+    font-size: 12px;
+}
+
+.contact-info p {
+    margin-bottom: 3px;
+}
+
+.header-photo {
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-left: 30px;
+}
+
+/* Regional Sizing */
+.photo-japan {
+    width: 113px; /* ~3.0cm */
+    height: 151px; /* ~4.0cm */
+}
+
+.photo-korea, .photo-germany, .photo-middleeast {
+    width: 132px; /* ~3.5cm */
+    height: 170px; /* ~4.5cm */
+}
+
+.photo-china {
+    width: 94px; /* ~2.5cm */
+    height: 132px; /* ~3.5cm */
+}
+
+.photo-international {
+    display: none; /* Although Template B is used only if include_photo is true, standardizing */
+}
+
+.section h2 {
+    font-size: 18px;
+    color: #2c3e50;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.item-title {
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.item-meta {
+    font-size: 13px;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.item-subtitle {
+    font-size: 13px;
+}
+
+ul li {
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #444;
+}

@@ -7,7 +7,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, ListFlowable, ListItem
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 
 def clean_text(text: str) -> str:
     """Removes or replaces non-printable/mangled characters for ReportLab PDF."""
@@ -27,32 +27,22 @@ def clean_text(text: str) -> str:
     return text
 
 def get_age(dob_str: str) -> int:
-    """Calculates age from DOB string (expected format: DD-MM-YYYY or MM-DD-YYYY)."""
+    """Calculates age from DOB string."""
     try:
-        # Try DD-MM-YYYY first
         dob = datetime.strptime(dob_str, "%d-%m-%Y")
     except ValueError:
         try:
-            # Fallback to MM-DD-YYYY
             dob = datetime.strptime(dob_str, "%m-%d-%Y")
         except ValueError:
             return 0
-    
     today = datetime.today()
     return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 def build_header_no_photo(story, profile, S):
-    """
-    Single column header — clean, ATS safe.
-    Used for: international only.
-    Strictly excludes DOB, gender, nationality, photo.
-    """
-    # Name
+    """Clean, ATS safe header."""
     story.append(Paragraph(profile.get('name', 'Divya Nirankari'), S['Name']))
-    # Role
     story.append(Paragraph(profile.get('role', 'Software Engineer'), S['SubTitle']))
     
-    # Contact Info Line
     contact_parts = [
         profile.get('location', ''),
         profile.get('email', ''),
@@ -63,37 +53,29 @@ def build_header_no_photo(story, profile, S):
     contact_line = " • ".join([p for p in contact_parts if p])
     story.append(Paragraph(contact_line, S['ContactInfo']))
     
-    # Timezone line for remote clarity (International only)
     if profile.get('timezone'):
         story.append(Paragraph(f"Timezone: {profile['timezone']}", S['SmallCenter']))
-    
     story.append(Spacer(1, 0.5 * cm))
 
 def build_header_with_photo(story, profile, photo_path, S, region):
-    """
-    Two-column header — contact info left, photo right.
-    Used for: korea, japan, china, germany, middleeast.
-    """
-    # Personal Info to show based on region
+    """Visual header with photo for specific regions."""
     personal_info = []
     
-    # General Photo Region Rules
     if region == 'japan':
         age = get_age(profile.get('dateOfBirth', ''))
         if age: personal_info.append(f"Age: {age}")
-    else:
+    elif region in ['korea', 'china', 'germany', 'middleeast']:
         if profile.get('dateOfBirth'): personal_info.append(f"DOB: {profile['dateOfBirth']}")
     
-    if profile.get('gender'): personal_info.append(f"Gender: {profile['gender']}")
-    if profile.get('nationality'): personal_info.append(f"Nationality: {profile['nationality']}")
-    
-    if region in ['china', 'middleeast']:
-        if profile.get('maritalStatus'): personal_info.append(f"Marital Status: {profile['maritalStatus']}")
-    
-    if region == 'middleeast':
-        if profile.get('visaStatus'): personal_info.append(f"Visa: {profile['visaStatus']}")
+    if region == 'korea' and profile.get('gender'): 
+        personal_info.append(f"Gender: {profile['gender']}")
+    if region in ['korea', 'japan', 'china', 'germany', 'middleeast'] and profile.get('nationality'): 
+        personal_info.append(f"Nationality: {profile['nationality']}")
+    if region == 'china' and profile.get('maritalStatus'):
+        personal_info.append(f"Marital Status: {profile['maritalStatus']}")
+    if region == 'middleeast' and profile.get('visaStatus'):
+        personal_info.append(f"Visa: {profile['visaStatus']}")
 
-    # Create Left Column Content (Info)
     info_elements = [
         Paragraph(profile.get('name', 'Divya Nirankari'), S['NameLeft']),
         Paragraph(profile.get('role', 'Software Engineer'), S['SubTitleLeft']),
@@ -102,19 +84,25 @@ def build_header_with_photo(story, profile, photo_path, S, region):
         Paragraph(f"Phone: {profile.get('phone', '')}", S['SmallLeft']),
         Paragraph(f"Location: {profile.get('location', '')}", S['SmallLeft']),
         Spacer(1, 0.2 * cm),
-        Paragraph(" | ".join(personal_info), S['SmallLeft']) if personal_info else Spacer(1, 0.1),
-        Spacer(1, 0.2 * cm),
-        Paragraph(f"<a href='{profile.get('linkedin', '')}' color='blue'>LinkedIn</a>  |  <a href='{profile.get('github', '')}' color='blue'>GitHub</a>", S['SmallLeft'])
     ]
+    if personal_info:
+        info_elements.append(Paragraph(" | ".join(personal_info), S['SmallLeft']))
+        info_elements.append(Spacer(1, 0.2 * cm))
+    info_elements.append(Paragraph(f"<a href='{profile.get('linkedin', '')}' color='blue'>LinkedIn</a>  |  <a href='{profile.get('github', '')}' color='blue'>GitHub</a>", S['SmallLeft']))
     
-    # Create Photo Column
     photo_cell = []
     if photo_path and os.path.exists(photo_path):
-        # Scale photo based on region rules if necessary, here using a standard size
-        img = Image(photo_path, width=3.0*cm, height=4.0*cm)
+        if region in ['korea', 'germany', 'middleeast']:
+            photo_w, photo_h = 3.5*cm, 4.5*cm
+        elif region == 'japan':
+            photo_w, photo_h = 3.0*cm, 4.0*cm
+        elif region == 'china':
+            photo_w, photo_h = 2.5*cm, 3.5*cm
+        else:
+            photo_w, photo_h = 3.0*cm, 4.0*cm
+        img = Image(photo_path, width=photo_w, height=photo_h)
         photo_cell.append(img)
     
-    # Header Table
     data = [[info_elements, photo_cell]]
     table = Table(data, colWidths=[14*cm, 4*cm])
     table.setStyle(TableStyle([
@@ -124,44 +112,69 @@ def build_header_with_photo(story, profile, photo_path, S, region):
     story.append(table)
     story.append(Spacer(1, 0.5 * cm))
 
-def generate_resume_by_region(data: dict, live_projects: list, region: str, include_photo: bool) -> BytesIO:
-    """Generates a regional PDF resume."""
+def generate_ats_resume(data: dict, live_projects: list, region: str) -> BytesIO:
+    """Strict ATS implementation (Single column, no photos/colors)."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     
-    # Styles
     styles = getSampleStyleSheet()
-    S = {}
-    S['Name'] = ParagraphStyle('Name', parent=styles['Heading1'], fontSize=24, alignment=1, spaceAfter=2)
-    S['NameLeft'] = ParagraphStyle('NameLeft', parent=styles['Heading1'], fontSize=22, alignment=0, spaceAfter=2)
-    S['SubTitle'] = ParagraphStyle('SubTitle', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.grey, spaceAfter=6)
-    S['SubTitleLeft'] = ParagraphStyle('SubTitleLeft', parent=styles['Normal'], fontSize=11, alignment=0, textColor=colors.grey, spaceAfter=6)
-    S['ContactInfo'] = ParagraphStyle('ContactInfo', parent=styles['Normal'], fontSize=9, alignment=1, spaceAfter=2)
-    S['SmallCenter'] = ParagraphStyle('SmallCenter', parent=styles['Normal'], fontSize=8, alignment=1, textColor=colors.grey)
-    S['SmallLeft'] = ParagraphStyle('SmallLeft', parent=styles['Normal'], fontSize=9, alignment=0)
-    S['SectionHeading'] = ParagraphStyle('SectionHeading', parent=styles['Heading2'], fontSize=14, spaceBefore=10, spaceAfter=6, borderPadding=2, borderSide='bottom', borderColor=colors.black, borderWidth=0.5)
-    S['Body'] = ParagraphStyle('Body', parent=styles['Normal'], fontSize=10, spaceAfter=4, leading=12)
-    S['Bullet'] = ParagraphStyle('Bullet', parent=styles['Normal'], fontSize=10, leftIndent=12, spaceAfter=2, leading=12)
-    S['BoldBody'] = ParagraphStyle('BoldBody', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold')
+    S = {
+        'Name': ParagraphStyle('Name', parent=styles['Heading1'], fontSize=24, alignment=1, spaceAfter=2),
+        'SubTitle': ParagraphStyle('SubTitle', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.grey, spaceAfter=6),
+        'ContactInfo': ParagraphStyle('ContactInfo', parent=styles['Normal'], fontSize=9, alignment=1, spaceAfter=2),
+        'SmallCenter': ParagraphStyle('SmallCenter', parent=styles['Normal'], fontSize=8, alignment=1, textColor=colors.grey),
+        'SectionHeading': ParagraphStyle('SectionHeading', parent=styles['Heading2'], fontSize=14, spaceBefore=10, spaceAfter=6, borderPadding=2, borderSide='bottom', borderColor=colors.black, borderWidth=0.5),
+        'Body': ParagraphStyle('Body', parent=styles['Normal'], fontSize=10, spaceAfter=4, leading=12),
+        'Bullet': ParagraphStyle('Bullet', parent=styles['Normal'], fontSize=10, leftIndent=12, spaceAfter=2, leading=12),
+        'SmallLeft': ParagraphStyle('SmallLeft', parent=styles['Normal'], fontSize=9, alignment=0)
+    }
 
     story = []
     profile = data.get('profile', {})
     
-    # Header Logic
-    photo_path = profile.get('photo') # Should be absolute or relative to backend root
-    if photo_path and not os.path.isabs(photo_path):
-        photo_path = os.path.join(os.getcwd(), photo_path)
+    build_header_no_photo(story, profile, S)
+    
+    populate_common_ats_sections(story, data, live_projects, region, S)
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
 
-    if region == 'international':
-        build_header_no_photo(story, profile, S)
-    else:
-        # Photo handling based on availability and region rules
-        actual_include_photo = include_photo and photo_path and os.path.exists(photo_path)
-        if actual_include_photo:
-            build_header_with_photo(story, profile, photo_path, S, region)
-        else:
-            build_header_no_photo(story, profile, S)
+def generate_photo_resume(data: dict, live_projects: list, region: str, photo_path: str) -> BytesIO:
+    """Visual template implementation for Photo-required regions."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    
+    styles = getSampleStyleSheet()
+    # Different visual style: Colored headings, different structural margins
+    primary_color = colors.HexColor('#2c3e50')
+    secondary_color = colors.HexColor('#7f8c8d')
+    
+    S = {
+        'NameLeft': ParagraphStyle('NameLeft', parent=styles['Heading1'], fontSize=22, alignment=0, spaceAfter=2, textColor=primary_color),
+        'SubTitleLeft': ParagraphStyle('SubTitleLeft', parent=styles['Normal'], fontSize=11, alignment=0, textColor=secondary_color, spaceAfter=6),
+        'SmallLeft': ParagraphStyle('SmallLeft', parent=styles['Normal'], fontSize=9, alignment=0),
+        'SectionHeading': ParagraphStyle('SectionHeading', parent=styles['Heading2'], fontSize=14, spaceBefore=12, spaceAfter=8, textColor=primary_color, borderPadding=4, borderSide='bottom', borderColor=primary_color, borderWidth=1),
+        'Body': ParagraphStyle('Body', parent=styles['Normal'], fontSize=10, spaceAfter=4, leading=14),
+        'Bullet': ParagraphStyle('Bullet', parent=styles['Normal'], fontSize=10, leftIndent=12, spaceAfter=4, leading=14, bulletColor=primary_color),
+        'SmallLeft': ParagraphStyle('SmallLeft', parent=styles['Normal'], fontSize=9, alignment=0)
+    }
 
+    story = []
+    profile = data.get('profile', {})
+    
+    build_header_with_photo(story, profile, photo_path, S, region)
+    
+    populate_common_ats_sections(story, data, live_projects, region, S)
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+def populate_common_ats_sections(story, data, live_projects, region, S):
+    """Shared body section generator. Can be further diverged if needed."""
+    profile = data.get('profile', {})
+    
     # Professional Summary
     summary = profile.get('summary') or profile.get('bio')
     if summary:
@@ -187,15 +200,24 @@ def generate_resume_by_region(data: dict, live_projects: list, region: str, incl
     if live_projects:
         story.append(Paragraph("Technical Projects", S['SectionHeading']))
         for proj in live_projects:
-            # proj is a dict with name, summary, techStack, github, etc.
-            name = f"<b>{proj.get('name', '')}</b>"
-            stack = f"({proj.get('techStack', '')})" if proj.get('techStack') else ""
+            is_gh = proj.get('is_github', False)
+            name_text = proj.get('name', 'Project')
+            if is_gh:
+                stars = proj.get('stars', 0)
+                star_text = f" | \u2605 {stars}" if stars > 0 else ""
+                name_line = f"<b>{name_text}</b> <font color='grey' size='9'>(GitHub{star_text})</font>"
+            else:
+                name_line = f"<b>{name_text}</b>"
+            
+            stack = f" — {proj.get('techStack', '')}" if proj.get('techStack') else ""
             summary = proj.get('summary') or proj.get('description') or ""
             
-            story.append(Paragraph(f"{name} {stack}", S['Body']))
+            story.append(Paragraph(f"{name_line}{stack}", S['Body']))
             story.append(Paragraph(clean_text(summary), S['Bullet']))
-            if proj.get('github'):
-                story.append(Paragraph(f"<a href='{proj['github']}' color='blue'>View Source Code</a>", S['Bullet']))
+            
+            project_url = proj.get('url') or proj.get('github')
+            if project_url:
+                story.append(Paragraph(f"<a href='{project_url}' color='blue'>View Implementation</a>", S['Bullet']))
             story.append(Spacer(1, 0.2 * cm))
 
     # Skills
@@ -207,17 +229,15 @@ def generate_resume_by_region(data: dict, live_projects: list, region: str, incl
             items = ", ".join(cat.get('items', []))
             story.append(Paragraph(label + items, S['Body']))
 
-    # Education (Oldest first for Japan, otherwise reverse chron)
+    # Education
     edu_list = data.get('education', [])
     if edu_list:
         story.append(Paragraph("Education", S['SectionHeading']))
         if region == 'japan':
-            # Note: Assuming education has a way to determine order, or just reverse if stored as reverse chron
             edu_list = list(reversed(edu_list))
             
         for edu in edu_list:
             if edu.get('visible') is False: continue
-            
             inst_name = edu.get('university') or edu.get('institution') or ''
             degree_name = edu.get('degree', '')
             
@@ -239,10 +259,8 @@ def generate_resume_by_region(data: dict, live_projects: list, region: str, incl
             
             if details:
                 story.append(Paragraph(" | ".join(details), S['SmallLeft']))
-            
             if edu.get('notes'):
                 story.append(Paragraph(clean_text(edu.get('notes', '')), S['Bullet']))
-                
             story.append(Spacer(1, 0.1 * cm))
 
     # Certifications
@@ -261,6 +279,15 @@ def generate_resume_by_region(data: dict, live_projects: list, region: str, incl
             story.append(Paragraph(line, S['Bullet']))
         story.append(Spacer(1, 0.2 * cm))
 
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
+def generate_resume_by_region(data: dict, live_projects: list, region: str, include_photo: bool) -> BytesIO:
+    """Master router orchestrating regional template deployment."""
+    profile = data.get('profile', {})
+    photo_path = profile.get('photo')
+    if photo_path and not os.path.isabs(photo_path):
+        photo_path = os.path.join(os.getcwd(), photo_path)
+
+    # Completely distinct logic branches!
+    if include_photo and photo_path and os.path.exists(photo_path) and region != 'international':
+        return generate_photo_resume(data, live_projects, region, photo_path)
+    else:
+        return generate_ats_resume(data, live_projects, region)

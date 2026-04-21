@@ -23,7 +23,7 @@ const ContactForm = () => {
 
     setStatus('loading');
     try {
-      const res = await fetch('http://localhost:8001/api/platform/contact/send/', {
+      const res = await fetch('http://localhost:8000/api/platform/contact/send/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

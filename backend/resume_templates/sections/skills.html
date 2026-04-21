@@ -1,0 +1,12 @@
+{% if skillCategories %}
+<div class="section skills-section">
+    <h2>Technical Skills</h2>
+    <ul>
+    {% for cat in skillCategories %}
+        {% if cat.visible != False %}
+        <li><strong>{{ cat.label }}:</strong> {{ cat['items'] | join(', ') }}</li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}

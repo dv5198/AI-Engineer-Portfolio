@@ -34,7 +34,7 @@ const Admin = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            fetch('http://localhost:8001/api/admin/projects/all/')
+            fetch('http://localhost:8000/api/admin/projects/all/')
                 .then(res => {
                     if (!res.ok) throw new Error('Failed to fetch projects');
                     return res.json();
@@ -91,7 +91,7 @@ const Admin = () => {
         e.preventDefault();
         setCmdResult('Processing...');
         try {
-            const res = await fetch('http://localhost:8001/api/admin/command/', {
+            const res = await fetch('http://localhost:8000/api/admin/command/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command })
@@ -106,7 +106,7 @@ const Admin = () => {
 
     const handleAIAction = async (endpoint, payload, callback) => {
         try {
-            const res = await fetch(`http://localhost:8001/api/admin/${endpoint}/`, {
+            const res = await fetch(`http://localhost:8000/api/admin/${endpoint}/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -205,21 +205,42 @@ const Admin = () => {
                             {/* Profile Editor */}
                             <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
                                 <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Identity Matrix</h3>
-                                {['name', 'role', 'email', 'phone', 'location', 'github', 'linkedin'].map(field => (
+                                {['name', 'role', 'email', 'phone', 'location', 'summary', 'bio'].map(field => (
                                     <div key={field}>
                                         <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field}</label>
-                                        <input
-                                            className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif bg-transparent"
-                                            value={formData.profile[field] || ''}
-                                            onChange={e => handleChange('profile', field, e.target.value)}
-                                        />
+                                        {field === 'summary' || field === 'bio' ? (
+                                            <textarea
+                                                className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif bg-transparent resize-none h-20"
+                                                value={formData.profile[field] || ''}
+                                                onChange={e => handleChange('profile', field, e.target.value)}
+                                            />
+                                        ) : (
+                                            <input
+                                                className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif bg-transparent"
+                                                value={formData.profile[field] || ''}
+                                                onChange={e => handleChange('profile', field, e.target.value)}
+                                            />
+                                        )}
                                     </div>
                                 ))}
 
                                 <div className="pt-4 border-t border-warmBrown/5 space-y-4">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Connections & Socials</h4>
+                                        <span className="font-mono text-[8px] text-warmBrown/20 uppercase tracking-[0.2em]">{formData.connections?.length || 0} signals</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="connections"
+                                        items={formData.connections || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, connections: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'connections', item })}
+                                    />
+                                </div>
+
+                                <div className="pt-4 border-t border-warmBrown/5 space-y-4">
                                     <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Regional Metadata</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        {['dateOfBirth', 'gender', 'nationality', 'maritalStatus', 'visaStatus', 'timezone'].map(field => (
+                                        {['dateOfBirth', 'gender', 'nationality', 'maritalStatus', 'visaStatus', 'visaType', 'visaIssueDate', 'visaExpiryDate', 'koreanLanguageLevel', 'timezone'].map(field => (
                                             <div key={field}>
                                                 <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.replace(/([A-Z])/g, ' $1')}</label>
                                                 <input
@@ -238,7 +259,7 @@ const Admin = () => {
                                     <div className="flex items-center gap-6 bg-ivory/20 p-4 border border-warmBrown/5">
                                         <div className="w-20 h-24 bg-white border border-warmBrown/10 overflow-hidden flex items-center justify-center">
                                             {formData.profile.photo ? (
-                                                <img src={`http://localhost:8001/${formData.profile.photo}?t=${Date.now()}`} alt="Profile" className="w-full h-full object-cover" />
+                                                <img src={`http://localhost:8000/${formData.profile.photo}?t=${Date.now()}`} alt="Profile" className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="text-[8px] font-mono text-warmBrown/20 uppercase text-center p-2">No Photo Signal</span>
                                             )}
@@ -255,7 +276,7 @@ const Admin = () => {
                                                     if (!file) return;
                                                     const uploadData = new FormData();
                                                     uploadData.append('file', file);
-                                                    const res = await fetch('http://localhost:8001/api/admin/profile-photo/', {
+                                                    const res = await fetch('http://localhost:8000/api/admin/profile-photo/', {
                                                         method: 'POST',
                                                         body: uploadData
                                                     });
@@ -369,6 +390,20 @@ const Admin = () => {
                                         items={formData.education || []}
                                         setItems={(newItems) => setFormData(prev => ({ ...prev, education: newItems }))}
                                         onEdit={(item) => setEditingItem({ type: 'education', item })}
+                                    />
+                                </div>
+
+                                {/* Extracurriculars */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
+                                        <h3 className="font-serif text-2xl italic">Extracurriculars / Languages</h3>
+                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.extracurriculars?.length || 0} nodes</span>
+                                    </div>
+                                    <CollectionEditor
+                                        type="extracurriculars"
+                                        items={formData.extracurriculars || []}
+                                        setItems={(newItems) => setFormData(prev => ({ ...prev, extracurriculars: newItems }))}
+                                        onEdit={(item) => setEditingItem({ type: 'extracurriculars', item })}
                                     />
                                 </div>
 
@@ -559,18 +594,18 @@ const Admin = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
                             <div className="bg-white p-8 border border-warmBrown/5 shadow-sm space-y-8">
                                 <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Visibility Map</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-wrap gap-4">
                                     {Object.keys(formData.sections_visibility).map(sec => (
-                                        <div key={sec} className="flex justify-between items-center bg-ivory/20 p-4 border border-warmBrown/5 hover:border-accent/20 transition-colors">
-                                            <span className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/60">{sec}</span>
+                                        <div key={sec} className="flex-auto min-w-[140px] flex items-center justify-between gap-4 bg-ivory/20 p-4 border border-warmBrown/5 hover:border-accent/10 transition-colors">
+                                            <span className="font-mono text-sm lowercase text-warmBrown/70">{sec}</span>
                                             <button
                                                 onClick={() => {
                                                     const newVal = !formData.sections_visibility[sec];
                                                     handleChange('sections_visibility', sec, newVal);
                                                 }}
-                                                className={`px-3 py-1 text-[9px] font-mono tracking-tighter transition-colors ${formData.sections_visibility[sec] ? 'text-accent font-bold' : 'text-warmBrown/20'}`}
+                                                className={`text-sm font-mono transition-all hover:scale-105 ${formData.sections_visibility[sec] ? 'text-accent' : 'text-warmBrown/30'}`}
                                             >
-                                                {formData.sections_visibility[sec] ? '[ ENABLED ]' : '[ DISABLED ]'}
+                                                {formData.sections_visibility[sec] ? '[Enabled]' : '[Disabled]'}
                                             </button>
                                         </div>
                                     ))}
@@ -645,13 +680,17 @@ const Admin = () => {
                             </div>
 
                             <div className="lg:col-span-2 bg-white p-8 border border-warmBrown/5 shadow-sm space-y-6">
-                                <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic flex justify-between items-center">
-                                    Live Resume Preview
-                                    <a href={`http://localhost:8001/api/resume/download?region=${formData.resumeSettings?.defaultRegion || 'international'}`} target="_blank" rel="noreferrer" className="text-accent font-mono text-[9px] uppercase tracking-widest hover:underline">Open Full PDF</a>
-                                </h3>
+                                <div className="flex justify-between items-center border-b border-warmBrown/5 pb-4 mb-4">
+                                    <h3 className="font-serif text-xl italic">
+                                        Live Resume Preview
+                                    </h3>
+                                    <a href={`http://localhost:8000/api/resume/download/${formData.resumeSettings?.defaultRegion || 'international'}?download=true`} target="_blank" rel="noreferrer" className="px-6 py-3 bg-accent text-white font-mono text-[10px] uppercase tracking-widest hover:bg-warmBlack transition-all">
+                                        Download Resume
+                                    </a>
+                                </div>
                                 <div className="w-full h-[600px] bg-ivory/50 flex items-center justify-center border border-warmBrown/10">
                                     <iframe
-                                        src={`http://localhost:8001/api/resume/download?region=${formData.resumeSettings?.defaultRegion || 'international'}#toolbar=0&navpanes=0&scrollbar=0`}
+                                        src={`http://localhost:8000/api/resume/download/${formData.resumeSettings?.defaultRegion || 'international'}#toolbar=0&navpanes=0&scrollbar=0`}
                                         width="100%"
                                         height="100%"
                                         className="bg-transparent"
@@ -681,9 +720,14 @@ const Admin = () => {
                                     <>
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Company" value={editingItem.item.company || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, company: e.target.value } })} />
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Role/Title" value={editingItem.item.role || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, role: e.target.value } })} />
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-3 gap-4">
                                             <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Start Date (e.g. Jan 2023)" value={editingItem.item.startDate || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, startDate: e.target.value } })} />
                                             <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="End Date (e.g. Present)" value={editingItem.item.endDate || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, endDate: e.target.value } })} />
+                                            <select className="w-full bg-transparent border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" value={editingItem.item.employment_type || 'Full-time'} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, employment_type: e.target.value } })}>
+                                                <option value="Full-time">Full-time</option>
+                                                <option value="Part-time">Part-time/Internship</option>
+                                                <option value="Contract">Contract/Freelance</option>
+                                            </select>
                                         </div>
                                         <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Description for AI (e.g. what you did)" value={editingItem.item.description || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, description: e.target.value } })} />
 
@@ -715,6 +759,18 @@ const Admin = () => {
                                             <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GPA" defaultValue={editingItem.item.gpa} onChange={e => editingItem.item.gpa = e.target.value} />
                                         </div>
                                         <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32 mt-4" placeholder="Notes (Optional)" defaultValue={editingItem.item.notes} onChange={e => editingItem.item.notes = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'extracurriculars' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Program/Activity Name" value={editingItem.item.title || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, title: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Institution" value={editingItem.item.institution || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, institution: e.target.value } })} />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Duration (e.g. 2023/03 - 2024/02)" value={editingItem.item.duration || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, duration: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Type (e.g. 어학연수)" value={editingItem.item.type || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, type: e.target.value } })} />
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32 mt-4" placeholder="Bullets (One per line)" value={(editingItem.item.bullets || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
                                     </>
                                 )}
 
@@ -819,7 +875,28 @@ const Admin = () => {
                                             </div>
                                         </div>
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px] text-warmBrown/40" placeholder="Slug (Auto-generated)" value={editingItem.item.slug || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, slug: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="External URL (Optional - Redirects instead of opening modal)" defaultValue={editingItem.item.url} onChange={e => editingItem.item.url = e.target.value} />
                                         <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-mono text-xs h-64" placeholder="Content (Markdown Supported)" defaultValue={editingItem.item.content} onChange={e => editingItem.item.content = e.target.value} />
+                                    </>
+                                )}
+
+                                {editingItem.type === 'connections' && (
+                                    <>
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Platform (e.g. YouTube, Instagram, KakaoTalk)" value={editingItem.item.platform || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, platform: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="URL (e.g. https://youtube.com/@handle)" value={editingItem.item.url || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, url: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Handle/Username (e.g. @divyanirankari)" value={editingItem.item.handle || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, handle: e.target.value } })} />
+                                        
+                                        <div className="flex items-center gap-4 bg-ivory/20 p-4 border border-warmBrown/5 mt-4">
+                                            <div className="flex-1">
+                                                <h4 className="font-mono text-[10px] uppercase tracking-widest text-warmBrown">Icon Signal</h4>
+                                                <p className="text-[9px] text-warmBrown/40 uppercase">Automatically mapped based on Platform name</p>
+                                            </div>
+                                            <div className="text-accent font-mono text-[10px] lowercase italic">
+                                                {(['github', 'linkedin', 'youtube', 'instagram', 'slack', 'skype', 'email', 'kakaotalk'].includes(editingItem.item.platform?.toLowerCase())) 
+                                                  ? '✓ Signal Match Found' 
+                                                  : '⚠ Generic Signal Active'}
+                                            </div>
+                                        </div>
                                     </>
                                 )}
 
@@ -828,6 +905,7 @@ const Admin = () => {
                                         const keyMap = {
                                             experience: 'experience',
                                             education: 'education',
+                                            extracurriculars: 'extracurriculars',
                                             certifications: 'certifications',
                                             achievements: 'achievements',
                                             testimonials: 'testimonials',
@@ -836,7 +914,8 @@ const Admin = () => {
                                             blog: 'blogPosts',
                                             projects: 'projects',
                                             skills: 'skillCategories',
-                                            activity: 'activityLog'
+                                            activity: 'activityLog',
+                                            connections: 'connections'
                                         };
                                         const key = keyMap[editingItem.type];
                                         if (!editingItem.item.id) {

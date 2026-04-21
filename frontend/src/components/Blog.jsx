@@ -19,7 +19,7 @@ const Blog = () => {
   };
 
   return (
-    <section id="blog" className="py-32 px-6">
+    <section id="blog" className="py-16 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-20 flex justify-between items-end">
           <div>
@@ -34,7 +34,13 @@ const Blog = () => {
               key={post.id || idx}
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 6, repeat: Infinity, delay: idx * 0.2, ease: "easeInOut" }}
-              onClick={() => setSelectedPost(post)}
+              onClick={() => {
+                if (post.url) {
+                  window.open(post.url, '_blank');
+                } else {
+                  setSelectedPost(post);
+                }
+              }}
               className="group cursor-pointer"
             >
               <div className="bg-ivory-deep/20 border border-warmBrown/5 p-8 h-full hover:border-accent/40 transition-all duration-500 hover:shadow-2xl">
@@ -49,7 +55,9 @@ const Blog = () => {
                 </p>
                 <div className="flex justify-between items-center pt-6 border-t border-warmBrown/5">
                     <span className="font-mono text-[10px] text-warmMid">{new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                    <span className="font-mono text-[10px] text-accent hover:underline">Read →</span>
+                    <span className="font-mono text-[10px] text-accent hover:underline flex items-center gap-1">
+                      {post.url ? 'Visit Link →' : 'Read →'}
+                    </span>
                 </div>
               </div>
             </motion.div>

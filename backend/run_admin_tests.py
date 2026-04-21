@@ -9,8 +9,8 @@ def run_tests():
     print("Status:", res1.status_code)
     print("Response:", res1.json())
     
-    print("\nTesting /api/admin/test-grok/ ...")
-    res2 = client.post("/api/admin/test-grok/", json={"message": "Hey"})
+    print("\nTesting /api/admin/test-groq/ ...")
+    res2 = client.post("/api/admin/test-groq/", json={"message": "Hey"})
     print("Status:", res2.status_code)
     print("Response:", res2.json())
     

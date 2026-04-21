@@ -24,21 +24,10 @@ const itemVariants = {
 
 const Hero = () => {
   const { data } = useContext(PortfolioContext);
-  const [regionInfo, setRegionInfo] = useState(null);
-
-  useEffect(() => {
-    fetch('http://localhost:8001/api/resume/detect')
-      .then(r => r.json())
-      .then(info => setRegionInfo(info))
-      .catch(() => setRegionInfo({
-        detectedRegion: 'international',
-        label: 'International (ATS)',
-        includesPhoto: false
-      }));
-  }, []);
-
   const titles = data?.profile?.titles || ["Python Software Engineer", "AI/ML Engineer", "Backend Developer", "Deep Learning Engineer"];
   const typewriterText = useTypewriter(titles);
+
+  const downloadUrl = `http://localhost:8000/api/resume/download?download=true`;
 
   if (!data) return <div className="min-h-[80vh] flex items-center justify-center">Loading...</div>;
   const { profile } = data;
@@ -99,31 +88,49 @@ const Hero = () => {
                 Explore Work
               </a>
 
-              <div className="flex items-center gap-6 lg:ml-auto">
-                <a href={profile.github} target="_blank" rel="noopener noreferrer" className="text-textPrimary/60 hover:text-textPrimary transition-colors">
-                  <GithubIcon size={18} />
-                </a>
-                <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-textPrimary/60 hover:text-textPrimary transition-colors">
-                  <LinkedinIcon size={18} />
-                </a>
-                
+                <div className="flex items-center gap-4">
+                  {(data.connections || [])
+                    .filter(c => c.visible !== false && c.platform !== 'Email')
+                    .slice(0, 4) // Show top 4 signals in Hero
+                    .map((conn, idx) => {
+                      const Icon = {
+                        'github': GithubIcon,
+                        'linkedin': LinkedinIcon,
+                        'youtube': (props) => (
+                          <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-youtube">
+                            <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 2-2h15a2 2 0 0 1 2 2 24.12 24.12 0 0 1 0 10 2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2Z"/><path d="m10 15 5-3-5-3z"/>
+                          </svg>
+                        ),
+                        'instagram': (props) => (
+                          <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram">
+                            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.51"/>
+                          </svg>
+                        )
+                      }[conn.platform.toLowerCase()] || GithubIcon; // Fallback to Github icon or similar
+
+                      return (
+                        <a 
+                          key={idx} 
+                          href={conn.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          title={conn.platform}
+                          className="text-textPrimary/60 hover:text-textPrimary transition-all duration-300 hover:-translate-y-1"
+                        >
+                          <Icon size={18} />
+                        </a>
+                      );
+                    })}
+                </div>
                 {/* Auto-Detecting Resume Download */}
-                <a
-                  href="http://localhost:8001/api/resume/download"
-                  download
-                  onClick={(e) => {
-                    if (regionInfo) {
-                      const location = regionInfo.detectedCountryName || regionInfo.detectedCountry || 'Unknown';
-                      alert(`Detected Location: ${location}\nRegion: ${regionInfo.label}\nServing optimized regional format.`);
-                    }
-                  }}
-                  className="flex items-center gap-4 bg-textPrimary text-white px-8 py-5 hover:bg-accent transition-all duration-500 group whitespace-nowrap"
-                >
-                  <Download size={16} />
-                  <span className="font-mono text-xs uppercase tracking-[0.2em]">Resume</span>
-                </a>
+                  <a
+                    href={downloadUrl}
+                    className="flex items-center gap-4 bg-textPrimary text-white px-8 py-5 hover:bg-accent transition-all duration-500 group whitespace-nowrap"
+                  >
+                    <Download size={16} />
+                    <span className="font-mono text-xs uppercase tracking-[0.2em]">Resume</span>
+                  </a>
               </div>
-            </div>
           </motion.div>
         </div>
       </motion.div>

@@ -25,7 +25,7 @@ const Home = () => {
     }
 
     // Log Analytics Event
-    fetch('http://localhost:8001/api/platform/event/', {
+    fetch('http://localhost:8000/api/platform/event/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event: 'page_view', data: { path: '/' } })

@@ -14,8 +14,10 @@ def get_portfolio():
     from database import load_data
     return load_data()
 
+from fastapi import BackgroundTasks
+
 @router.post("/")
-def update_portfolio(data: Dict[str, Any]):
+def update_portfolio(data: Dict[str, Any], background_tasks: BackgroundTasks):
     from database import save_data, load_data
     
     current_data = load_data()
@@ -31,6 +33,14 @@ def update_portfolio(data: Dict[str, Any]):
         
     updated = deep_update(current_data, data)
     save_data(updated)
+    
+    from routes.dynamic_sections import log_activity
+    sections_updated = list(data.keys())
+    log_activity(f"Manually updated config/profile", "Settings", data)
+    
+    from services.groq_service import auto_regenerate_summary_task
+    background_tasks.add_task(auto_regenerate_summary_task)
+    
     return {"status": "success", "data": updated}
 
 @router.post("/photo")
