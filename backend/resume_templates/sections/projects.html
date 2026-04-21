@@ -1,0 +1,42 @@
+{% if categorized_projects %}
+<div class="section projects-section">
+    <h2>Technical Projects</h2>
+    
+    {% if categorized_projects.ai_research %}
+    <div class="project-category">
+        <h3>AI & Research</h3>
+        {% for proj in categorized_projects.ai_research %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ proj.name }} {% if proj.techStack %}({{ proj.techStack }}){% endif %}</span>
+            </div>
+            {% if proj.summary or proj.description %}
+            <ul>
+                <li>{{ proj.summary | default(proj.description) }}</li>
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if categorized_projects.software_other %}
+    <div class="project-category">
+        <h3>Software & General</h3>
+        {% for proj in categorized_projects.software_other %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ proj.name }} {% if proj.techStack %}({{ proj.techStack }}){% endif %}</span>
+            </div>
+            {% if proj.summary or proj.description %}
+            <ul>
+                <li>{{ proj.summary | default(proj.description) }}</li>
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}

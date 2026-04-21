@@ -1,0 +1,16 @@
+{% if certifications %}
+<div class="section certifications-section">
+    <h2>Certifications</h2>
+    <ul>
+    {% for cert in certifications %}
+        {% if cert.visible != False %}
+        <li>
+            <strong>{{ cert.name }}</strong>
+            {% if cert.issuer %}, {{ cert.issuer }}{% endif %}
+            {% if cert.year %} ({{ cert.year }}){% endif %}
+        </li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}

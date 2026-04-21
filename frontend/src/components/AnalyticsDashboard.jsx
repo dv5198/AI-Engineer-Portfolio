@@ -9,7 +9,7 @@ const AnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8001/api/platform/summary/')
+    fetch('http://localhost:8000/api/platform/summary/')
       .then(res => res.json())
       .then(data => {
         setAnalytics(data);

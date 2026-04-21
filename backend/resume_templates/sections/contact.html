@@ -1,0 +1,13 @@
+<div class="contact-info">
+    <p>
+        {% if profile.location %}{{ profile.location }} &bull; {% endif %}
+        {% if profile.email %}{{ profile.email }} &bull; {% endif %}
+        {% if profile.phone %}{{ profile.phone }} &bull; {% endif %}
+        {% for conn in connections %}
+            {% if conn.visible and conn.url %}
+                <a href="{{ conn.url }}">{{ conn.platform }}</a>
+                {% if not loop.last or loop.nextitem %}&bull; {% endif %}
+            {% endif %}
+        {% endfor %}
+    </p>
+</div>

@@ -1,0 +1,72 @@
+/* ats.css: Strict, single-column, highly scannable */
+@page {
+    size: Letter portrait;
+    margin: 25mm;
+}
+
+@media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { margin: 0; padding: 0; }
+}
+
+body {
+    padding: 0;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: 28px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.header .subtitle {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.contact-info {
+    font-size: 11px;
+    text-align: center;
+}
+
+.section {
+    page-break-inside: avoid;
+}
+
+.section h2 {
+    font-size: 16px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
+}
+
+.item {
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+}
+
+.item-title {
+    font-size: 13px;
+}
+
+.item-meta, .item-subtitle {
+    font-size: 12px;
+}
+
+ul {
+    font-size: 12px;
+}
+
+li {
+    page-break-inside: avoid;
+    margin-bottom: 3px;
+}

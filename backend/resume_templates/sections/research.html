@@ -1,0 +1,23 @@
+{% if research %}
+<div class="section research-section">
+    <h2>Research & Academic Work</h2>
+    {% for res in research %}
+        {% if res.visible != False %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ res.title }}</span>
+                {% if res.year %}<span class="item-meta">{{ res.year }}</span>{% endif %}
+            </div>
+            {% if res.institution or res.conference %}
+            <div class="item-subtitle">{{ res.institution | default('') }} {% if res.institution and res.conference %}|{% endif %} {{ res.conference | default('') }}</div>
+            {% endif %}
+            {% if res.summary %}
+            <ul>
+                <li>{{ res.summary }}</li>
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}

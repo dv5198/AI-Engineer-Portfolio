@@ -9,6 +9,12 @@ import httpx
 from datetime import datetime
 import hashlib
 from dotenv import load_dotenv
+import asyncio
+import sys
+
+# Fix for Playwright NotImplementedError in Windows Async loops
+if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from routes.portfolio import router as portfolio_router
 from routes.projects import router as projects_router

@@ -9,7 +9,7 @@ const Skills = () => {
   const { skills } = data;
 
   return (
-    <section id="skills" className="py-32 bg-skillsBg px-6 relative overflow-hidden">
+    <section id="skills" className="py-16 bg-skillsBg px-6 relative overflow-hidden">
       <div className="max-w-6xl mx-auto flex flex-col items-center">
         <div className="mb-20 text-center">
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-textPrimary/40 mb-4">Toolkit // System</p>

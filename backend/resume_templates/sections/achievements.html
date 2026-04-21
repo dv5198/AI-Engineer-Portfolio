@@ -1,0 +1,17 @@
+{% if achievements %}
+<div class="section achievements-section">
+    <h2>Achievements & Awards</h2>
+    <ul>
+    {% for ach in achievements %}
+        {% if ach.visible != False %}
+        <li>
+            <strong>{{ ach.name | default(ach.title) }}</strong>
+            {% if ach.issuer %}, {{ ach.issuer }}{% endif %}
+            {% if ach.year %} ({{ ach.year }}){% endif %}
+            {% if ach.summary %}<br/><em>{{ ach.summary }}</em>{% endif %}
+        </li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}

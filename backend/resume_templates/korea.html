@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ base_css }}">
+    <link rel="stylesheet" href="{{ specific_css }}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-info">
+            <h1>{{ profile.name }}</h1>
+            
+            <div class="demographics">
+                <span>{{ profile.gender | default("여성") }}</span>
+                <span class="divider">ㅣ</span>
+                <span>{{ profile.dateOfBirth }} {% if profile.age %}(만 {{ profile.age }}세){% endif %}</span>
+                <span class="divider">ㅣ</span>
+                <span>{{ profile.nationality | default("Nation") }}</span>
+            </div>
+
+            <div class="contact-grid">
+                <div class="contact-label">이메일</div>
+                <div class="contact-value">{{ profile.email }}</div>
+
+                <div class="contact-label">연락처</div>
+                <div class="contact-value">{{ profile.phone }}</div>
+
+                <div class="contact-label">주소</div>
+                <div class="contact-value">{{ profile.location }}</div>
+                
+                <div class="contact-label">소지 비자</div>
+                <div class="contact-value">
+                    <span class="visa-type">{{ profile.visaType | default("E-7 (특정활동)") }}</span>
+                    <span class="visa-dates">발급일 {{ profile.visaIssueDate | default("2024/01/01") }} &nbsp;&nbsp; 만료일 {{ profile.visaExpiryDate | default("2026/01/01") }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-photo-wrapper">
+            {% if profile.photo and profile.photo != "" %}
+            <img class="header-photo" src="{{ profile.photo }}" alt="ID Photo">
+            {% else %}
+            <div class="photo-placeholder">Photo</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 5. SUMMARY (간단 소개) -->
+    <div class="section">
+        <h2>간단 소개</h2>
+        <div class="summary-content">
+            {{ profile.summary | default(profile.bio) | replace('\n', '<br>') | safe }}
+        </div>
+        {% if profile.koreanLanguageLevel %}
+        <div class="summary-highlights">
+            <ul>
+                <li>다양한 부서와 유연한 한국어 소통({{ profile.koreanLanguageLevel }})</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 6. EDUCATION (학력) -->
+    <div class="section">
+        <h2>학력</h2>
+        {% for edu in education %}
+        <div class="item">
+            <div class="item-left">
+                <div class="date-block">
+                    {{ edu.startDate }} <br>~<br> {{ edu.endDate }}<br><span class="edu-status">(졸업)</span><br><span class="edu-degree">학사</span>
+                </div>
+            </div>
+            <div class="item-right">
+                <div class="item-title">{{ edu.institution }} <span class="edu-major">{{ edu.degree }}</span></div>
+                {% if edu.bullets %}
+                <div class="edu-courses">이수 과목</div>
+                <ul class="course-list">
+                    {% for bullet in edu.bullets %}
+                    <li>{{ bullet }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 7. FULL-TIME EXPERIENCE (경력 - 정규직/인턴) -->
+    {% if experience_full %}
+    <div class="section">
+        <h2>경력</h2>
+        {% for exp in experience_full %}
+        <div class="item">
+            <div class="item-left">
+                <div class="date-block">
+                    {{ exp.startDate }} <br>~<br> {{ exp.endDate }}<br><span class="job-type">{{ exp.employment_type | default("정규직") }}</span>
+                </div>
+            </div>
+            <div class="item-right">
+                <div class="item-title">{{ exp.company }}</div>
+                <div class="item-subtitle">{{ exp.role }}</div>
+                <ul>
+                    {% for bullet in exp.bullets %}
+                    <li>{{ bullet }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 8. PART-TIME EXPERIENCE (경력 - 아르바이트) -->
+    {% if experience_part %}
+    <div class="section">
+        <h2>경력 (아르바이트)</h2>
+        {% for exp in experience_part %}
+        <div class="item">
+            <div class="item-left">
+                <div class="date-block">
+                    {{ exp.startDate }} <br>~<br> {{ exp.endDate }}<br><span class="job-type">아르바이트</span>
+                </div>
+            </div>
+            <div class="item-right">
+                <div class="item-title">{{ exp.company }}</div>
+                <div class="item-subtitle">{{ exp.role }}</div>
+                <ul>
+                    {% for bullet in exp.bullets %}
+                    <li>{{ bullet }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 9. LANGUAGES (언어 능력) -->
+    {% if languages %}
+    <div class="section">
+        <h2>언어 능력</h2>
+        <div class="language-grid">
+            {% for lang in languages %}
+            {% if lang.visible != false %}
+            <div class="lang-item">
+                <div class="lang-name">{{ lang.name }}</div>
+                <div class="lang-level">{{ lang.level }}</div>
+                {% if lang.name == '한국어' or lang.name == 'Korean' %}
+                    {% if profile.koreanLanguageLevel %}
+                    <div class="lang-cert">{{ profile.koreanLanguageLevel }}</div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 10 & 11 EXTRACURRICULARS (교육이수/대외활동) -->
+    {% if extracurriculars %}
+    <div class="section">
+        <h2>교육이수/대외활동</h2>
+        {% for extra in extracurriculars %}
+        <div class="item">
+            <div class="item-left">
+                <div class="date-block">
+                    {{ extra.duration }}<br><span class="job-type">{{ extra.type | default("동아리") }}</span>
+                </div>
+            </div>
+            <div class="item-right">
+                <div class="item-title">{{ extra.title }}</div>
+                <div class="item-subtitle">{{ extra.institution }}</div>
+                {% if extra.bullets %}
+                <ul>
+                    {% for bullet in extra.bullets %}
+                    <li>{{ bullet }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 12. SKILLS (스킬) -->
+    {% if skills %}
+    <div class="section">
+        <h2>스킬</h2>
+        <div class="skills-wrap">
+            {% for skill in skills %}
+            {% if skill.visible != false %}
+            <span class="skill-tag">{{ skill.name }}</span>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 13. LINKS (첨부자료/링크) -->
+    <div class="section">
+        <h2>첨부자료/링크</h2>
+        <div class="links-box">
+            <div class="link-label">링크(URL)</div>
+            <div class="link-value"><a href="{{ profile.github }}" target="_blank">{{ profile.github }}</a></div>
+            {% if profile.linkedin %}
+            <div class="link-label">LinkedIn</div>
+            <div class="link-value"><a href="{{ profile.linkedin }}" target="_blank">{{ profile.linkedin }}</a></div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

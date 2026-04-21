@@ -14,16 +14,10 @@ const ProjectCard = ({ project, idx }) => {
   return (
     <motion.div
       className="group relative flex flex-col bg-background border border-textPrimary/5 overflow-hidden shadow-none hover:shadow-2xl transition-all duration-700 h-full"
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      animate={{ y: [0, -12, 0] }}
-      transition={{
-        duration: 5 + (idx % 3) * 1.5,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: idx * 0.2
-      }}
+      transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
     >
       <div className="h-56 overflow-hidden relative border-b border-textPrimary/5">
         {cover ? (
@@ -84,7 +78,7 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch('http://localhost:8001/api/projects/');
+        const res = await fetch('http://localhost:8000/api/projects/');
         if (!res.ok) throw new Error();
         const githubRepos = await res.json();
         
@@ -123,7 +117,7 @@ const Projects = () => {
   if (!data || !data.sections_visibility?.projects) return null;
 
   return (
-    <section id="projects" className="pt-32 pb-12 px-6">
+    <section id="projects" className="pt-16 pb-8 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="max-w-2xl">

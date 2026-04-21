@@ -19,8 +19,8 @@ const CustomCursor = () => {
     };
 
     const handleMouseOver = (e) => {
-      const isInteractive = e.target.tagName.toLowerCase() === 'a' || 
-                            e.target.tagName.toLowerCase() === 'button' || 
+      const isInteractive = e.target.tagName?.toLowerCase() === 'a' || 
+                            e.target.tagName?.toLowerCase() === 'button' || 
                             e.target.closest('a') || 
                             e.target.closest('button');
       setIsHovering(!!isInteractive);
@@ -39,19 +39,19 @@ const CustomCursor = () => {
   if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) return null;
 
   return (
-    <div className={`pointer-events-none z-[100] fixed inset-0 ${!isVisible ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+    <div className={`pointer-events-none z-[9999] fixed inset-0 ${!isVisible ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
       {/* 8px solid dot */}
       <motion.div
-        className="absolute top-0 left-0 w-2 h-2 rounded-full bg-textPrimary pointer-events-none mix-blend-difference"
+        className="absolute top-0 left-0 w-2 h-2 rounded-full bg-warmBrown pointer-events-none"
         style={{ x: mouseX, y: mouseY, translateX: '-50%', translateY: '-50%' }}
       />
       {/* 32px ring border */}
       <motion.div
-        className="absolute top-0 left-0 w-8 h-8 rounded-full border border-textPrimary pointer-events-none mix-blend-difference"
+        className="absolute top-0 left-0 w-8 h-8 rounded-full border border-warmBrown pointer-events-none"
         style={{ x: ringX, y: ringY, translateX: '-50%', translateY: '-50%' }}
         animate={{ 
           scale: isHovering ? 1.5 : 1, 
-          opacity: isHovering ? 0.3 : 0.8 
+          opacity: isHovering ? 0.5 : 1 
         }}
         transition={{ duration: 0.15 }}
       />

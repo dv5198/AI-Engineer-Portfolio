@@ -1,0 +1,35 @@
+{
+  "international": {
+    "countries": ["US", "GB", "CA", "AU", "NZ", "IE", "NL", "SE", "NO", "DK", "FI", "SG", "HK", "IN"],
+    "config": { "region": "international", "photo": false, "label": "International (ATS)", "filename": "divya_nirankari_resume.pdf" }
+  },
+  "specific_overrides": {
+    "SG": { "region": "international", "photo": false, "label": "Singapore", "filename": "divya_nirankari_resume.pdf" },
+    "HK": { "region": "international", "photo": false, "label": "Hong Kong", "filename": "divya_nirankari_resume.pdf" },
+    "IN": { "region": "international", "photo": false, "label": "India (ATS)", "filename": "divya_nirankari_resume.pdf" }
+  },
+  "korea": {
+    "countries": ["KR"],
+    "config": { "region": "korea", "photo": true, "label": "South Korea (이력서)", "filename": "divya_nirankari_이력서.pdf" }
+  },
+  "japan": {
+    "countries": ["JP"],
+    "config": { "region": "japan", "photo": true, "label": "Japan (履歴書)", "filename": "divya_nirankari_履歴書.pdf" }
+  },
+  "china": {
+    "countries": ["CN", "TW"],
+    "config": { "region": "china", "photo": true, "label": "China (简历)", "filename": "divya_nirankari_简历.pdf" }
+  },
+  "germany": {
+    "countries": ["DE", "AT", "CH", "FR", "ES", "IT", "PL", "PT", "BE", "CZ", "RO", "HU"],
+    "config": { "region": "germany", "photo": true, "label": "Germany (Lebenslauf)", "filename": "divya_nirankari_lebenslauf.pdf" }
+  },
+  "middleeast": {
+    "countries": ["AE", "SA", "QA", "KW", "BH", "OM"],
+    "config": { "region": "middleeast", "photo": true, "label": "Middle East", "filename": "divya_nirankari_resume_me.pdf" }
+  },
+  "dev": {
+    "countries": ["DEV"],
+    "config": { "region": "international", "photo": false, "label": "India (Local/Dev)", "filename": "divya_nirankari_resume.pdf" }
+  }
+}

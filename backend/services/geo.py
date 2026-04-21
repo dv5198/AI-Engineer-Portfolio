@@ -1,82 +1,93 @@
 # backend/services/geo.py
 
 import httpx
+import ipaddress
+import json
+import os
+from datetime import datetime, timedelta
 
-# Mapping of country codes to resume regions
-REGION_MAP = {
-    # ── No photo — ATS strict (Western/International) ──
-    'US': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'GB': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'CA': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'AU': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'NZ': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'IE': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'NL': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'SE': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'NO': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'DK': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'FI': { 'region': 'international', 'photo': False, 'label': 'International (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
-    'SG': { 'region': 'international', 'photo': False, 'label': 'Singapore', 'filename': 'divya_nirankari_resume.pdf' },
-    'HK': { 'region': 'international', 'photo': False, 'label': 'Hong Kong', 'filename': 'divya_nirankari_resume.pdf' },
-    'IN': { 'region': 'international', 'photo': False, 'label': 'India (ATS)', 'filename': 'divya_nirankari_resume.pdf' },
+# In-memory cache for IP lookups to avoid rate limits
+IP_CACHE = {}
+CACHE_TTL_HOURS = 24
 
-    # ── Photo mandatory — East Asia ──────────────────
-    'KR': { 'region': 'korea', 'photo': True, 'label': 'South Korea (이력서)', 'filename': 'divya_nirankari_이력서.pdf' },
-    'JP': { 'region': 'japan', 'photo': True, 'label': 'Japan (履歴書)', 'filename': 'divya_nirankari_履歴書.pdf' },
-    'CN': { 'region': 'china', 'photo': True, 'label': 'China (简历)', 'filename': 'divya_nirankari_简历.pdf' },
-    'TW': { 'region': 'china', 'photo': True, 'label': 'Taiwan', 'filename': 'divya_nirankari_resume_tw.pdf' },
+def load_geo_config():
+    """Loads regional mapping config from JSON file."""
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'geo_regions.json')
+    mapping = {}
+    
+    # ── Hard Fallback (in case JSON is missing) ──────────────────
+    default_config = { 'region': 'international', 'photo': False, 'label': 'India (ATS)', 'filename': 'divya_nirankari_resume.pdf' }
+    
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+                # Expand standard categories
+                for category, details in data.items():
+                    if category == 'specific_overrides': continue
+                    for country_code in details.get('countries', []):
+                        mapping[country_code] = details['config']
+                
+                # Apply specific overrides (e.g., individual labels for SG, HK)
+                overrides = data.get('specific_overrides', {})
+                for country_code, config in overrides.items():
+                    mapping[country_code] = config
+        else:
+            print(f"Warning: {config_path} not found. Using minimal fallback.")
+            mapping['IN'] = default_config
+    except Exception as e:
+        print(f"Error loading geo config: {e}")
+        mapping['IN'] = default_config
+        
+    return mapping
 
-    # ── Photo expected — Europe ────────────────────
-    'DE': { 'region': 'germany', 'photo': True, 'label': 'Germany (Lebenslauf)', 'filename': 'divya_nirankari_lebenslauf.pdf' },
-    'AT': { 'region': 'germany', 'photo': True, 'label': 'Austria', 'filename': 'divya_nirankari_lebenslauf.pdf' },
-    'CH': { 'region': 'germany', 'photo': True, 'label': 'Switzerland', 'filename': 'divya_nirankari_lebenslauf.pdf' },
-    'FR': { 'region': 'germany', 'photo': True, 'label': 'France', 'filename': 'divya_nirankari_resume_fr.pdf' },
-    'ES': { 'region': 'germany', 'photo': True, 'label': 'Spain', 'filename': 'divya_nirankari_resume_es.pdf' },
-    'IT': { 'region': 'germany', 'photo': True, 'label': 'Italy', 'filename': 'divya_nirankari_resume_it.pdf' },
-    'PL': { 'region': 'germany', 'photo': True, 'label': 'Poland', 'filename': 'divya_nirankari_resume_pl.pdf' },
-    'PT': { 'region': 'germany', 'photo': True, 'label': 'Portugal', 'filename': 'divya_nirankari_resume_pt.pdf' },
-    'BE': { 'region': 'germany', 'photo': True, 'label': 'Belgium', 'filename': 'divya_nirankari_resume_be.pdf' },
-    'CZ': { 'region': 'germany', 'photo': True, 'label': 'Czech Republic', 'filename': 'divya_nirankari_resume_cz.pdf' },
-    'RO': { 'region': 'germany', 'photo': True, 'label': 'Romania', 'filename': 'divya_nirankari_resume_ro.pdf' },
-    'HU': { 'region': 'germany', 'photo': True, 'label': 'Hungary', 'filename': 'divya_nirankari_resume_hu.pdf' },
-
-    # ── Photo expected — Middle East ─────────────────
-    'AE': { 'region': 'middleeast', 'photo': True, 'label': 'UAE', 'filename': 'divya_nirankari_resume_uae.pdf' },
-    'SA': { 'region': 'middleeast', 'photo': True, 'label': 'Saudi Arabia', 'filename': 'divya_nirankari_resume_sa.pdf' },
-    'QA': { 'region': 'middleeast', 'photo': True, 'label': 'Qatar', 'filename': 'divya_nirankari_resume_qa.pdf' },
-    'KW': { 'region': 'middleeast', 'photo': True, 'label': 'Kuwait', 'filename': 'divya_nirankari_resume_kw.pdf' },
-    'BH': { 'region': 'middleeast', 'photo': True, 'label': 'Bahrain', 'filename': 'divya_nirankari_resume_bh.pdf' },
-    'OM': { 'region': 'middleeast', 'photo': True, 'label': 'Oman', 'filename': 'divya_nirankari_resume_om.pdf' },
-
-    # ── Development / Localhost ─
-    'DEV': { 'region': 'international', 'photo': False, 'label': 'Development (default)', 'filename': 'divya_nirankari_resume.pdf' },
-}
-
-DEFAULT_REGION = {
-    'region': 'international',
-    'photo': False,
-    'label': 'International (ATS)',
-    'filename': 'divya_nirankari_resume.pdf',
-}
+# Global Map Initialized on Startup
+REGION_MAP = load_geo_config()
+DEFAULT_REGION = REGION_MAP.get('IN', { 'region': 'international', 'photo': False, 'label': 'India (ATS)', 'filename': 'divya_nirankari_resume.pdf' })
 
 async def get_country_from_ip(ip: str) -> dict:
-    """Detects country code and name from IP using ip-api.com."""
-    local_ips = ['127.0.0.1', 'localhost', '::1', '0.0.0.0']
-    if ip in local_ips or ip.startswith('192.168.') or ip.startswith('10.'):
-        return {'code': 'IN', 'name': 'India'}
+    """Detects country code and name from IP using ip-api.com with local caching."""
+    now = datetime.now()
     
+    # 1. Local/Private IP Check
+    try:
+        if ip in ['localhost', '::1']:
+            return {'code': 'IN', 'name': 'India (Localhost)'}
+        
+        ip_obj = ipaddress.ip_address(ip)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
+            return {'code': 'IN', 'name': 'India (Private Network)'}
+    except ValueError:
+        return {'code': 'IN', 'name': 'India (Unknown/Local)'}
+    
+    # 2. Cache Check
+    if ip in IP_CACHE:
+        entry = IP_CACHE[ip]
+        if entry['expires'] > now:
+            return entry['data']
+
+    # 3. API Lookup
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             res = await client.get(f'http://ip-api.com/json/{ip}?fields=status,countryCode,country')
             data = res.json()
             if data.get('status') == 'success':
-                return {
-                    'code': data.get('countryCode', 'US'),
-                    'name': data.get('country', 'United States')
+                geo_info = {
+                    'code': data.get('countryCode', 'IN'),
+                    'name': data.get('country', 'India')
                 }
-    except Exception:
+                # Update Cache
+                IP_CACHE[ip] = {
+                    'data': geo_info,
+                    'expires': now + timedelta(hours=CACHE_TTL_HOURS)
+                }
+                return geo_info
+    except Exception as e:
+        print(f"Geo-Detection Error for {ip}: {e}")
         pass
-    return {'code': 'US', 'name': 'United States'}
+        
+    return {'code': 'IN', 'name': 'India (Fallback)'}
 
 
 def get_visitor_ip(request) -> str:

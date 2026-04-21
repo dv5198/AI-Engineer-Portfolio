@@ -133,7 +133,34 @@ register_crud("languages", LanguageItem, "Languages")
 @router.get("/blog/{slug}")
 async def get_blog_post(slug: str):
     data = load_data()
-    for post in data["blogPosts"]:
-        if post["slug"] == slug:
+    for post in data.get("blogPosts", []):
+        if post.get("slug") == slug:
             return post
     raise HTTPException(status_code=404, detail="Post not found")
+
+class PublicTestimonial(BaseModel):
+    name: str
+    role: str
+    company: str
+    relation: str
+    quote: str
+
+@router.post("/testimonials/public")
+async def submit_public_testimonial(testimonial: PublicTestimonial):
+    data = load_data()
+    new_testimonial = {
+        "id": f"te_{uuid.uuid4().hex[:8]}",
+        "name": testimonial.name,
+        "role": testimonial.role,
+        "company": testimonial.company,
+        "relation": testimonial.relation,
+        "quote": testimonial.quote,
+        "visible": False, # Requires admin approval
+        "order": len(data.get("testimonials", [])) + 1
+    }
+    if "testimonials" not in data:
+        data["testimonials"] = []
+    data["testimonials"].append(new_testimonial)
+    save_data(data)
+    log_activity(f"New public testimonial submitted by {testimonial.name}", "Testimonials")
+    return {"message": "Testimonial submitted successfully. Pending admin approval."}

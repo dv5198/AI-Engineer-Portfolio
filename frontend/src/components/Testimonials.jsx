@@ -9,7 +9,7 @@ const Testimonials = () => {
   const testimonials = data.testimonials?.filter(t => t.visible !== false) || [];
 
   return (
-    <section id="testimonials" className="py-32 px-6 bg-ivory-deep/10">
+    <section id="testimonials" className="py-16 px-6 bg-ivory-deep/10">
       <div className="max-w-6xl mx-auto">
         <div className="mb-20">
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-warmBrown/40 mb-4">Praise // 05</p>
@@ -20,13 +20,10 @@ const Testimonials = () => {
           {testimonials.map((item, idx) => (
             <motion.div
               key={item.id || idx}
-              animate={{ y: [0, -12, 0] }}
-              transition={{
-                duration: 5 + (idx % 2),
-                repeat: Infinity,
-                delay: idx * 0.4,
-                ease: "easeInOut"
-              }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
               className="bg-white border border-warmBrown/5 p-10 relative overflow-hidden group hover:border-accent/30 transition-colors duration-500"
             >
               <span className="absolute -top-4 -left-2 text-8xl font-serif text-accent/10 pointer-events-none group-hover:text-accent/20 transition-colors duration-500">“</span>

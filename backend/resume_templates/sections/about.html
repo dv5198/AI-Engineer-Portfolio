@@ -1,0 +1,11 @@
+{% if profile.summary %}
+<div class="section about-section">
+    <h2>Professional Summary</h2>
+    <p>{{ profile.summary }}</p>
+</div>
+{% elif profile.bio %}
+<div class="section about-section">
+    <h2>Professional Summary</h2>
+    <p>{{ profile.bio }}</p>
+</div>
+{% endif %}

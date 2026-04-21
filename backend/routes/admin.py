@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import List
-from services.grok import (
+from services.groq_service import (
     rewrite_text, 
     execute_admin_command,
-    call_grok,
+    call_groq,
     summarize_about
 )
 from database import load_data, save_data
@@ -24,9 +24,9 @@ class RewriteRequest(BaseModel):
     text: str
     instruction: str = "Make it sound more professional and engaging"
 
-# Simple token generation for proof of concept
-ADMIN_PASSWORD = "admin123"
-SESSION_TOKEN = "admin_secret_token_42"
+# Secure Token Loading
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+SESSION_TOKEN = os.getenv("SESSION_TOKEN", "admin_secret_token_42")
 
 @router.post("/login/")
 def login(req: LoginRequest):
@@ -34,8 +34,10 @@ def login(req: LoginRequest):
         return {"token": SESSION_TOKEN}
     raise HTTPException(status_code=401, detail="Invalid password")
 
+from fastapi import BackgroundTasks
+
 @router.post("/command/")
-async def process_command(req: CommandRequest):
+async def process_command(req: CommandRequest, background_tasks: BackgroundTasks):
     current_data = load_data()
     # Execute command using Claude to get structural changes
     changes = await execute_admin_command(req.command, current_data)
@@ -55,6 +57,12 @@ async def process_command(req: CommandRequest):
     updated = deep_update(current_data, changes)
     save_data(updated)
     
+    from routes.dynamic_sections import log_activity
+    log_activity(f"Applied AI command: {req.command}", "Admin AI", changes)
+    
+    from services.groq_service import auto_regenerate_summary_task
+    background_tasks.add_task(auto_regenerate_summary_task)
+    
     return {"message": "Command executed successfully", "changes_applied": changes, "new_data": updated}
 
 @router.post("/rewrite-bio/")
@@ -67,12 +75,12 @@ async def rewrite_about_route(req: RewriteRequest):
     new_text = await rewrite_text(req.text, req.instruction)
     return {"rewritten": new_text}
     
-class GrokTestRequest(BaseModel):
+class GroqTestRequest(BaseModel):
     message: str
 
-@router.post("/test-grok/")
-async def test_grok_route(req: GrokTestRequest):
-    res = await call_grok(req.message)
+@router.post("/test-groq/")
+async def test_groq_route(req: GroqTestRequest):
+    res = await call_groq(req.message)
     return {"response": res}
 
 class SummarizeRequest(BaseModel):
@@ -91,7 +99,7 @@ class GenerateBulletsRequest(BaseModel):
 @router.post("/generate-bullets/")
 async def generate_bullets_route(req: GenerateBulletsRequest):
     prompt = f"Generate 3 professional, action-oriented resume bullets for a {req.role} at {req.company} based on this description: {req.description}. Return ONLY the bullets starting with a dash (-). No introductory text."
-    res = await call_grok(prompt)
+    res = await call_groq(prompt)
     # Llama/Groq often uses '*' or '-' and might still include empty lines
     bullets = [b.strip().lstrip('-').lstrip('*').strip() for b in res.split('\n') if b.strip() and (b.strip().startswith('-') or b.strip().startswith('*'))]
     if not bullets:

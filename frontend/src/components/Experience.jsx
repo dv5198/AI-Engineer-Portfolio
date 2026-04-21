@@ -7,7 +7,7 @@ const Experience = () => {
   if (!data || !data.sections_visibility?.experience) return null;
 
   return (
-    <section id="experience" className="pt-12 pb-32 px-6 bg-background">
+    <section id="experience" className="pt-8 pb-16 px-6 bg-background">
       <div className="max-w-6xl mx-auto">
         <div className="mb-20">
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-textPrimary/40 mb-4">Journey // 02</p>

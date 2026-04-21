@@ -15,7 +15,7 @@ export const PortfolioProvider = ({ children }) => {
     try {
       setLoading(true);
       // In production, configure API base URL properly (.env)
-      const res = await fetch('http://localhost:8001/api/portfolio/');
+      const res = await fetch('http://localhost:8000/api/portfolio/');
       if (!res.ok) throw new Error('Failed to fetch portfolio data');
       const json = await res.json();
       setData(json);
@@ -50,7 +50,7 @@ export const PortfolioProvider = ({ children }) => {
 
   const updatePortfolio = async (newData) => {
     try {
-      const res = await fetch('http://localhost:8001/api/portfolio/', {
+      const res = await fetch('http://localhost:8000/api/portfolio/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newData)

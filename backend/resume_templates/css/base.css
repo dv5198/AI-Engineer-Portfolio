@@ -1,0 +1,57 @@
+/* base.css: Shared resets and utilities */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.5;
+    background: white;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0.5em;
+    color: #222;
+}
+
+p, ul, ol {
+    margin-bottom: 1em;
+}
+
+ul {
+    padding-left: 1.5em;
+}
+
+a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+}
+
+.item-title {
+    font-weight: bold;
+}
+
+.item-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.item-subtitle {
+    font-style: italic;
+    margin-bottom: 8px;
+    color: #555;
+}

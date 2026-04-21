@@ -1,0 +1,23 @@
+{% if experience %}
+<div class="section experience-section">
+    <h2>Professional Experience</h2>
+    {% for exp in experience %}
+        {% if exp.visible != False %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ exp.company }}</span>
+                <span class="item-meta">{{ exp.startDate }} &mdash; {{ exp.endDate }}</span>
+            </div>
+            <div class="item-subtitle">{{ exp.role }}</div>
+            {% if exp.bullets %}
+            <ul>
+                {% for bullet in exp.bullets %}
+                <li>{{ bullet }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}

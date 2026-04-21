@@ -17,7 +17,7 @@ client = AsyncOpenAI(
     base_url=GROQ_BASE_URL
 )
 
-async def call_grok_json(system_prompt: str, user_prompt: str) -> dict:
+async def call_groq_json(system_prompt: str, user_prompt: str) -> dict:
     """
     Helper to call Groq API with JSON response format.
     Uses OpenAI-compatible endpoint.
@@ -45,7 +45,7 @@ async def rewrite_text(text: str, instruction: str) -> str:
     """Generic text rewriter for About/Bio edits in admin panel."""
     system = "You are a professional editor. Return ONLY a JSON object: {\"rewritten\": \"<your rewritten text here>\"}"
     user = f"Rewrite the following text according to this instruction: '{instruction}'. Text: {text}"
-    res = await call_grok_json(system, user)
+    res = await call_groq_json(system, user)
     return res.get("rewritten", text)
 
 async def execute_admin_command(command: str, current_data: dict) -> dict:
@@ -56,9 +56,9 @@ async def execute_admin_command(command: str, current_data: dict) -> dict:
     Command: "{command}"
     Return ONLY a raw JSON object representing the exact updates to apply to the state.
     """
-    return await call_grok_json(system, user)
+    return await call_groq_json(system, user)
 
-async def call_grok(prompt: str) -> str:
+async def call_groq(prompt: str) -> str:
     """
     Generic helper to call Groq API for plain text responses.
     """
@@ -100,10 +100,31 @@ async def summarize_about(about_list: list) -> str:
     """
     
     try:
-        response = await call_grok(prompt)
+        response = await call_groq(prompt)
         # Groq might wrap in markdown, though we asked it not to. Let's do a basic strip just in case.
         return response.strip().replace('```', '')
     except Exception as e:
         print(f"Error summarizing about section: {e}")
         return about_text[0] if about_list else ""
 
+async def auto_regenerate_summary_task():
+    """Background task to auto-regenerate and save the profile summary."""
+    from database import load_data, save_data
+    from routes.dynamic_sections import log_activity
+    
+    data = load_data()
+    about_list = data.get("profile", {}).get("about", [])
+    if not about_list:
+        return
+        
+    try:
+        new_summary = await summarize_about(about_list)
+        if new_summary:
+            fresh_data = load_data()
+            if "profile" not in fresh_data:
+                fresh_data["profile"] = {}
+            fresh_data["profile"]["summary"] = new_summary
+            save_data(fresh_data)
+            log_activity("System auto-regenerated summary", "System", None)
+    except Exception as e:
+        print(f"Auto-regenerate summary failed: {e}")

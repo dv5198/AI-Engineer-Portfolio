@@ -24,7 +24,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Cormorant Garamond"', 'serif'], // Primary UI font
-        serif: ['"Playfair Display"', 'serif'], // Large Headers
+        serif: ['"Cormorant Garamond"', 'serif'], // Large Headers
         mono: ['"DM Mono"', 'monospace'], // Code and Badges
         body: ['"Cormorant Garamond"', 'serif'] 
       },

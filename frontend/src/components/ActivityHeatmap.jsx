@@ -11,7 +11,7 @@ const ActivityHeatmap = () => {
   useEffect(() => {
     if (portfolioData?.profile?.github) {
       const username = portfolioData.profile.github.split('/').pop();
-      fetch(`http://localhost:8001/api/platform/github/contributions/?username=${username}`)
+      fetch(`http://localhost:8000/api/platform/github/contributions/?username=${username}`)
         .then(res => res.json())
         .then(data => {
           setContributions(data);
@@ -27,7 +27,7 @@ const ActivityHeatmap = () => {
   if (!portfolioData?.sections_visibility?.activity) return null;
 
   const colors = {
-    0: "#f2ede0", // ivory-deep
+    0: "#e8e0d0", 
     1: "#d4c9b0",
     2: "#b5a890",
     3: "#9a7a55",
@@ -45,30 +45,28 @@ const ActivityHeatmap = () => {
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   return (
-    <section id="activity" className="py-32 px-6 bg-ivory">
+    <section id="activity" className="py-16 px-6 bg-ivory">
       <div className="max-w-6xl mx-auto">
         <div className="mb-16">
-          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-warmBrown/40 mb-4 text-center">Open Source Activity // 02</p>
-          <h2 className="text-5xl md:text-6xl font-serif text-warmBrown text-center italic">Code Pulse</h2>
+          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-warmBrown mb-4 text-center">Open Source Activity // 02</p>
+          <h2 className="text-5xl md:text-6xl font-serif text-textPrimary text-center italic">Code Pulse</h2>
         </div>
 
-        <motion.div 
-          animate={{ y: [0, -12, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="bg-white/40 backdrop-blur-md border border-warmBrown/10 p-8 md:p-12 overflow-x-auto relative"
+        <div 
+          className="bg-ivory p-4 md:p-8 overflow-hidden relative w-full flex justify-center"
         >
           {loading ? (
-            <div className="h-40 flex items-center justify-center font-mono text-sm text-warmBrown/50">
+            <div className="h-40 flex items-center justify-center font-mono text-sm text-warmBrown">
               Synchronizing with GitHub...
             </div>
           ) : contributions?.weeks ? (
-            <div className="min-w-[800px]">
+            <div className="w-full max-w-[800px]">
               <div className="flex justify-between items-center mb-8">
-                <p className="font-mono text-xs text-warmBrown/60">
+                <p className="font-mono text-xs text-textPrimary">
                   <span className="text-accent font-bold text-lg mr-2">{contributions.totalContributions}</span> 
                   contributions in the last year
                 </p>
-                <div className="flex items-center gap-2 text-[10px] font-mono text-warmBrown/40">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-warmBrown">
                   <span>Less</span>
                   {[0, 1, 4, 7, 10].map(v => (
                     <div key={v} className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: getColor(v) }} />
@@ -78,14 +76,14 @@ const ActivityHeatmap = () => {
               </div>
 
               <div className="flex">
-                <div className="flex flex-col gap-[7px] pr-4 pt-6 text-[9px] font-mono text-warmBrown/30">
+                <div className="flex flex-col gap-[7px] pr-4 pt-6 text-[9px] font-mono text-warmBrown">
                   <span>Mon</span>
                   <span>Wed</span>
                   <span>Fri</span>
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex mb-2 text-[9px] font-mono text-warmBrown/30">
+                  <div className="flex mb-2 text-[9px] font-mono text-warmBrown">
                     {monthLabels.map((m, i) => (
                       <span key={i} style={{ width: `${100/12}%` }}>{m}</span>
                     ))}
@@ -110,7 +108,7 @@ const ActivityHeatmap = () => {
               </div>
             </div>
           ) : (
-             <div className="h-40 flex items-center justify-center font-mono text-sm text-red-400">
+             <div className="h-40 flex items-center justify-center font-mono text-sm text-red-500">
               Unable to fetch contribution data.
             </div>
           )}
@@ -128,7 +126,7 @@ const ActivityHeatmap = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

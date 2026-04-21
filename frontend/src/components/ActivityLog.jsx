@@ -6,7 +6,7 @@ const ActivityLog = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8001/api/platform/activity/')
+    fetch('http://localhost:8000/api/platform/activity/')
       .then(res => res.json())
       .then(data => {
         setLogs(data);
@@ -45,15 +45,27 @@ const ActivityLog = () => {
             
             <div className="flex-1">
               <div className="flex justify-between items-start">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-warmBrown">
-                  {log.event.replace('_', ' ')}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-warmBrown">
+                    {log.event.replace('_', ' ')}
+                  </p>
+                  {log.event === 'resume_download' && log.country && (
+                    <span className="px-1.5 py-0.5 bg-black text-[8px] text-white font-mono uppercase">
+                      {log.country}
+                    </span>
+                  )}
+                  {log.event === 'resume_download' && log.format && (
+                    <span className="text-[9px] text-accent/60 lowercase italic">
+                      — {log.format}
+                    </span>
+                  )}
+                </div>
                 <span className="font-mono text-[9px] text-warmBrown/30">
                   {new Date(log.timestamp).toLocaleString()}
                 </span>
               </div>
               <p className="font-mono text-[9px] text-warmBrown/40 truncate max-w-md mt-1 italic">
-                {log.ip} // {log.userAgent}
+                {log.ip} {log.region ? `// ${log.region}` : ''} // {log.userAgent || 'system'}
               </p>
             </div>
           </div>

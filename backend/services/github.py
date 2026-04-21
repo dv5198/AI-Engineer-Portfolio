@@ -8,7 +8,7 @@ async def fetch_github_projects(username: str):
     if GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
 
-    url = f"https://api.github.com/users/{username}/repos?sort=updated&per_page=10"
+    url = f"https://api.github.com/users/{username}/repos?sort=updated&per_page=15"
     
     async with httpx.AsyncClient() as client:
         try:
@@ -16,9 +16,24 @@ async def fetch_github_projects(username: str):
             response.raise_for_status()
             repos = response.json()
             
-            # Filter out forks
-            filtered = [r for r in repos if not r.get("fork")]
-            return filtered
+            # Process and refine repos
+            refined_repos = []
+            for r in repos:
+                if r.get("fork"):
+                    continue
+                
+                refined_repos.append({
+                    "id": f"gh_{r.get('id')}",
+                    "name": r.get("name"),
+                    "summary": r.get("description") or "Open source project on GitHub.",
+                    "techStack": r.get("language") or "Code",
+                    "stars": r.get("stargazers_count", 0),
+                    "url": r.get("html_url"),
+                    "updated_at": r.get("updated_at"),
+                    "is_github": True # Metadata to distinguish from manual projects
+                })
+            
+            return refined_repos
         except Exception as e:
             print(f"Error fetching from GitHub API: {e}")
-            return None
+            return []

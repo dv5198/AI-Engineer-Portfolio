@@ -18,7 +18,7 @@ const About = () => {
   ];
 
   return (
-    <section id="about" className="pt-32 pb-12 px-6 bg-background relative overflow-hidden">
+    <section id="about" className="pt-16 pb-8 px-6 bg-background relative overflow-hidden">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-20 items-center">
         
         {/* Left Column: Text */}
