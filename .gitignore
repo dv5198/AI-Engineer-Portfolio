@@ -54,3 +54,9 @@ backend/*.pdf
 # OS
 .DS_Store
 Thumbs.db
+"backend/data.json" 
+"backend/data.json.bak*" 
+"backend/*.bak1" 
+"backend/*.bak2" 
+"backend/*.bak3" 
+"backend/*.tmp" 
