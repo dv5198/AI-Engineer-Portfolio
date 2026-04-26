@@ -1,0 +1,28 @@
+/* europe.css */
+@page {
+    size: A4;
+    margin: 18mm 15mm 18mm 15mm;
+}
+.header {
+    margin-bottom: 25px;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 15px;
+}
+.header h1 {
+    font-size: 24pt;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+.subtitle {
+    font-size: 14pt;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+.header-info {
+    float: left;
+    max-width: 80%;
+}
+.header-photo-wrapper {
+    float: right;
+}
+/* Remaining parts inherit from base_css */

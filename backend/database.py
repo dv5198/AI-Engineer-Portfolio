@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +24,18 @@ DEFAULT_DATA = {
             "political_status": "",
             "wechat_id": "",
             "military_service": "",
-            "japanese_era_dates": False
+            "japanese_era_dates": False,
+            "name_furigana": "",
+            "nationality_ja": "",
+            "address_furigana": "",
+            "commute_time": "",
+            "dependents_count": 0,
+            "has_spouse": False,
+            "spouse_dependency": False,
+            "self_pr_ja": "",
+            "self_pr_ja_detailed": "",
+            "career_summary_ja": "",
+            "desired_conditions_ja": "貴社の規定に従います。"
         },
         "visa_info": {
             "visaType": "",
@@ -97,7 +109,9 @@ DEFAULT_DATA = {
                 "Architected scalable backend systems with optimized Redis caching and PostgreSQL data pipelines.",
                 "Developed custom NLP solutions for text classification and sentiment analysis with Hugging Face transformers."
             ],
-            "visible": True
+            "visible": True,
+            "department": "",
+            "resign_reason_ja": "一身上の都合により退社"
         }
     ],
     "education": [
@@ -161,6 +175,26 @@ def load_data():
                     profile["visa_info"][field] = profile.pop(field)
                     changed = True
 
+            # Migration 1.5: Ensure all personal fields exist safely
+            japan_fields = {
+                "name_furigana": "",
+                "nationality_ja": "",
+                "address_furigana": "",
+                "commute_time": "",
+                "dependents_count": 0,
+                "has_spouse": False,
+                "spouse_dependency": False,
+                "self_pr_ja": "",
+                "self_pr_ja_detailed": "",
+                "career_summary_ja": "",
+                "desired_conditions_ja": "貴社の規定に従います。"
+            }
+            if "personal" in profile:
+                for k, v in japan_fields.items():
+                    if k not in profile["personal"]:
+                        profile["personal"][k] = v
+                        changed = True
+
         # Migration 2: Ensure all DEFAULT_DATA keys exist
         for k, v in DEFAULT_DATA.items():
             if k not in data:
@@ -172,8 +206,42 @@ def load_data():
         return data
 
 def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+    # Rotate backups: bak2->bak3, bak1->bak2, current->bak1
+    bak3 = DATA_FILE + ".bak3"
+    bak2 = DATA_FILE + ".bak2"
+    bak1 = DATA_FILE + ".bak1"
+
+    if os.path.exists(bak2):
+        shutil.copy2(bak2, bak3)
+    if os.path.exists(bak1):
+        shutil.copy2(bak1, bak2)
+    if os.path.exists(DATA_FILE):
+        shutil.copy2(DATA_FILE, bak1)
+
+    # Write to a temporary file first
+    tmp_file = DATA_FILE + ".tmp"
+    with open(tmp_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
+    
+    # Atomic rename (overwrites DATA_FILE on POSIX and modern Windows)
+    try:
+        os.replace(tmp_file, DATA_FILE)
+    except PermissionError:
+        import time
+        time.sleep(0.1)  # Brief pause in case of anti-virus file lock
+        try:
+            os.replace(tmp_file, DATA_FILE)
+        except PermissionError:
+            # Absolute fallback
+            shutil.copy2(tmp_file, DATA_FILE)
+            os.remove(tmp_file)
+    
+    # Clear PDF cache
+    try:
+        from services.cache_service import clear_pdf_cache
+        clear_pdf_cache()
+    except ImportError:
+        pass
 
 def log_resume_download(ip: str, country: str, region: str, format_label: str):
     """

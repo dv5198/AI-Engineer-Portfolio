@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ base_css }}">
+    <link rel="stylesheet" href="{{ specific_css }}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-info">
+            <h1>{{ profile.name }}</h1>
+            <div class="subtitle">个人简历</div>
+            
+            <div class="demographics" style="margin-top: 10px;">
+                {% if personal.dob %}<span>出生年月: {{ personal.dob }}</span> <span class="divider">ㅣ</span>{% endif %}
+                <span>{{ personal.gender | default("性别") }}</span>
+                <span class="divider">ㅣ</span>
+                {% if personal.political_status %}<span>政治面貌: {{ personal.political_status }}</span> <span class="divider">ㅣ</span>{% endif %}
+                <span>WeChat: {{ personal.wechat_id | default("未提供") }}</span>
+            </div>
+
+            <div class="contact-grid" style="margin-top: 15px;">
+                <div class="contact-label">邮箱</div>
+                <div class="contact-value">{{ profile.email }}</div>
+
+                <div class="contact-label">电话</div>
+                <div class="contact-value">{{ profile.phone }}</div>
+
+                <div class="contact-label">地址</div>
+                <div class="contact-value">{{ profile.location }}</div>
+            </div>
+        </div>
+
+        <div class="header-photo-wrapper">
+            {% if profile.photo and profile.photo != "" %}
+            <img class="header-photo" src="{{ profile.photo }}" alt="ID Photo">
+            {% else %}
+            <div class="photo-placeholder">照片</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="section">
+        <h2>个人简介</h2>
+        <div class="summary-content">
+            {{ profile.summary | default(profile.bio) | replace('\n', '<br>') | safe }}
+        </div>
+    </div>
+
+    <!-- EXPERIENCE -->
+    {% include 'sections/education.html' %}
+    {% include 'sections/experience.html' %}
+
+    <!-- PROJECTS -->
+    {% include 'sections/projects.html' %}
+
+    <!-- EDUCATION (typically important in China PR) -->
+    {% include 'sections/education.html' ignore missing %}
+
+    <!-- SKILLS -->
+    {% include 'sections/skills.html' %}
+
+</body>
+</html>

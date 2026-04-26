@@ -2,22 +2,54 @@
 <div class="section experience-section">
     <h2>Professional Experience</h2>
     {% for exp in experience %}
-        {% if exp.visible != False %}
-        <div class="item">
-            <div class="item-header">
-                <span class="item-title">{{ exp.company }}</span>
-                <span class="item-meta">{{ exp.startDate }} &mdash; {{ exp.endDate }}</span>
-            </div>
-            <div class="item-subtitle">{{ exp.role }}</div>
-            {% if exp.bullets %}
+    {% if exp.visible != False %}
+    <div class="item">
+        <div class="item-header">
+            <span class="item-title">{{ exp.company }}</span>
+            <span class="item-meta">{{ exp.startDate }} &mdash; {{ exp.endDate }}</span>
+        </div>
+        <div class="item-subtitle">{{ exp.role }}{% if exp.location %} &mdash; {{ exp.location }}{% endif %}</div>
+
+        {#
+        BULLET RENDERING LOGIC — priority order:
+        1. exp.bullets list (from data.json) — standard path
+        2. exp.description string — split into sentences
+        3. exp.summary string — AI-generated, split into sentences
+        Always renders as individual <li> items, never as one block.
+            #}
+            {% set bullet_list = [] %}
+
+            {% if exp.bullets and exp.bullets | length > 0 %}
+            {% set bullet_list = exp.bullets %}
+            {% elif exp.description %}
+            {% if exp.description is iterable and exp.description is not string %}
+            {% set bullet_list = exp.description %}
+            {% elif '\n' in exp.description %}
+            {% set bullet_list = exp.description.split('\n') %}
+            {% else %}
+            {% set bullet_list = exp.description.split('. ') %}
+            {% endif %}
+            {% elif exp.summary %}
+            {% if '\n' in exp.summary %}
+            {% set bullet_list = exp.summary.split('\n') %}
+            {% else %}
+            {% set bullet_list = exp.summary.split('. ') %}
+            {% endif %}
+            {% endif %}
+
+            {% if bullet_list %}
             <ul>
-                {% for bullet in exp.bullets %}
-                <li>{{ bullet }}</li>
+                {% for bullet in bullet_list %}
+                {% set clean = bullet.strip().rstrip('.') %}
+                {% if clean and clean | length > 10 %}
+                <li>{{ clean }}.</li>
+                {% endif %}
                 {% endfor %}
             </ul>
             {% endif %}
-        </div>
-        {% endif %}
+
+    </div>
+    {% endif %}
     {% endfor %}
 </div>
 {% endif %}

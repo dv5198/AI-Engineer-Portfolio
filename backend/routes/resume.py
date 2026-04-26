@@ -143,17 +143,35 @@ async def serve_pdf(region_info: dict, request: Request, background_tasks: Backg
             email_body = f"Resume downloaded in {country_name}.\nIP: {client_ip}\nRegion: {region_name}"
             await send_email_notification(email_subject, email_body)
 
-        buffer = await generate_resume_playwright(data, live_projects=merged_projects, region=region_name, include_photo=include_photo)
+        from services.cache_service import get_cached_pdf, set_cached_pdf
+        from io import BytesIO
+        
+        cached_pdf = get_cached_pdf(region_name)
+        if cached_pdf:
+            buffer = BytesIO(cached_pdf)
+        else:
+            buffer = await generate_resume_playwright(data, live_projects=merged_projects, region=region_name, include_photo=include_photo)
+            set_cached_pdf(region_name, buffer.getvalue())
+
         disp = "attachment" if request.query_params.get("download") == "true" else "inline"
         
         if disp == "attachment":
             background_tasks.add_task(background_radar_process)
             
+        # Determine base filename and handle Unicode via RFC 5987
+        import urllib.parse
+        base_name = data.get("profile", {}).get("name", "resume").lower().replace(" ", "_")
+        region_filename = region_info.get("filename", f"{base_name}_resume.pdf") 
+        if "{name}" in region_filename:
+            region_filename = region_filename.replace("{name}", base_name)
+            
+        encoded_filename = urllib.parse.quote(region_filename)
+            
         return StreamingResponse(
             buffer,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'{disp}; filename="{data.get("profile", {}).get("name", "resume").lower().replace(" ", "_")}_resume.pdf"'
+                "Content-Disposition": f"{disp}; filename*=UTF-8''{encoded_filename}"
             },
             background=background_tasks
         )

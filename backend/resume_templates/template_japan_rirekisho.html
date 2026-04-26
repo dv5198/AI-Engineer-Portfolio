@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>履歴書 - {{ personal.name_en }}</title>
+<style>
+/* ============================================================
+   PLAYWRIGHT PDF RESET — required for correct rendering
+   ============================================================ */
+@page {
+  size: A4;
+  margin: 10mm 10mm 10mm 10mm;
+}
+* {
+  box-sizing: border-box;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: "MS Mincho", "Yu Mincho", "Hiragino Mincho Pro", "Noto Serif JP", serif;
+  font-size: 9pt;
+  line-height: 1.4;
+  color: #000;
+  background: #fff;
+}
+
+/* ============================================================
+   PAGE BREAK CONTROL
+   ============================================================ */
+.page { page-break-after: always; break-after: page; }
+.page:last-child { page-break-after: avoid; break-after: avoid; }
+.no-break { page-break-inside: avoid; break-inside: avoid; }
+
+/* ============================================================
+   MAIN GRID TABLE — mimics JIS form
+   ============================================================ */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td, th {
+  border: 0.75pt solid #000;
+  padding: 2px 3px;
+  vertical-align: top;
+  font-size: 8.5pt;
+}
+.label-cell {
+  background: #f5f5f5;
+  font-size: 7.5pt;
+  color: #333;
+  white-space: nowrap;
+}
+.furigana-cell {
+  font-size: 7pt;
+  color: #444;
+  border-bottom: none;
+}
+.main-cell {
+  font-size: 10pt;
+  font-weight: bold;
+}
+.center { text-align: center; }
+.right { text-align: right; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.doc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.doc-title {
+  font-size: 18pt;
+  font-weight: bold;
+  letter-spacing: 8px;
+}
+.doc-date {
+  font-size: 9pt;
+}
+
+/* ============================================================
+   PHOTO BOX
+   ============================================================ */
+.photo-box {
+  width: 30mm;
+  height: 40mm;
+  border: 0.75pt solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.photo-box img {
+  width: 30mm;
+  height: 40mm;
+  object-fit: cover;
+  object-position: center top;
+}
+.photo-placeholder {
+  font-size: 7pt;
+  color: #666;
+  text-align: center;
+  padding: 4px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   PERSONAL INFO SECTION — two-column layout
+   ============================================================ */
+.personal-section {
+  display: flex;
+  gap: 0;
+  border: 0.75pt solid #000;
+  margin-bottom: 0;
+}
+.personal-left { flex: 1; }
+.personal-right {
+  width: 32mm;
+  border-left: 0.75pt solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   HISTORY TABLE — shared education + work
+   ============================================================ */
+.history-section-label {
+  text-align: center;
+  font-size: 8.5pt;
+  padding: 1px;
+  background: #f5f5f5;
+}
+.year-col { width: 28px; text-align: center; }
+.month-col { width: 20px; text-align: center; }
+.content-col { }
+.history-row td { height: 16px; }
+.close-row td { text-align: right; padding-right: 4px; }
+
+/* ============================================================
+   BOTTOM SECTION — self-PR + right sidebar
+   ============================================================ */
+.bottom-section {
+  display: flex;
+  gap: 0;
+  border-top: none;
+}
+.self-pr-area {
+  flex: 1;
+  border: 0.75pt solid #000;
+  border-right: none;
+  min-height: 28mm;
+  padding: 3px;
+}
+.sidebar-area {
+  width: 42mm;
+  border: 0.75pt solid #000;
+}
+.sidebar-row {
+  border-bottom: 0.75pt solid #000;
+  padding: 2px 3px;
+  font-size: 8pt;
+}
+.sidebar-row:last-child { border-bottom: none; }
+.sidebar-label { font-size: 7pt; color: #444; }
+.sidebar-value { font-size: 9pt; }
+.circle-option { font-size: 8pt; }
+.selected-option {
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+/* ============================================================
+   WISHES SECTION
+   ============================================================ */
+.wishes-section {
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 3px;
+  min-height: 14mm;
+}
+.wishes-label {
+  font-size: 7.5pt;
+  color: #444;
+  margin-bottom: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     履歴書 — PAGE 1
+     ============================================================ -->
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="doc-title">履　歴　書</div>
+    <div class="doc-date">{{ generated_date }}現在</div>
+  </div>
+
+  <!-- PERSONAL INFO + PHOTO -->
+  <table style="margin-bottom:0; border-bottom: none;">
+    <tr>
+      <!-- LEFT: furigana + name -->
+      <td style="width:55%; border-bottom:none; padding-bottom:0;">
+        <div style="font-size:7pt; color:#555;">ふりがな</div>
+        <div style="font-size:8pt; margin-bottom:2px;">{{ personal.name_furigana }}</div>
+        <div style="font-size:7pt; color:#555;">氏　名</div>
+        <div style="font-size:13pt; font-weight:bold; letter-spacing:1px;">{{ personal.name_en }}</div>
+      </td>
+      <!-- RIGHT: photo -->
+      <td rowspan="4" style="width:32mm; text-align:center; vertical-align:middle; border-left: 0.75pt solid #000;">
+        <div style="font-size:7pt; color:#666; margin-bottom:2px;">写真をはる位置<br>縦36〜40mm<br>横24〜30mm</div>
+        <div class="photo-box">
+          {% if personal.photo_base64 %}
+            <img src="{{ personal.photo_base64 }}" alt="photo">
+          {% else %}
+            <div class="photo-placeholder">写真<br>（実際の<br>写真を<br>貼付）</div>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="border-top: none; border-bottom: none;">
+        <!-- nationality + DOB + gender row -->
+        <table style="width:100%; border:none; margin-top:2px;">
+          <tr>
+            <td style="border:none; width:22%; padding:1px 2px;">
+              <div style="font-size:7pt; color:#555;">国籍</div>
+              <div style="font-size:8.5pt;">{{ personal.nationality_ja }}</div>
+            </td>
+            <td style="border-left:0.75pt solid #000; padding:1px 4px; width:52%;">
+              <div style="font-size:7pt; color:#555;">生年月日（年齢）</div>
+              <div style="font-size:8.5pt;">{{ personal.dob_ja }}生（満{{ personal.age }}歳）</div>
+            </td>
+            <td style="border-left:0.75pt solid #000; padding:1px 4px; width:26%;">
+              <div style="font-size:7pt; color:#555;">性別</div>
+              <div style="font-size:8.5pt;">
+                {% if personal.gender == 'female' %}
+                  男・<span class="selected-option">女</span>
+                {% else %}
+                  <span class="selected-option">男</span>・女
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="border-top: none; border-bottom:none;">
+        <div style="font-size:7pt; color:#555;">ふりがな</div>
+        <div style="font-size:8pt;">{{ personal.address_furigana }}</div>
+        <div style="font-size:7pt; color:#555; margin-top:1px;">現住所</div>
+        <div style="font-size:9pt;">{{ personal.address }}</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="border-top: none;">
+        <table style="width:100%; border:none;">
+          <tr>
+            <td style="border:none; width:50%; padding:1px 2px;">
+              <div style="font-size:7pt; color:#555;">電話</div>
+              <div style="font-size:9pt;">{{ personal.phone }}</div>
+            </td>
+            <td style="border-left:0.75pt solid #000; padding:1px 4px; width:50%;">
+              <div style="font-size:7pt; color:#555;">メールアドレス</div>
+              <div style="font-size:8.5pt;">{{ personal.email }}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="border-top: 0.75pt solid #000;">
+        <div style="font-size:7pt; color:#555;">ふりがな</div>
+        <div style="font-size:7.5pt; color:#888; font-style:italic;">（現住所以外に連絡を希望する場合のみ記入）</div>
+        <div style="font-size:7pt; color:#555; margin-top:1px;">連絡先　〒</div>
+        <div style="font-size:8.5pt; color:#888;">同上</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- EDUCATION & WORK HISTORY — combined table -->
+  <table style="margin-top:0; border-top: none;">
+    <tr>
+      <th class="year-col label-cell">年</th>
+      <th class="month-col label-cell">月</th>
+      <th class="label-cell" style="text-align:center;">学　歴・職　歴（各別にまとめて書く）</th>
+    </tr>
+
+    <!-- 学歴 label row -->
+    <tr>
+      <td class="year-col"></td>
+      <td class="month-col"></td>
+      <td class="history-section-label">学　歴</td>
+    </tr>
+
+    <!-- Education entries — oldest first, each with 入学 and 卒業 -->
+    {% for edu in education | sort(attribute='start') %}
+    <tr class="history-row no-break">
+      <td class="year-col">{{ edu.start_year }}</td>
+      <td class="month-col">{{ edu.start_month }}</td>
+      <td>{{ edu.institution }}　入学</td>
+    </tr>
+    <tr class="history-row no-break">
+      <td class="year-col">{{ edu.end_year }}</td>
+      <td class="month-col">{{ edu.end_month }}</td>
+      <td>{{ edu.institution }}　卒業{% if edu.major %}（{{ edu.major }}）{% endif %}</td>
+    </tr>
+    {% endfor %}
+
+    <!-- 職歴 label row -->
+    <tr>
+      <td class="year-col"></td>
+      <td class="month-col"></td>
+      <td class="history-section-label">職　歴</td>
+    </tr>
+
+    <!-- Work history entries — oldest first -->
+    {% for job in experience | sort(attribute='start') %}
+    <tr class="history-row no-break">
+      <td class="year-col">{{ job.start_year }}</td>
+      <td class="month-col">{{ job.start_month }}</td>
+      <td>{{ job.company }}　入社</td>
+    </tr>
+    <tr class="history-row no-break">
+      <td class="year-col"></td>
+      <td class="month-col"></td>
+      <td>　{{ job.department if job.department else '' }}　{{ job.role }}</td>
+    </tr>
+    {% if not job.is_current %}
+    <tr class="history-row no-break">
+      <td class="year-col">{{ job.end_year }}</td>
+      <td class="month-col">{{ job.end_month }}</td>
+      <td>　{{ job.resign_reason_ja | default('一身上の都合により退社') }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+
+    <!-- 現在に至る + 以上 -->
+    <tr class="history-row">
+      <td class="year-col"></td>
+      <td class="month-col"></td>
+      <td>現在に至る</td>
+    </tr>
+    <tr class="close-row">
+      <td class="year-col"></td>
+      <td class="month-col"></td>
+      <td style="text-align:right; padding-right:8px;">以上</td>
+    </tr>
+
+    <!-- Empty filler rows to match JIS form spacing -->
+    {% for i in range(3) %}
+    <tr class="history-row"><td class="year-col"></td><td class="month-col"></td><td></td></tr>
+    {% endfor %}
+  </table>
+
+  <!-- CERTIFICATIONS TABLE (right side — rendered inline here for single-page layout) -->
+  <table style="border-top:none; margin-top: 6px;">
+    <tr>
+      <th class="year-col label-cell">年</th>
+      <th class="month-col label-cell">月</th>
+      <th class="label-cell" style="text-align:center;">免　許・資　格</th>
+    </tr>
+    {% if certifications %}
+      {% for cert in certifications %}
+      <tr class="history-row no-break">
+        <td class="year-col">{{ cert.year }}</td>
+        <td class="month-col">{{ cert.month }}</td>
+        <td>{{ cert.name }}</td>
+      </tr>
+      {% endfor %}
+    {% endif %}
+    <!-- Empty rows -->
+    {% for i in range(5 - (certifications | length if certifications else 0)) %}
+    <tr class="history-row"><td class="year-col"></td><td class="month-col"></td><td></td></tr>
+    {% endfor %}
+  </table>
+
+  <!-- SELF-PR + SIDEBAR -->
+  <table style="border-top:none; margin-top:6px; width:100%;">
+    <tr>
+      <td style="width:65%; vertical-align:top; min-height:30mm;">
+        <div style="font-size:7.5pt; color:#555; margin-bottom:3px;">特技、自己PRなど</div>
+        <div style="font-size:9pt; line-height:1.6;">{{ personal.self_pr_ja }}</div>
+      </td>
+      <td style="width:35%; vertical-align:top; border-left:0.75pt solid #000;">
+        <!-- Commute time -->
+        <div style="border-bottom:0.75pt solid #000; padding:2px 4px;">
+          <div style="font-size:7.5pt; color:#555;">通勤時間</div>
+          <div style="font-size:8.5pt;">
+            {% if personal.commute_time %}
+              約　{{ personal.commute_time }}
+            {% else %}
+              約　　時間　　分
+            {% endif %}
+          </div>
+        </div>
+        <!-- Dependents -->
+        <div style="border-bottom:0.75pt solid #000; padding:2px 4px;">
+          <div style="font-size:7.5pt; color:#555;">扶養家族（配偶者を除く）</div>
+          <div style="font-size:9pt;">{{ personal.dependents_count | default(0) }}人</div>
+        </div>
+        <!-- Spouse -->
+        <div style="border-bottom:0.75pt solid #000; padding:2px 4px;">
+          <div style="font-size:7.5pt; color:#555;">配偶者</div>
+          <div style="font-size:8.5pt;">
+            {% if personal.has_spouse %}
+              <span class="selected-option">有</span>・無
+            {% else %}
+              有・<span class="selected-option">無</span>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Spouse dependency -->
+        <div style="padding:2px 4px;">
+          <div style="font-size:7.5pt; color:#555;">配偶者の扶養義務</div>
+          <div style="font-size:8.5pt;">
+            {% if personal.spouse_dependency %}
+              <span class="selected-option">有</span>・無
+            {% else %}
+              有・<span class="selected-option">無</span>
+            {% endif %}
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- PERSONAL WISHES / REQUESTS -->
+  <table style="border-top:none; width:100%;">
+    <tr>
+      <td>
+        <div style="font-size:7.5pt; color:#555; margin-bottom:3px;">
+          本人希望記入欄（特に給料・職種・勤務時間・勤務地・その他についての希望などがあれば記入）
+        </div>
+        <div style="font-size:9pt; min-height:12mm;">
+          {{ personal.desired_conditions_ja | default('貴社の規定に従います。') }}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- NOTES -->
+  <div style="margin-top:4px; font-size:7pt; color:#555; line-height:1.5;">
+    記入上の注意　１．鉛筆以外の黒又は青の筆記具で記入。　２．数字はアラビア数字で、文字はくずさず正確に書く。　３．※印のところは、該当するものを○で囲む。
+  </div>
+
+</div><!-- end page 1 -->
+
+</body>
+</html>

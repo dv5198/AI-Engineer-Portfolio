@@ -8,15 +8,16 @@
 <body>
     <div class="header">
         <h1>{{ profile.name }}</h1>
-        <div class="subtitle">{{ profile.role }}</div>
+        <div class="subtitle">Academic Curriculum Vitae | {{ profile.role }}</div>
         {% include 'sections/contact.html' %}
     </div>
 
     {% include 'sections/about.html' %}
+    {% include 'sections/research.html' %}
+    {% include 'sections/education.html' ignore missing %}
     {% include 'sections/education.html' %}
     {% include 'sections/experience.html' %}
     {% include 'sections/projects.html' %}
-    {% include 'sections/research.html' %}
     {% include 'sections/skills.html' %}
     {% include 'sections/achievements.html' %}
     {% include 'sections/certifications.html' %}

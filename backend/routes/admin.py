@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+import time
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from pydantic import BaseModel
 from typing import List
 from services.groq_service import (
@@ -28,10 +29,27 @@ class RewriteRequest(BaseModel):
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 SESSION_TOKEN = os.getenv("SESSION_TOKEN", "admin_secret_token_42")
 
+login_attempts = {}
+
 @router.post("/login/")
-def login(req: LoginRequest):
+def login(req: LoginRequest, request: Request):
+    ip = request.client.host
+    now = time.time()
+    
+    # Keep only attempts within the last 15 minutes (900 seconds)
+    attempts = [t for t in login_attempts.get(ip, []) if now - t < 900]
+    
+    if len(attempts) >= 5:
+        login_attempts[ip] = attempts
+        raise HTTPException(status_code=429, detail="Too many failed attempts. Please try again in 15 minutes.")
+        
     if req.password == ADMIN_PASSWORD:
+        if ip in login_attempts:
+            del login_attempts[ip]
         return {"token": SESSION_TOKEN}
+        
+    attempts.append(now)
+    login_attempts[ip] = attempts
     raise HTTPException(status_code=401, detail="Invalid password")
 
 from fastapi import BackgroundTasks

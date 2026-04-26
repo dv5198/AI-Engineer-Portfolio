@@ -1,20 +1,59 @@
 {% if categorized_projects %}
 <div class="section projects-section">
     <h2>Technical Projects</h2>
-    
+
     {% if categorized_projects.ai_research %}
     <div class="project-category">
         <h3>AI & Research</h3>
         {% for proj in categorized_projects.ai_research %}
         <div class="item">
             <div class="item-header">
-                <span class="item-title">{{ proj.name }} {% if proj.techStack %}({{ proj.techStack }}){% endif %}</span>
+                <span class="item-title">{{ proj.name }}{% if proj.techStack %} ({{ proj.techStack }}){% endif %}</span>
+                {% if proj.url %}<span class="item-meta"><a href="{{ proj.url }}">GitHub</a></span>{% endif %}
             </div>
-            {% if proj.summary or proj.description %}
-            <ul>
-                <li>{{ proj.summary | default(proj.description) }}</li>
-            </ul>
-            {% endif %}
+
+            {#
+            BULLET RENDERING LOGIC — priority order:
+            1. proj.bullets → list of strings (admin-entered or AI-generated) — render each as <li>
+                2. proj.summary → may be a string with newlines or sentences — split and render
+                3. proj.description → single string fallback — split into sentences
+                #}
+                {% set bullet_list = [] %}
+
+                {% if proj.bullets and proj.bullets | length > 0 %}
+                {# Priority 1: explicit bullets list #}
+                {% set bullet_list = proj.bullets %}
+
+                {% elif proj.summary %}
+                {# Priority 2: summary — split on newline or ". " to get multiple points #}
+                {% if '\n' in proj.summary %}
+                {% set bullet_list = proj.summary.split('\n') %}
+                {% else %}
+                {# Split on period+space to get individual sentences #}
+                {% set raw_split = proj.summary.split('. ') %}
+                {% set bullet_list = raw_split %}
+                {% endif %}
+
+                {% elif proj.description %}
+                {# Priority 3: description fallback — same splitting logic #}
+                {% if '\n' in proj.description %}
+                {% set bullet_list = proj.description.split('\n') %}
+                {% else %}
+                {% set bullet_list = proj.description.split('. ') %}
+                {% endif %}
+                {% endif %}
+
+                {% if bullet_list %}
+                <ul>
+                    {% for bullet in bullet_list %}
+                    {% set clean = bullet.strip().rstrip('.') %}
+                    {% if clean and clean | length > 10 %}
+                    <li>{{ clean }}.</li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
         </div>
         {% endfor %}
     </div>
@@ -26,13 +65,39 @@
         {% for proj in categorized_projects.software_other %}
         <div class="item">
             <div class="item-header">
-                <span class="item-title">{{ proj.name }} {% if proj.techStack %}({{ proj.techStack }}){% endif %}</span>
+                <span class="item-title">{{ proj.name }}{% if proj.techStack %} ({{ proj.techStack }}){% endif %}</span>
+                {% if proj.url %}<span class="item-meta"><a href="{{ proj.url }}">GitHub</a></span>{% endif %}
             </div>
-            {% if proj.summary or proj.description %}
+
+            {% set bullet_list = [] %}
+
+            {% if proj.bullets and proj.bullets | length > 0 %}
+            {% set bullet_list = proj.bullets %}
+            {% elif proj.summary %}
+            {% if '\n' in proj.summary %}
+            {% set bullet_list = proj.summary.split('\n') %}
+            {% else %}
+            {% set bullet_list = proj.summary.split('. ') %}
+            {% endif %}
+            {% elif proj.description %}
+            {% if '\n' in proj.description %}
+            {% set bullet_list = proj.description.split('\n') %}
+            {% else %}
+            {% set bullet_list = proj.description.split('. ') %}
+            {% endif %}
+            {% endif %}
+
+            {% if bullet_list %}
             <ul>
-                <li>{{ proj.summary | default(proj.description) }}</li>
+                {% for bullet in bullet_list %}
+                {% set clean = bullet.strip().rstrip('.') %}
+                {% if clean and clean | length > 10 %}
+                <li>{{ clean }}.</li>
+                {% endif %}
+                {% endfor %}
             </ul>
             {% endif %}
+
         </div>
         {% endfor %}
     </div>
