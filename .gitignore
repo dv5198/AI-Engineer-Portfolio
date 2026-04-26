@@ -60,3 +60,6 @@ Thumbs.db
 "backend/*.bak2" 
 "backend/*.bak3" 
 "backend/*.tmp" 
+"backend/data.json" 
+"backend/data.json.bak*" 
+"backend/uploads/" 
