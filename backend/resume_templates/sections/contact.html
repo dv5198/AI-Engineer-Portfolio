@@ -1,12 +1,15 @@
 <div class="contact-info">
     <p>
-        {% if profile.location %}{{ profile.location }} &bull; {% endif %}
-        {% if profile.email %}{{ profile.email }} &bull; {% endif %}
-        {% if profile.phone %}{{ profile.phone }} &bull; {% endif %}
+        {% if profile.location %}{{ profile.location }} | {% endif %}
+        {% if profile.email %}<a href="mailto:{{ profile.email }}">{{ profile.email }}</a> | {% endif %}
+        {% if profile.phone %}{{ profile.phone }} | {% endif %}
+        {% if profile.linkedin %}<a href="{{ profile.linkedin }}">LinkedIn</a> | {% endif %}
+        {% if profile.github %}<a href="{{ profile.github }}">GitHub</a> | {% endif %}
+        
         {% for conn in connections %}
             {% if conn.visible and conn.url %}
                 <a href="{{ conn.url }}">{{ conn.platform }}</a>
-                {% if not loop.last or loop.nextitem %}&bull; {% endif %}
+                {% if not loop.last or loop.nextitem %} | {% endif %}
             {% endif %}
         {% endfor %}
     </p>

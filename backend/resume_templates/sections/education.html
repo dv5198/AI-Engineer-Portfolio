@@ -1,0 +1,14 @@
+<div class="section">
+    <h2 class="section-header">Education</h2>
+    {% for edu in education %}
+        {% if edu.visible %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ edu.degree }}</span>
+                <span class="item-meta">{{ edu.year }}</span>
+            </div>
+            <div class="item-subtitle">{{ edu.university }}</div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>

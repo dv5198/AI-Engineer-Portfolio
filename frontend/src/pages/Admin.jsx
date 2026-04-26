@@ -25,10 +25,21 @@ const Admin = () => {
     const [formData, setFormData] = useState(null);
     const [resumeFile, setResumeFile] = useState(null);
     const [allProjects, setAllProjects] = useState([]);
+    const [toastMessage, setToastMessage] = useState(null);
+
+    const showToast = (text, type = 'success') => {
+        setToastMessage({ text, type });
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     useEffect(() => {
         if (data) {
-            setFormData(JSON.parse(JSON.stringify(data))); // deep copy
+            const copy = JSON.parse(JSON.stringify(data));
+            if (!copy.profile) copy.profile = {};
+            if (!copy.profile.personal) copy.profile.personal = {};
+            copy.profile.personal.gender = 'Female';
+            copy.profile.personal.military_service = 'No';
+            setFormData(copy);
         }
     }, [data]);
 
@@ -61,11 +72,11 @@ const Admin = () => {
     const saveChanges = async () => {
         const success = await updatePortfolio(formData);
         if (success) {
-            alert('Artifacts Deposited Successfully');
+            showToast('Artifacts Deposited Successfully', 'success');
             // Refresh to ensure we have the latest server state (including IDs)
             await fetchPortfolio();
         } else {
-            alert('Failed to deposit artifacts. Check backend logs.');
+            showToast('Failed to deposit artifacts. Check backend logs.', 'error');
         }
     };
 
@@ -113,10 +124,13 @@ const Admin = () => {
             });
             const data = await res.json();
             const result = data.rewritten || data.summary || data.bio || data.bullets;
-            if (result) callback(result);
+            if (result) {
+                callback(result);
+                showToast('AI Synthesis Complete', 'success');
+            }
             else throw new Error("No result found");
         } catch (err) {
-            alert('AI Action failed: ' + err.message);
+            showToast('AI Action failed: ' + err.message, 'error');
         }
     };
 
@@ -155,6 +169,24 @@ const Admin = () => {
 
     return (
         <div className="min-h-screen bg-ivory pt-8 pb-24 px-6 relative z-20">
+            {/* Toast Notification */}
+            <AnimatePresence>
+                {toastMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -50 }}
+                        className={`fixed top-8 left-1/2 -translate-x-1/2 px-6 py-4 font-mono text-[10px] uppercase tracking-widest z-[200] shadow-2xl border flex items-center gap-3 ${
+                            toastMessage.type === 'error' 
+                            ? 'bg-red-50 text-red-600 border-red-200' 
+                            : 'bg-warmBlack text-accent border-accent/20'
+                        }`}
+                    >
+                        <ShieldCheck size={14} />
+                        {toastMessage.text}
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <div className="max-w-6xl mx-auto">
 
                 {/* Superior Header */}
@@ -238,17 +270,127 @@ const Admin = () => {
                                 </div>
 
                                 <div className="pt-4 border-t border-warmBrown/5 space-y-4">
-                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Regional Metadata</h4>
+                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Regional Metadata (Personal)</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        {['dateOfBirth', 'gender', 'nationality', 'maritalStatus', 'visaStatus', 'visaType', 'visaIssueDate', 'visaExpiryDate', 'koreanLanguageLevel', 'timezone'].map(field => (
+                                        {[
+                                            { key: 'dob', label: 'Date of Birth', type: 'date' },
+                                            { key: 'gender', label: 'Gender', type: 'static', value: 'Female' },
+                                            { key: 'nationality', label: 'Nationality', type: 'text' },
+                                            { key: 'marital_status', label: 'Marital Status', type: 'select', options: ['Single', 'Married', 'Divorced'] },
+                                            { key: 'visa_status', label: 'Visa Status', type: 'text' },
+                                            { key: 'military_service', label: 'Military Service', type: 'static', value: 'No' },
+                                            { key: 'wechat_id', label: 'WeChat ID', type: 'text' },
+                                            { key: 'kakaotalk_id', label: 'KakaoTalk ID', type: 'text' },
+                                            { key: 'political_status', label: 'Political Status', type: 'text' },
+                                            { key: 'korean_language_level', label: 'Korean Language Level', type: 'text' }
+                                        ].map(field => (
+                                            <div key={field.key}>
+                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
+                                                {field.type === 'static' ? (
+                                                    <input
+                                                        className="w-full border-b border-warmBrown/10 py-2 font-sans text-xs bg-transparent text-warmBrown/50 cursor-not-allowed"
+                                                        value={field.value}
+                                                        disabled
+                                                    />
+                                                ) : field.type === 'select' ? (
+                                                    <select
+                                                        className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
+                                                        value={formData.profile?.personal?.[field.key] || ''}
+                                                        onChange={e => {
+                                                            const personal = formData.profile.personal || {};
+                                                            handleChange('profile', 'personal', { ...personal, [field.key]: e.target.value });
+                                                        }}
+                                                    >
+                                                        <option value="">Select {field.label}</option>
+                                                        {field.options.map(opt => (
+                                                            <option key={opt} value={opt}>{opt}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type={field.type}
+                                                        className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
+                                                        value={formData.profile?.personal?.[field.key] || ''}
+                                                        placeholder={`Enter ${field.label}`}
+                                                        onChange={e => {
+                                                            const personal = formData.profile.personal || {};
+                                                            handleChange('profile', 'personal', { ...personal, [field.key]: e.target.value });
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold mt-4">Regional Metadata (Visa Info)</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {['visaType', 'visaIssueDate', 'visaExpiryDate'].map(field => (
                                             <div key={field}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.replace(/([A-Z])/g, ' $1')}</label>
+                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.replace(/([A-Z])/g, ' $1').trim()}</label>
                                                 <input
                                                     className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
-                                                    value={formData.profile[field] || ''}
+                                                    value={formData.profile?.visa_info?.[field] || ''}
                                                     placeholder={`Enter ${field}`}
-                                                    onChange={e => handleChange('profile', field, e.target.value)}
+                                                    onChange={e => {
+                                                        const visa_info = formData.profile.visa_info || {};
+                                                        handleChange('profile', 'visa_info', { ...visa_info, [field]: e.target.value });
+                                                    }}
                                                 />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold mt-4">Japan Metadata (Personal)</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { key: 'name_furigana', label: 'ふりがな (Name Reading)', placeholder: 'ディヴィア・ニランカリ' },
+                                            { key: 'nationality_ja', label: '国籍 (Nationality in Japanese)', placeholder: 'インド' },
+                                            { key: 'address_furigana', label: '住所ふりがな (Address Reading)', placeholder: 'インド グジャラート州 スーラト' },
+                                            { key: 'commute_time', label: '通勤時間 (Commute Time)', placeholder: '約1時間' },
+                                            { key: 'dependents_count', label: '扶養家族数 (Number of Dependents)', type: 'number', placeholder: '0' },
+                                            { key: 'has_spouse', label: '配偶者 (Spouse)', type: 'boolean' },
+                                            { key: 'spouse_dependency', label: '配偶者の扶養義務 (Spouse Dependency)', type: 'boolean' },
+                                            { key: 'self_pr_ja', label: '自己PR 履歴書用 (Self PR for Rirekisho)', type: 'textarea' },
+                                            { key: 'self_pr_ja_detailed', label: '自己PR 職務経歴書用 (Self PR for Shokumu)', type: 'textarea' },
+                                            { key: 'career_summary_ja', label: '職務要約 (Career Summary)', type: 'textarea' },
+                                            { key: 'desired_conditions_ja', label: '本人希望 (Desired Conditions)', placeholder: '貴社の規定に従います。' },
+                                        ].map(field => (
+                                            <div key={field.key} className={field.type === 'textarea' ? "col-span-2" : ""}>
+                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
+                                                {field.type === 'textarea' ? (
+                                                    <textarea
+                                                        className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-sans text-xs bg-transparent min-h-[80px]"
+                                                        value={formData.profile?.personal?.[field.key] || ''}
+                                                        placeholder={field.placeholder || `Enter ${field.label}`}
+                                                        onChange={e => {
+                                                            const personal = formData.profile.personal || {};
+                                                            handleChange('profile', 'personal', { ...personal, [field.key]: e.target.value });
+                                                        }}
+                                                    />
+                                                ) : field.type === 'boolean' ? (
+                                                    <select
+                                                        className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
+                                                        value={formData.profile?.personal?.[field.key] ? 'true' : 'false'}
+                                                        onChange={e => {
+                                                            const personal = formData.profile.personal || {};
+                                                            handleChange('profile', 'personal', { ...personal, [field.key]: e.target.value === 'true' });
+                                                        }}
+                                                    >
+                                                        <option value="false">No / False</option>
+                                                        <option value="true">Yes / True</option>
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type={field.type === 'number' ? 'number' : 'text'}
+                                                        className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
+                                                        value={formData.profile?.personal?.[field.key] || ''}
+                                                        placeholder={field.placeholder || `Enter ${field.label}`}
+                                                        onChange={e => {
+                                                            const personal = formData.profile.personal || {};
+                                                            let val = e.target.value;
+                                                            if (field.type === 'number') val = val ? parseInt(val, 10) : 0;
+                                                            handleChange('profile', 'personal', { ...personal, [field.key]: val });
+                                                        }}
+                                                    />
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -283,7 +425,7 @@ const Admin = () => {
                                                     const resJson = await res.json();
                                                     if (resJson.url) {
                                                         handleChange('profile', 'photo', 'uploads/profile_photo.jpg');
-                                                        alert('Photo Decanted Successfully');
+                                                        showToast('Photo Decanted Successfully');
                                                     }
                                                 }}
                                             />
@@ -746,6 +888,20 @@ const Admin = () => {
                                             >✦ generate bullets</button>
                                         </div>
                                         <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Bullets (One per line)" value={(editingItem.item.bullets || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
+                                        
+                                        <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold mt-4 pt-4 border-t border-warmBrown/10">Japan Metadata</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="部署名 (Department)" value={editingItem.item.department || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, department: e.target.value } })} />
+                                            <select className="w-full bg-transparent border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" value={editingItem.item.employment_type_ja || '正社員'} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, employment_type_ja: e.target.value } })}>
+                                                <option value="正社員">正社員 (Full-time)</option>
+                                                <option value="契約社員">契約社員 (Contract)</option>
+                                                <option value="フリーランス">フリーランス (Freelance)</option>
+                                                <option value="アルバイト">アルバイト (Part-time)</option>
+                                            </select>
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="チーム規模 (Team Size)" value={editingItem.item.team_size || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, team_size: e.target.value ? parseInt(e.target.value) : '' } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="退職理由 (Reason for leaving)" value={editingItem.item.resign_reason_ja || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, resign_reason_ja: e.target.value } })} />
+                                        </div>
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24 mt-2" placeholder="実績・成果 (Achievements - One per line)" value={(editingItem.item.achievements || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, achievements: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
                                     </>
                                 )}
 

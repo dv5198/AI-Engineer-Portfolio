@@ -51,6 +51,18 @@ def startup_event():
     load_data()
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
+        
+    # Warm up Playwright in the background to prevent the first resume request from timing out
+    import threading
+    def warmup_pdf():
+        try:
+            from services.pdf_playwright import _generate_pdf_sync
+            _generate_pdf_sync("<html><body>warmup</body></html>", "A4", {"top": "0"})
+            print("Playwright warmed up successfully.")
+        except Exception as e:
+            print(f"Playwright warmup failed: {e}")
+            
+    threading.Thread(target=warmup_pdf, daemon=True).start()
 
 app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
 app.include_router(projects_router, prefix="/api/projects", tags=["projects"])

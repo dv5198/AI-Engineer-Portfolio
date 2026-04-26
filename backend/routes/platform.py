@@ -16,6 +16,7 @@ class ContactFormRequest(BaseModel):
     email: EmailStr
     subject: str
     message: str
+    website: Optional[str] = None  # honeypot
 
 class AnalyticsEvent(BaseModel):
     event: str
@@ -24,6 +25,10 @@ class AnalyticsEvent(BaseModel):
 # --- Contact Form ---
 @router.post("/contact/send/")
 async def send_contact(req: ContactFormRequest, background_tasks: BackgroundTasks, request: Request):
+    if req.website:
+        # Spam bot filled out the hidden honeypot. Fall on our sword and return true.
+        return {"message": "Success"}
+        
     data = load_data()
     client_ip = request.client.host
     

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ base_css }}">
+    <link rel="stylesheet" href="{{ specific_css }}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-info">
+            <h1>{{ profile.name }}</h1>
+            <div class="subtitle">{{ profile.role }}</div>
+            {% include 'sections/contact.html' %}
+        </div>
+        <div class="header-photo-wrapper" style="float:right; margin-left:20px;">
+            {% if profile.photo and profile.photo != "" %}
+            <img class="header-photo" src="{{ profile.photo }}" alt="ID Photo" style="width: 100px; height: 125px; object-fit: cover; border-radius: 5px;">
+            {% endif %}
+        </div>
+        <div style="clear:both;"></div>
+        
+        <!-- Middle East explicit personal details -->
+        {% if personal %}
+        <div class="personal-details" style="font-size: 0.9em; color: #555; margin-top: 5px;">
+            {% if personal.dob %}<span>Date of Birth: {{ personal.dob }}</span> &bull; {% endif %}
+            {% if personal.nationality %}<span>Nationality: {{ personal.nationality }}</span> &bull; {% endif %}
+            {% if personal.marital_status %}<span>Marital Status: {{ personal.marital_status }}</span> &bull; {% endif %}
+            {% if personal.gender %}<span>Gender: {{ personal.gender }}</span>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% include 'sections/about.html' %}
+    {% include 'sections/education.html' %}
+    {% include 'sections/experience.html' %}
+    {% include 'sections/projects.html' %}
+    {% include 'sections/research.html' %}
+    {% include 'sections/skills.html' %}
+    {% include 'sections/achievements.html' %}
+    {% include 'sections/certifications.html' %}
+    
+</body>
+</html>
