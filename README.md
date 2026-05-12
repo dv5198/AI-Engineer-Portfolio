@@ -1,93 +1,95 @@
-# Divya Nirankari - Portfolio
+# ✨ Ivory Editorial Antigravity
+### *The Definitive AI-Powered Professional Presence Engine*
 
-A modern, dynamic personal portfolio built with **React (Vite)** and **Python (FastAPI)**.
-Features an "Ivory Editorial Antigravity" aesthetic, Framer Motion animations, custom deterministic canvas-generated project cover images, and a fully functional hidden admin dashboard with AI capabilities.
-
-## 🚀 Completed Features
-
-- **Dynamic Portfolio Core**: Responsive React (Vite) frontend with a high-performance FastAPI backend.
-- **Ivory Editorial Aesthetic**: Premium, light-mode "Antigravity" design with sophisticated Framer Motion transitions and custom cursor.
-- **Hidden Admin Command Center**: Secure dashboard at `/admin` for full content management and system monitoring.
-- **GitHub Integration**: Automatic fetching of repositories with granular visibility control (Show/Hide individual repos).
-- **AI-Powered Content**: Integrated neural text rewriting for bios and summaries (Grok/X.AI integration).
-- **Inbound Transmissions**: Robust message inbox for managing contact form submissions with "Mark as Read" and quick reply features.
-- **Language Proficiency**: Visual progress bars for communication skills with proficiency-level mapping.
-- **Artifact Manager**: Sortable, draggable editors for Experience, Achievements, Projects, Testimonials, Research, and Blog posts.
-- **Activity Signal**: Tracking professional activity via a heatmap and detailed signal log.
-- **Analytics Dashboard**: Real-time monitoring of page views, visitor engagement, and traffic sources.
-- **SEO Optimized**: Semantic HTML5 and meta-tag structure for maximum visibility.
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 18, Vite, Tailwind CSS (light-mode only), Framer Motion, Lucide-React
-- **Backend**: FastAPI (Python 3.10+), Uvicorn, httpx, python-dotenv
-- **Database**: Persistent JSON storage (`data.json`)
-- **AI Integrations**: Grok (X.AI) API for intelligent text editing
+[![React](https://img.shields.io/badge/Frontend-React%2018-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Vite](https://img.shields.io/badge/Build-Vite-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Tailwind](https://img.shields.io/badge/Styling-Vanilla%20CSS-brown?style=for-the-badge&logo=css3)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 
 ---
 
-## ⚙️ Setup & Installation
+## 📖 Overview
 
-### 1. Backend Setup
+**Ivory Editorial Antigravity** is not just a portfolio; it is a sophisticated **Neural Artifact Management System**. Designed for elite AI/ML engineers and researchers, it blends high-end editorial typography with a robust localization engine capable of generating ATS-compliant resumes across 7+ regional markets (Japan, Korea, China, USA, India, and Europe).
 
-1. Navigate to the `backend` directory:
+> "A good README can literally make a mediocre project look respectable. This project aim for visual and technical excellence."
 
+---
+
+## 🖼️ Visual Showcase
+
+| 🖥️ Portfolio Core | 🛠️ Secure Admin Vault |
+| :--- | :--- |
+| ![Portfolio Home](./portfolio_mockup.png) | ![Admin Dashboard](./admin_preview.png) |
+| *High-end minimalist landing with glassmorphism.* | *The neural command center for artifact management.* |
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+### **Frontend Infrastructure**
+- **React 18 & Vite**: For lightning-fast hot module replacement and sub-second initial load.
+- **Framer Motion**: Powering the "Antigravity" signature smooth transitions and micro-animations.
+- **Lucide Icons**: A curated set of high-stroke-weight icons for that premium editorial feel.
+
+### **Backend Core**
+- **FastAPI (Python)**: High-performance asynchronous API layer.
+- **Playwright PDF Engine**: Real-time generation of complex, localized HTML templates into pixel-perfect PDF resumes.
+- **Groq & Llama 3**: Powering the "Enrich Sequence" for automated professional narrative synthesis.
+- **SQLite with FileLock**: Robust, concurrency-safe data persistence for multi-admin stability.
+
+---
+
+## 🚀 Key Features
+
+- **🌍 Global Localization Engine**: Intelligent regional routing. Automatically generates specialized resumes (e.g., Japanese *Rirekisho*, Korean *Shokumu Keirekisho*, and Chinese professional standards).
+- **🤖 AI Narrative Synthesis**: Uses neural engines to expand single-sentence notes into two-paragraph professional summaries optimized for ATS.
+- **🧠 Neural Scroll-Sync**: A revolutionary dual-iframe verification suite that synchronizes scrolling between reference English resumes and localized target resumes for instant auditing.
+- **📡 Terminal AI Control**: A command-line interface within the Admin Panel for direct system telemetry and "Commit-to-Pulse" updates.
+- **🛡️ Secure Vault Entry**: Password-gated administrative access with full encryption of professional identity data.
+
+---
+
+## 📥 Installation & Documentation
+
+### **Prerequisites**
+- Node.js (v18+)
+- Python 3.10+
+- Groq API Key (for AI features)
+
+### **Setup Sequence**
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/your-repo/ivory-antigravity.git
+   cd ivory-antigravity
+   ```
+
+2. **Backend Initialization**
    ```bash
    cd backend
-   ```
-
-2. Install dependencies:
-
-   ```bash
+   python -m venv venv
+   source venv/bin/activate  # or venv\Scripts\activate on Windows
    pip install -r requirements.txt
-   # Or install manually:
-   pip install fastapi uvicorn httpx python-dotenv
+   uvicorn main:app --reload
    ```
 
-3. Add your Grok API Key and GitHub Token to `backend/.env`:
-
-   ```env
-   GROK_API_KEY=your_key_here
-   GITHUB_TOKEN=your_token_here
-   ```
-
-4. Run the FastAPI server:
-
+3. **Frontend Initialization**
    ```bash
-   uvicorn main:app --reload --port 8000
-   ```
-
-   > The server will run on `http://localhost:8000`
-
-### 2. Frontend Setup
-
-1. Navigate to the `frontend` directory:
-
-   ```bash
-   cd frontend
-   ```
-
-2. Install Node dependencies:
-
-   ```bash
+   cd ../frontend
    npm install
-   ```
-
-3. Start the Vite dev server:
-
-   ```bash
    npm run dev
    ```
 
-   > The app will run on `http://localhost:5173`
+---
+
+## 🔭 Future Horizon
+
+- **[ ] WebGL Hero Interactive**: A fully 3D interactive "Artifact Cloud" for the landing page.
+- **[ ] Multi-Agent Peer Review**: AI agents that simulate an HR interview based on your current artifacts to provide a "Market Readiness Score".
+- **[ ] Dynamic Project Lab**: Interactive code snippets within project artifacts that run in-browser.
 
 ---
 
-## 🔒 Admin Access
-
-The admin dashboard is deliberately hidden for security and aesthetics.
-
-- **URL**: [http://localhost:5173/admin](http://localhost:5173/admin)
-- **Passphrase**: Managed via `AdminContext` (Default is typically defined in setup).
-
-From the **Command Center**, you can toggle entire sections, sync GitHub pulse, and deposit new professional artifacts to refresh your identity.
+*Curated with precision by **Divya Nirankari***  
+*Copyright © 2026 // NEURAL_CORE_V8*

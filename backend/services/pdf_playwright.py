@@ -1040,6 +1040,10 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
                     queue.append({"text": pers['nationality'], "field_name": "nationality", "cb": set_pers(pers, 'nationality')})
                 if pers.get('summary'):
                     queue.append({"text": pers['summary'], "field_name": "pers_summary", "cb": set_pers(pers, 'summary')})
+                if pers.get('visa_status'):
+                    queue.append({"text": pers['visa_status'], "field_name": "visa_status", "cb": set_pers(pers, 'visa_status')})
+                if pers.get('political_status'):
+                    queue.append({"text": pers['political_status'], "field_name": "political_status", "cb": set_pers(pers, 'political_status')})
             
             if prof.get('address'):
                 queue.append({"text": prof['address'], "field_name": "address", "cb": set_prof(prof, 'address')})
@@ -1103,7 +1107,25 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
         html_content = template.render(**view_data)
 
     if return_html:
-        return html_content.replace("file:///" + TEMPLATES_DIR.replace("\\", "/"), "/static/templates")
+        # Inject Neural Scroll Sync Script
+        sync_script = """
+        <script>
+            (function() {
+                window.onscroll = function() {
+                    var percentage = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+                    window.parent.postMessage({ type: 'scroll', percentage: percentage, sourceId: window.name || location.href }, '*');
+                };
+                window.addEventListener('message', function(event) {
+                    if (event.data && event.data.type === 'scroll' && event.data.sourceId !== (window.name || location.href)) {
+                        var targetScroll = event.data.percentage * (document.documentElement.scrollHeight - window.innerHeight);
+                        window.scrollTo(0, targetScroll);
+                    }
+                });
+            })();
+        </script>
+        """
+        html_with_sync = html_content + sync_script
+        return html_with_sync.replace("file:///" + TEMPLATES_DIR.replace("\\", "/"), "/static/templates")
 
     # 6. Generate PDF
     try:

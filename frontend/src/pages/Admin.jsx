@@ -33,12 +33,30 @@ const Admin = () => {
     const [allProjects, setAllProjects] = useState([]);
     const [toastMessage, setToastMessage] = useState(null);
     const [translations, setTranslations] = useState([]);
+
     const [isLoadingTranslations, setIsLoadingTranslations] = useState(false);
     const [showDownloadPrompt, setShowDownloadPrompt] = useState(false);
     const [isVerifyingBeforeDownload, setIsVerifyingBeforeDownload] = useState(false);
     const [verificationLang, setVerificationLang] = useState('en');
     const [atsScore, setAtsScore] = useState(0);
     const [atsChecks, setAtsChecks] = useState([]);
+
+    useEffect(() => {
+        const handleMessage = (event) => {
+            if (event.data && event.data.type === 'scroll') {
+                const iframeEn = document.getElementById('verification-iframe-en');
+                const iframeTarget = document.getElementById('verification-iframe-target');
+                
+                if (event.data.sourceId === 'verification-iframe-en' && iframeTarget) {
+                    iframeTarget.contentWindow.postMessage(event.data, '*');
+                } else if (event.data.sourceId === 'verification-iframe-target' && iframeEn) {
+                    iframeEn.contentWindow.postMessage(event.data, '*');
+                }
+            }
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [isVerifyingBeforeDownload]);
 
     const showToast = (text, type = 'success') => {
         setToastMessage({ text, type });
@@ -205,59 +223,6 @@ const Admin = () => {
             fetchATSScore();
         }
     }, [previewCountry, data, activeTab]);
-
-    // Neural Scroll Synchronization for Verification Suite
-    useEffect(() => {
-        if (!isVerifyingBeforeDownload) return;
-
-        const setupSync = () => {
-            const iframeEn = document.getElementById('verification-iframe-en');
-            const iframeTarget = document.getElementById('verification-iframe-target');
-            
-            if (!iframeEn || !iframeTarget) return;
-
-            let isSyncing = false;
-
-            const handleScroll = (source, target) => {
-                if (isSyncing) return;
-                isSyncing = true;
-                try {
-                    const sourceDoc = source.contentDocument || source.contentWindow.document;
-                    const targetDoc = target.contentDocument || target.contentWindow.document;
-                    if (!sourceDoc || !targetDoc) return;
-                    
-                    const scrollPercent = sourceDoc.documentElement.scrollTop / (sourceDoc.documentElement.scrollHeight - sourceDoc.documentElement.clientHeight);
-                    const targetScrollTop = scrollPercent * (targetDoc.documentElement.scrollHeight - targetDoc.documentElement.clientHeight);
-                    targetDoc.documentElement.scrollTop = targetScrollTop;
-                } catch (e) {
-                    // Possible cross-origin or frame not ready
-                }
-                setTimeout(() => { isSyncing = false; }, 50);
-            };
-
-            const attachListener = (iframe, other) => {
-                try {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (doc) {
-                        iframe.contentWindow.onscroll = () => handleScroll(iframe, other);
-                        // Also try the doc itself for redundancy
-                        doc.onscroll = () => handleScroll(iframe, other);
-                    }
-                } catch (e) {}
-            };
-
-            // Attempt initial attachment
-            attachListener(iframeEn, iframeTarget);
-            attachListener(iframeTarget, iframeEn);
-
-            // Re-attach on load to ensure we have the internal window context
-            iframeEn.onload = () => attachListener(iframeEn, iframeTarget);
-            iframeTarget.onload = () => attachListener(iframeTarget, iframeEn);
-        };
-
-        const timer = setTimeout(setupSync, 1500); // Wait for initial render
-        return () => clearTimeout(timer);
-    }, [isVerifyingBeforeDownload, activeTab]);
 
     const handleAIAction = async (endpoint, payload, callback) => {
         try {
@@ -448,12 +413,6 @@ const Admin = () => {
                                             { key: 'gender', label: 'Gender', type: 'static', value: 'Female' },
                                             { key: 'nationality', label: 'Nationality', type: 'text' },
                                             { key: 'marital_status', label: 'Marital Status', type: 'select', options: ['Single', 'Married', 'Divorced'] },
-                                            { key: 'visa_status', label: 'Visa Status', type: 'text' },
-                                            { key: 'military_service', label: 'Military Service', type: 'static', value: 'No' },
-                                            { key: 'wechat_id', label: 'WeChat ID', type: 'text' },
-                                            { key: 'kakaotalk_id', label: 'KakaoTalk ID', type: 'text' },
-                                            { key: 'political_status', label: 'Political Status', type: 'text' },
-                                            { key: 'korean_language_level', label: 'Korean Language Level', type: 'text' }
                                         ].map(field => (
                                             <div key={field.key}>
                                                 <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
@@ -492,18 +451,24 @@ const Admin = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold mt-4">Regional Metadata (Visa Info)</h4>
+                                    <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold mt-4">Global Metadata</h4>
                                     <div className="grid grid-cols-2 gap-4">
-                                        {['visaType', 'visaIssueDate', 'visaExpiryDate'].map(field => (
-                                            <div key={field}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.replace(/([A-Z])/g, ' $1').trim()}</label>
+                                        {[
+                                            { key: 'visa_status', label: 'Visa / Work Status', placeholder: 'Permanent Resident / H1-B / F-1' },
+                                            { key: 'wechat_id', label: 'WeChat ID', placeholder: 'Enter WeChat ID' },
+                                            { key: 'kakaotalk_id', label: 'KakaoTalk ID', placeholder: 'Enter KakaoTalk ID' },
+                                            { key: 'military_service', label: 'Military Service', type: 'static', value: 'No' },
+                                            { key: 'political_status', label: 'Political Status (Global/China)', placeholder: 'Enter Political Status' },
+                                        ].map(field => (
+                                            <div key={field.key}>
+                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
                                                 <input
                                                     className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
-                                                    value={formData.profile?.visa_info?.[field] || ''}
-                                                    placeholder={`Enter ${field}`}
+                                                    value={formData.profile?.personal?.[field.key] || ''}
+                                                    placeholder={field.placeholder}
                                                     onChange={e => {
-                                                        const visa_info = formData.profile.visa_info || {};
-                                                        handleChange('profile', 'visa_info', { ...visa_info, [field]: e.target.value });
+                                                        const personal = formData.profile.personal || {};
+                                                        handleChange('profile', 'personal', { ...personal, [field.key]: e.target.value });
                                                     }}
                                                 />
                                             </div>
@@ -640,9 +605,16 @@ const Admin = () => {
                                     <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 flex justify-between items-center italic">
                                         Narrative sequence
                                         <button
-                                            onClick={() => handleAIAction('rewrite-about', { text: formData.about.join('\n') }, (newText) => setFormData(p => ({ ...p, about: newText.split('\n') })))}
-                                            className="text-accent font-mono text-[9px] hover:underline uppercase tracking-widest"
-                                        >✦ enrich sequence</button>
+                                             onClick={() => handleAIAction('rewrite-about', { text: formData.about.join('\n') }, (newText) => {
+                                                 const paras = newText.split('\n').filter(p => p.trim());
+                                                 // Ensure exactly 2 paragraphs
+                                                 let finalParas = paras.slice(0, 2);
+                                                 while (finalParas.length < 2) finalParas.push('Narrative signal pending...');
+                                                 setFormData(p => ({ ...p, about: finalParas }));
+                                                 showToast('Narrative Sequence Enriched', 'success');
+                                             })}
+                                             className="text-accent font-mono text-[9px] hover:underline uppercase tracking-widest"
+                                         >✦ enrich sequence</button>
                                     </h3>
                                     {formData.about.map((para, idx) => (
                                         <textarea
@@ -706,19 +678,7 @@ const Admin = () => {
                                     />
                                 </div>
 
-                                {/* Extracurriculars */}
-                                <div className="space-y-6">
-                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
-                                        <h3 className="font-serif text-2xl italic">Extracurriculars / Languages</h3>
-                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.extracurriculars?.length || 0} nodes</span>
-                                    </div>
-                                    <CollectionEditor
-                                        type="extracurriculars"
-                                        items={formData.extracurriculars || []}
-                                        setItems={(newItems) => setFormData(prev => ({ ...prev, extracurriculars: newItems }))}
-                                        onEdit={(item) => setEditingItem({ type: 'extracurriculars', item })}
-                                    />
-                                </div>
+
 
                                 {/* Certifications */}
                                 <div className="space-y-6">
@@ -864,28 +824,6 @@ const Admin = () => {
                                     />
                                 </div>
 
-                                {/* Activity Signal (Read-Only) */}
-                                <div className="space-y-6">
-                                    <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
-                                        <h3 className="font-serif text-2xl italic">Signal History</h3>
-                                        <span className="font-mono text-[9px] text-warmBrown/30 uppercase tracking-[0.2em]">{formData.activityLog?.length || 0} nodes</span>
-                                    </div>
-                                    <div className="flex flex-col gap-2 max-h-96 overflow-y-auto pr-2">
-                                        {(formData.activityLog || []).slice(0, 100).map((act, i) => (
-                                            <div key={i} className="flex justify-between items-center p-3 border border-warmBrown/5 bg-white">
-                                                <div className="flex flex-col">
-                                                    <span className="font-mono text-[10px] uppercase text-warmBrown">{act.action}</span>
-                                                    <span className="font-mono text-[9px] uppercase tracking-widest text-warmBrown/40 mt-1">{act.description}</span>
-                                                </div>
-                                                <span className="font-mono text-[9px] text-warmBrown/30">{act.date}</span>
-                                            </div>
-                                        ))}
-                                        {(!formData.activityLog || formData.activityLog.length === 0) && (
-                                            <div className="py-8 text-center text-warmBrown/30 font-mono text-[10px] uppercase tracking-widest border border-dashed border-warmBrown/10">No signals detected</div>
-                                        )}
-                                    </div>
-                                </div>
-
                                 {/* Blog */}
                                 <div className="space-y-6">
                                     <div className="flex justify-between items-end border-b border-warmBrown/5 pb-4">
@@ -899,7 +837,7 @@ const Admin = () => {
                                     />
                                 </div>
                             </div>
-                            <button onClick={() => saveChanges('Artifacts deposited successfully')} className="fixed bottom-8 right-8 w-48 py-4 bg-accent text-white font-mono text-xs shadow-2xl z-50 hover:bg-warmBlack transition-all uppercase tracking-widest">Deposit Artifacts</button>
+                             <button onClick={() => saveChanges('Artifacts deposited successfully')} className="fixed bottom-10 right-32 w-48 py-4 bg-accent text-white font-mono text-[10px] shadow-2xl z-[100] hover:bg-warmBlack transition-all uppercase tracking-widest border border-white/10">Deposit Artifacts</button>
                         </div>
                     )}
 
@@ -948,23 +886,6 @@ const Admin = () => {
                                 </h3>
 
                                 <div className="grid grid-cols-1 gap-8">
-                                    {/* Global Content Field */}
-                                    <div className="space-y-3">
-                                        <label className="block text-[10px] font-mono text-accent font-bold uppercase tracking-widest">Global Body (International / Japan / China)</label>
-                                        <textarea
-                                            className="w-full border border-warmBrown/10 p-6 focus:outline-none focus:border-accent font-serif text-sm h-64 bg-ivory/5 leading-relaxed"
-                                            value={formData.cover_letter?.content || ''}
-                                            onChange={e => setFormData(prev => ({
-                                                ...prev,
-                                                cover_letter: {
-                                                    ...(prev.cover_letter || {}),
-                                                    content: e.target.value
-                                                }
-                                            }))}
-                                            placeholder="Standard cover letter body used for non-Korean templates..."
-                                        />
-                                    </div>
-
                                     {/* Korean Specific Sections */}
                                     <div className="pt-8 border-t border-warmBrown/5 space-y-8">
                                         <h4 className="font-mono text-[10px] text-warmBrown/30 uppercase tracking-[0.3em]">Korean Specialty Sections (자기소개서)</h4>
@@ -1013,7 +934,7 @@ const Admin = () => {
                                                 setIsRefreshing(true);
                                                 setPreviewCountry(e.target.value);
                                                 const country = e.target.value;
-                                                if (['japan', 'korea', 'china'].includes(country)) {
+                                                if (['japan', 'korea', 'china', 'india'].includes(country)) {
                                                     setPreviewRegion(country);
                                                     setIncludeCoverLetter(true);
                                                 } else {
@@ -1023,6 +944,7 @@ const Admin = () => {
                                             }}
                                         >
                                             <option value="usa">USA (Standard ATS)</option>
+                                            <option value="india">India (Domestic ATS)</option>
                                             <option value="uk">United Kingdom</option>
                                             <option value="germany">Germany (DACH)</option>
                                             <option value="uae">UAE / Middle East</option>
@@ -1315,16 +1237,16 @@ const Admin = () => {
                                 <form onSubmit={handleCommand} className="relative">
                                     <div className="absolute left-0 top-3 text-accent font-mono text-xs opacity-50">&gt;</div>
                                     <input
-                                        type="text"
-                                        placeholder="Invoke command sequence..."
-                                        className="w-full border-b border-accent/10 p-3 pl-6 font-mono text-xs focus:outline-none focus:border-accent bg-transparent text-ivory placeholder:text-ivory/10 transition-all"
-                                        value={command}
-                                        onChange={(e) => setCommand(e.target.value)}
-                                    />
+                                         type="text"
+                                         value={command}
+                                         onChange={e => setCommand(e.target.value)}
+                                         className="w-full bg-transparent border-none focus:ring-0 font-mono text-xs text-warmBrown placeholder-ivory/20 pb-4"
+                                         placeholder="Input sequence command..."
+                                     />
                                     <button type="submit" className="absolute right-0 bottom-2 text-accent font-mono text-[9px] uppercase tracking-widest hover:text-white transition-colors">Execute</button>
                                 </form>
 
-                                <div className="min-h-[200px] bg-black/40 border border-white/5 p-6 rounded-xl font-mono text-[10px] leading-relaxed text-ivory/60 overflow-y-auto max-h-64 custom-scrollbar">
+                                <div className="min-h-[200px] bg-black/40 border border-white/5 p-6 rounded-xl font-mono text-[10px] leading-relaxed text-accent overflow-y-auto max-h-64 custom-scrollbar shadow-inner">
                                     {cmdResult ? (
                                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                                             <span className="text-accent/60"># SEQUENCE_SUCCESSFUL</span>
@@ -1332,7 +1254,7 @@ const Admin = () => {
                                             {cmdResult}
                                         </motion.div>
                                     ) : (
-                                        <span className="opacity-20 animate-pulse">Awaiting input...</span>
+                                        <span className="opacity-20 animate-pulse text-ivory/60">Awaiting input...</span>
                                     )}
                                 </div>
                             </div>
@@ -1418,17 +1340,7 @@ const Admin = () => {
                                     </>
                                 )}
 
-                                {editingItem.type === 'extracurriculars' && (
-                                    <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Program/Activity Name" value={editingItem.item.title || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, title: e.target.value } })} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Institution" value={editingItem.item.institution || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, institution: e.target.value } })} />
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Duration (e.g. 2023/03 - 2024/02)" value={editingItem.item.duration || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, duration: e.target.value } })} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Type (e.g. 어학연수)" value={editingItem.item.type || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, type: e.target.value } })} />
-                                        </div>
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32 mt-4" placeholder="Bullets (One per line)" value={(editingItem.item.bullets || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
-                                    </>
-                                )}
+
 
                                 {editingItem.type === 'certifications' && (
                                     <>
@@ -1520,32 +1432,102 @@ const Admin = () => {
                                 {editingItem.type === 'research' && (
                                     <>
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Topic" defaultValue={editingItem.item.topic} onChange={e => editingItem.item.topic = e.target.value} />
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-mono text-[10px] uppercase h-32" placeholder="Description (Compact)" defaultValue={editingItem.item.description} onChange={e => editingItem.item.description = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Date" value={editingItem.item.date || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, date: e.target.value } })} />
                                     </>
                                 )}
 
                                 {editingItem.type === 'languages' && (
-                                    <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Language Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" defaultValue={editingItem.item.level} onChange={e => editingItem.item.level = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage" defaultValue={editingItem.item.percentage} onChange={e => editingItem.item.percentage = Number(e.target.value)} />
-                                        </div>
-                                    </>
-                                )}
+                                     <div className="space-y-6">
+                                         {/* New Language Wizard */}
+                                         {(!editingItem.item.id && (!editingItem.item.wizardStep || editingItem.item.wizardStep === 1)) && (
+                                             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                                                 <label className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Step 1: Language Identity</label>
+                                                 <input 
+                                                    className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif text-xl" 
+                                                    placeholder="Language Name (e.g. Japanese)" 
+                                                    defaultValue={editingItem.item.name} 
+                                                    onChange={e => { editingItem.item.name = e.target.value; setEditingItem({...editingItem}); }} 
+                                                 />
+                                                 <button 
+                                                    onClick={() => {
+                                                        const exists = formData.languages?.some(l => l.name?.toLowerCase() === editingItem.item.name?.toLowerCase());
+                                                        if (exists) {
+                                                            showToast('Language already available', 'error');
+                                                            return;
+                                                        }
+                                                        setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 2 } });
+                                                    }}
+                                                    disabled={!editingItem.item.name}
+                                                    className="px-6 py-2 bg-accent text-white font-mono text-[9px] uppercase tracking-widest hover:bg-black transition-all disabled:opacity-30"
+                                                 >Next: Certification Query</button>
+                                             </div>
+                                         )}
+
+                                         {(!editingItem.item.id && editingItem.item.wizardStep === 2) && (
+                                             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                                                 <div className="bg-ivory/30 p-8 border border-warmBrown/5 text-center space-y-4">
+                                                     <h4 className="font-serif text-lg italic">Do you hold a formal certification or exam score for {editingItem.item.name}?</h4>
+                                                     <div className="flex justify-center gap-4">
+                                                         <button 
+                                                            onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 4, hasCert: true } })}
+                                                            className="px-8 py-3 bg-warmBrown text-ivory font-mono text-[10px] uppercase tracking-widest hover:bg-black transition-all"
+                                                         >Yes, I have proof</button>
+                                                         <button 
+                                                            onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 3, hasCert: false } })}
+                                                            className="px-8 py-3 border border-warmBrown/20 text-warmBrown font-mono text-[10px] uppercase tracking-widest hover:bg-ivory transition-all"
+                                                         >No, general proficiency</button>
+                                                     </div>
+                                                 </div>
+                                                 <button onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 1 } })} className="text-[9px] font-mono text-warmBrown/30 uppercase hover:text-accent tracking-widest">← Back to Identity</button>
+                                             </div>
+                                         )}
+
+                                         {(!editingItem.item.id && editingItem.item.wizardStep === 3) && (
+                                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                                 <label className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Proficiency Calibration</label>
+                                                 <div className="grid grid-cols-2 gap-4">
+                                                     <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" defaultValue={editingItem.item.level} onChange={e => { editingItem.item.level = e.target.value; setEditingItem({...editingItem}); }} />
+                                                     <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage (0-100)" defaultValue={editingItem.item.percentage} onChange={e => { editingItem.item.percentage = Number(e.target.value); setEditingItem({...editingItem}); }} />
+                                                 </div>
+                                                 <button onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 2 } })} className="text-[9px] font-mono text-warmBrown/30 uppercase hover:text-accent tracking-widest block">← Back to Choice</button>
+                                             </div>
+                                         )}
+
+                                         {(!editingItem.item.id && editingItem.item.wizardStep === 4) && (
+                                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                                 <label className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Certification Registry</label>
+                                                 <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Exam/Certification Name (e.g. JLPT N2)" defaultValue={editingItem.item.exam_name} onChange={e => { editingItem.item.exam_name = e.target.value; setEditingItem({...editingItem}); }} />
+                                                 <div className="grid grid-cols-3 gap-4">
+                                                     <div className="flex flex-col gap-1">
+                                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" type="date" placeholder="Date" defaultValue={editingItem.item.date} onChange={e => { editingItem.item.date = e.target.value; setEditingItem({...editingItem}); }} />
+                                                        {editingItem.item.date && new Date(editingItem.item.date) > new Date() && (
+                                                            <span className="text-[8px] text-red-500 font-mono uppercase tracking-tighter">Must be past date</span>
+                                                        )}
+                                                     </div>
+                                                     <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Score" defaultValue={editingItem.item.score} onChange={e => { editingItem.item.score = e.target.value; setEditingItem({...editingItem}); }} />
+                                                     <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Resulting Level" defaultValue={editingItem.item.level} onChange={e => { editingItem.item.level = e.target.value; setEditingItem({...editingItem}); }} />
+                                                 </div>
+                                                 <button onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 2 } })} className="text-[9px] font-mono text-warmBrown/30 uppercase hover:text-accent tracking-widest block">← Back to Choice</button>
+                                             </div>
+                                         )}
+
+                                         {/* Existing Edit View */}
+                                         {editingItem.item.id && (
+                                             <>
+                                                 <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Language Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                                 <div className="grid grid-cols-2 gap-4">
+                                                     <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" defaultValue={editingItem.item.level} onChange={e => editingItem.item.level = e.target.value} />
+                                                     <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage" defaultValue={editingItem.item.percentage} onChange={e => editingItem.item.percentage = Number(e.target.value)} />
+                                                 </div>
+                                             </>
+                                         )}
+                                     </div>
+                                 )}
 
                                 {editingItem.type === 'skills' && (
                                     <>
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Category Label (e.g. ML & AI)" defaultValue={editingItem.item.label} onChange={e => editingItem.item.label = e.target.value} />
                                         <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Skills (Comma Separated)" defaultValue={editingItem.item.items?.join(', ')} onChange={e => editingItem.item.items = e.target.value.split(',').map(s => s.trim()).filter(s => s)} />
-                                    </>
-                                )}
-
-                                {editingItem.type === 'activity' && (
-                                    <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Date (YYYY-MM-DD)" defaultValue={editingItem.item.date} onChange={e => editingItem.item.date = e.target.value} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Activity (e.g. Commited to Portfolio)" defaultValue={editingItem.item.activity} onChange={e => editingItem.item.activity = e.target.value} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Count" defaultValue={editingItem.item.count} onChange={e => editingItem.item.count = Number(e.target.value)} />
                                     </>
                                 )}
 
@@ -1610,7 +1592,7 @@ const Admin = () => {
                                         const keyMap = {
                                             experience: 'experience',
                                             education: 'education',
-                                            extracurriculars: 'extracurriculars',
+
                                             certifications: 'certifications',
                                             achievements: 'achievements',
                                             testimonials: 'testimonials',
@@ -1624,17 +1606,47 @@ const Admin = () => {
                                         };
                                         const key = keyMap[editingItem.type];
                                         if (!editingItem.item.id) {
-                                            // It's a new item (no ID assigned yet)
                                             const newItems = [...(formData[key] || []), { ...editingItem.item, id: Date.now().toString(), visible: true, order: (formData[key]?.length || 0) }];
                                             setFormData(prev => ({ ...prev, [key]: newItems }));
                                         } else {
-                                            // It's an update - we already mutated the item in the modal, 
-                                            // but we should trigger a state update to ensure persistence
                                             setFormData(prev => ({ ...prev }));
+                                        }
+
+                                        // Task 6: Logic for Language -> Certifications sync
+                                        if (editingItem.type === 'languages' && editingItem.item.hasCert && editingItem.item.exam_name) {
+                                            const certName = `${editingItem.item.exam_name} (${editingItem.item.name})`;
+                                            const certYear = editingItem.item.date ? editingItem.item.date.split('-')[0] : new Date().getFullYear().toString();
+                                            
+                                            setFormData(prev => {
+                                                const existingCerts = prev.certifications || [];
+                                                if (!existingCerts.some(c => c.name === certName)) {
+                                                    return {
+                                                        ...prev,
+                                                        certifications: [...existingCerts, {
+                                                            id: `sync-${Date.now()}`,
+                                                            name: certName,
+                                                            issuer: 'Official Proficiency Exam',
+                                                            year: certYear,
+                                                            score: editingItem.item.score,
+                                                            visible: true,
+                                                            order: existingCerts.length
+                                                        }]
+                                                    };
+                                                }
+                                                return prev;
+                                            });
                                         }
                                         setEditingItem(null);
                                     }}
-                                    className="w-full py-4 bg-warmBrown text-ivory font-mono text-xs uppercase tracking-[0.4em] hover:bg-black transition-all"
+                                    disabled={
+                                        (editingItem.type === 'languages' && !editingItem.item.id && ![3, 4].includes(editingItem.item.wizardStep)) || 
+                                        (editingItem.item.wizardStep === 4 && (!editingItem.item.date || new Date(editingItem.item.date) > new Date()))
+                                    }
+                                    className={`w-full py-4 bg-warmBrown text-ivory font-mono text-xs uppercase tracking-[0.4em] hover:bg-black transition-all ${
+                                        ((editingItem.type === 'languages' && !editingItem.item.id && ![3, 4].includes(editingItem.item.wizardStep)) || 
+                                        (editingItem.item.wizardStep === 4 && (!editingItem.item.date || new Date(editingItem.item.date) > new Date()))) 
+                                        ? 'opacity-20 pointer-events-none' : ''
+                                    }`}
                                 >
                                     Index Artifact
                                 </button>
@@ -1668,7 +1680,7 @@ const Admin = () => {
             <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-warmBrown/5 flex justify-between items-center opacity-40">
                 <div className="flex gap-8">
                     <div className="flex flex-col">
-                        <span className="font-mono text-[8px] uppercase tracking-[0.3em]">Quantum Portfolio Engine</span>
+                        <span className="font-mono text-[8px] uppercase tracking-[0.3em] font-bold">Quantum Portfolio Engine</span>
                         <span className="font-serif italic text-[11px]">Secure Admin Core v8.2.1</span>
                     </div>
                 </div>
@@ -1751,9 +1763,9 @@ const Admin = () => {
                                         <div className="flex gap-4">
                                             <button 
                                                 onClick={() => setIsVerifyingBeforeDownload(false)}
-                                                className="px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-ivory/40 hover:text-white transition-all"
+                                                className="px-6 py-2 border border-accent/20 text-accent font-mono text-[10px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all rounded"
                                             >
-                                                Back
+                                                Abort
                                             </button>
                                             <button 
                                                 onClick={() => triggerDownload(verificationLang)}
@@ -1797,6 +1809,7 @@ const Admin = () => {
                                                     </div>
                                                     <iframe 
                                                         id="verification-iframe-en"
+                                                        name="verification-iframe-en"
                                                         src={`http://localhost:8000/api/resume/preview/${previewCountry}?lang=en&cover=${includeCoverLetter}&v=${Date.now()}`}
                                                         className="flex-1 w-full border border-warmBrown/10 bg-white shadow-sm"
                                                     />
@@ -1804,17 +1817,18 @@ const Admin = () => {
 
                                                 {/* Target Translation */}
                                                 <div className="flex-1 flex flex-col h-full">
-                                                    <div className="bg-accent/5 px-3 py-1 border border-accent/20 border-b-0 rounded-t flex justify-between items-center">
-                                                        <span className="font-mono text-[7px] uppercase tracking-widest text-accent/60">Live Signal ({verificationLang.toUpperCase()})</span>
+                                                    <div className="bg-accent/10 px-3 py-1 border border-accent/20 border-b-0 rounded-t flex justify-between items-center">
+                                                        <span className="font-mono text-[7px] uppercase tracking-widest text-accent font-bold">Target ({verificationLang.toUpperCase()})</span>
                                                         <div className="flex gap-1">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-accent/40 animate-pulse" />
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                                                             <div className="w-1.5 h-1.5 rounded-full bg-accent/40" />
                                                         </div>
                                                     </div>
                                                     <iframe 
                                                         id="verification-iframe-target"
+                                                        name="verification-iframe-target"
                                                         src={`http://localhost:8000/api/resume/preview/${previewCountry}?lang=${verificationLang}&cover=${includeCoverLetter}&v=${Date.now()}`}
-                                                        className="flex-1 w-full border border-accent/20 bg-white shadow-md ring-1 ring-accent/5"
+                                                        className="flex-1 w-full border border-accent/20 bg-white shadow-xl"
                                                     />
                                                 </div>
                                             </div>

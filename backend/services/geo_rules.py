@@ -52,7 +52,7 @@ GEO_RULES = {
         "show_nationality": False,
         "show_marital": False,
         "show_gpa": True,
-        "show_visa": False,
+        "show_visa": True,
         "show_religion": False,
         "date_format": "MM/YYYY",
         "edu_order": "newest_first",
@@ -73,7 +73,7 @@ GEO_RULES = {
         "show_nationality": False,
         "show_marital": False,
         "show_gpa": False,
-        "show_visa": False,
+        "show_visa": True,
         "show_religion": False,
         "date_format": "MM/YYYY",
         "edu_order": "newest_first",
@@ -113,7 +113,7 @@ GEO_RULES = {
         "show_nationality": True,
         "show_marital": True,
         "show_gpa": True,
-        "show_visa": False,
+        "show_visa": True,
         "show_religion": False,
         "date_format": "YYYY年MM月",
         "edu_order": "newest_first",
@@ -125,7 +125,7 @@ GEO_RULES = {
         "format": "A4",
         "margin": {"top": "15mm", "right": "15mm", "bottom": "15mm", "left": "15mm"},
     },
-    "germany": {
+    "india": {
         "template": "template_ats.html",
         "css": "css/ats.css",
         "specialty": False,
@@ -144,12 +144,33 @@ GEO_RULES = {
         "prune_fields": ["photo", "dob", "nationality", "marital_status"],
         "max_pages": 2,
         "format": "A4",
-        "margin": {"top": "18mm", "right": "15mm", "bottom": "18mm", "left": "15mm"},
+        "margin": {"top": "20mm", "right": "20mm", "bottom": "20mm", "left": "20mm"},
+    },
+    "international": {
+        "template": "template_ats.html",
+        "css": "css/ats.css",
+        "specialty": False,
+        "show_photo": False,
+        "show_dob": False,
+        "show_nationality": False,
+        "show_marital": False,
+        "show_gpa": True,
+        "show_visa": True,
+        "show_religion": False,
+        "date_format": "MM/YYYY",
+        "edu_order": "newest_first",
+        "work_order": "newest_first",
+        "cover_letter": True,
+        "cover_letter_type": "ats_letter",
+        "prune_fields": ["photo", "dob", "nationality", "marital_status"],
+        "max_pages": 2,
+        "format": "A4",
+        "margin": {"top": "20mm", "right": "20mm", "bottom": "20mm", "left": "20mm"},
     },
 }
 
 ATS_COUNTRIES = [
-    "usa", "uk", "canada", "australia",
+    "usa", "uk", "canada", "australia", "india",
     "singapore", "france", "germany",
     "uae", "saudi_arabia", "europe", "international"
 ]
@@ -203,7 +224,7 @@ def calculate_ats_score(data: dict, region: str):
 
     # 5. Region Specific Rules
     region_key = region.lower()
-    if region_key in ["usa", "uk", "germany", "international"]:
+    if region_key in ["usa", "uk", "germany", "international", "india"]:
         # Photo Check (ATS compliant = no photo)
         if not data.get("profile_photo_url") and not data.get("profile_photo"):
             score += 20
@@ -213,6 +234,11 @@ def calculate_ats_score(data: dict, region: str):
         if not personal.get("dob"):
             score += 10
             checks.append("Privacy Compliance (No DOB for ATS)")
+            
+        # Visa Status Check (Standard for International, optional for others)
+        if region_key == "international" and personal.get("visa_status"):
+            score += 10
+            checks.append("Visa Status / Work Authorization included")
             
         # Education
         if len(data.get("education", [])) > 0:

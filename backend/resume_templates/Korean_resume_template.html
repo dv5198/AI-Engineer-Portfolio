@@ -399,7 +399,7 @@
                 <td class="period-text">
                     {{ job.start_year }}/{{ '%02d' | format(job.start_month) }} ~ 
                     {% if job.is_current %}현재{% else %}{{ job.end_year }}/{{ '%02d' | format(job.end_month) }}{% endif %}
-                    <span class="duration-label">{{ job.duration }}</span>
+                    <span class="duration-label">{% if job.is_current %}약 {% endif %}{{ job.duration }}</span>
                 </td>
                 <td class="main-content">
                     <div class="company-name">

@@ -309,11 +309,7 @@ def _save_data_internal(data):
         conn.commit()
     
     # Clear PDF cache
-    try:
-        from services.cache_service import clear_pdf_cache
-        clear_pdf_cache()
-    except ImportError:
-        pass
+    _clear_pdf_cache_db_internal()
 
 def log_resume_download(ip: str, country: str, region: str, format_label: str):
     """
@@ -416,11 +412,14 @@ def save_cached_pdf_db(cache_key: str, pdf_blob: bytes):
             )
             conn.commit()
 
+def _clear_pdf_cache_db_internal():
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("DELETE FROM pdf_cache")
+        conn.commit()
+
 def clear_pdf_cache_db():
     with FileLock(LOCK_FILE, timeout=10):
-        with sqlite3.connect(DB_FILE) as conn:
-            conn.execute("DELETE FROM pdf_cache")
-            conn.commit()
+        _clear_pdf_cache_db_internal()
 
 def get_all_translations():
     with FileLock(LOCK_FILE, timeout=10):
