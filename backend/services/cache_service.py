@@ -1,25 +1,20 @@
 import time
 from typing import Dict, Tuple
 
-# Stores region -> (pdf_bytes, timestamp)
-pdf_cache: Dict[str, Tuple[bytes, float]] = {}
+from database import get_cached_pdf_db, save_cached_pdf_db, clear_pdf_cache_db
 PDF_TTL = 300  # 5 minutes
 
 # Stores IP -> country_dict
 ip_cache: Dict[str, dict] = {}
 
 def get_cached_pdf(region: str) -> bytes:
-    if region in pdf_cache:
-        pdf_bytes, ts = pdf_cache[region]
-        if time.time() - ts < PDF_TTL:
-            return pdf_bytes
-    return None
+    return get_cached_pdf_db(region, ttl_seconds=PDF_TTL)
 
 def set_cached_pdf(region: str, pdf_bytes: bytes):
-    pdf_cache[region] = (pdf_bytes, time.time())
+    save_cached_pdf_db(region, pdf_bytes)
 
 def clear_pdf_cache():
-    pdf_cache.clear()
+    clear_pdf_cache_db()
 
 # Project bullet cache — persists for 24 hours
 # Key: project name (lowercased, stripped)

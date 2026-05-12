@@ -2,7 +2,7 @@
 
 import os
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from services.geo import get_visitor_ip, get_country_from_ip, country_to_region
 from services.pdf_playwright import generate_resume_playwright
 from services.email_service import send_email_notification
@@ -12,7 +12,15 @@ from services.ntfy import send_hiring_alert
 import json
 import asyncio
 
+from services.geo_rules import calculate_ats_score
+
 router = APIRouter()
+
+@router.get("/ats-score/{region}")
+async def get_ats_score_route(region: str):
+    data = load_data()
+    result = calculate_ats_score(data, region)
+    return result
 
 @router.get("/detect")
 async def detect_region(request: Request):
@@ -34,17 +42,17 @@ async def detect_region(request: Request):
     }
 
 @router.get("/download")
-async def download_auto(request: Request, background_tasks: BackgroundTasks):
+async def download_auto(request: Request, background_tasks: BackgroundTasks, lang: str = "en"):
     """Auto-detects region and serves the PDF."""
     ip = get_visitor_ip(request)
     geo_data = await get_country_from_ip(ip)
     country_code = geo_data['code']
     region_info = country_to_region(country_code)
     
-    return await serve_pdf(region_info, request, background_tasks)
+    return await serve_pdf(region_info, request, background_tasks, lang=lang)
 
 @router.get("/download/{region}")
-async def download_manual(region: str, request: Request, background_tasks: BackgroundTasks):
+async def download_manual(region: str, request: Request, background_tasks: BackgroundTasks, lang: str = "en", cover: bool = None):
     """Manual override for regional resume download."""
     # Find the region info from REGION_MAP in geo.py
     from services.geo import REGION_MAP, DEFAULT_REGION
@@ -59,11 +67,39 @@ async def download_manual(region: str, request: Request, background_tasks: Backg
     if not target:
         target = DEFAULT_REGION
         
-    return await serve_pdf(target, request, background_tasks)
+    return await serve_pdf(target, request, background_tasks, lang=lang, include_cover=cover)
 
-async def serve_pdf(region_info: dict, request: Request, background_tasks: BackgroundTasks):
+@router.get("/preview")
+async def preview_auto(request: Request, background_tasks: BackgroundTasks, lang: str = "en"):
+    """Auto-detects region and serves the HTML preview."""
+    ip = get_visitor_ip(request)
+    geo_data = await get_country_from_ip(ip)
+    country_code = geo_data['code']
+    region_info = country_to_region(country_code)
+    
+    return await serve_pdf(region_info, request, background_tasks, return_html=True, lang=lang)
+
+@router.get("/preview/{region}")
+async def preview_manual(region: str, request: Request, background_tasks: BackgroundTasks, lang: str = "en", cover: bool = False):
+    """Manual override for regional HTML resume preview."""
+    from services.geo import REGION_MAP, DEFAULT_REGION
+    
+    target = None
+    for code, info in REGION_MAP.items():
+        if info['region'] == region or code.lower() == region.lower():
+            target = info
+            break
+            
+    if not target:
+        target = DEFAULT_REGION
+        
+    return await serve_pdf(target, request, background_tasks, return_html=True, lang=lang, include_cover=cover)
+
+async def serve_pdf(region_info: dict, request: Request, background_tasks: BackgroundTasks, return_html: bool = False, lang: str = "en", include_cover: bool = None):
+    print("serve_pdf: started")
     """Helper to generate and serve the PDF response."""
     data = load_data()
+    print("serve_pdf: data loaded")
     
     # Get live projects from projects service if needed, 
     # but here we can just pass the projects from data or fetched elsewhere.
@@ -113,6 +149,16 @@ async def serve_pdf(region_info: dict, request: Request, background_tasks: Backg
     try:
         region_name = region_info.get('region', 'international')
         include_photo = region_info.get('photo', False)
+
+        # Handle Cover Letter Logic
+        if include_cover is None:
+            from services.geo_rules import ATS_COUNTRIES
+            # Check query params first, fallback to region default
+            q_cover = request.query_params.get("cover")
+            if q_cover is not None:
+                include_cover = q_cover.lower() == "true"
+            else:
+                include_cover = False if region_name.lower() in ATS_COUNTRIES else True
         
         # Hiring Radar: Process analytics and notifications in background
         client_ip = get_visitor_ip(request)
@@ -146,12 +192,23 @@ async def serve_pdf(region_info: dict, request: Request, background_tasks: Backg
         from services.cache_service import get_cached_pdf, set_cached_pdf
         from io import BytesIO
         
-        cached_pdf = get_cached_pdf(region_name)
+        if return_html:
+            # For HTML preview, bypass cache and return HTML string
+            html_content = await generate_resume_playwright(data, live_projects=merged_projects, region=region_name, include_photo=include_photo, return_html=True, lang=lang, include_cover=include_cover)
+            return HTMLResponse(content=html_content)
+        
+        # Caching: Use region + lang for cache key
+        cache_key = f"{region_name}_{lang}_{include_cover}"
+        
+        # Bypass cache if 'v' (version/cache buster) is present in query params
+        use_cache = request.query_params.get("v") is None
+        
+        cached_pdf = get_cached_pdf(cache_key) if use_cache else None
         if cached_pdf:
             buffer = BytesIO(cached_pdf)
         else:
-            buffer = await generate_resume_playwright(data, live_projects=merged_projects, region=region_name, include_photo=include_photo)
-            set_cached_pdf(region_name, buffer.getvalue())
+            buffer = await generate_resume_playwright(data, live_projects=merged_projects, region=region_name, include_photo=include_photo, lang=lang, include_cover=include_cover)
+            set_cached_pdf(cache_key, buffer.getvalue())
 
         disp = "attachment" if request.query_params.get("download") == "true" else "inline"
         

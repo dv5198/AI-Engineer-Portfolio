@@ -29,7 +29,8 @@ async def fetch_github_contributions(username: str):
     """
     
     headers = {"Authorization": f"bearer {github_token}"}
-    async with httpx.AsyncClient() as client:
+    data = None  # initialise before try so except block can always reference it
+    async with httpx.AsyncClient(timeout=12.0) as client:
         try:
             response = await client.post(
                 "https://api.github.com/graphql",
@@ -45,6 +46,8 @@ async def fetch_github_contributions(username: str):
                 return {"error": data["errors"][0]["message"]}
                 
             return data["data"]["user"]["contributionsCollection"]["contributionCalendar"]
+        except httpx.TimeoutException:
+            return {"error": "GitHub GraphQL request timed out — check network connectivity"}
         except Exception as e:
-            return {"error": f"Exception: {str(e)} - Raw Response: {data}"}
-
+            raw = str(data) if data is not None else "no response received"
+            return {"error": f"Exception: {str(e)} - Raw Response: {raw}"}

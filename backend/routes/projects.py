@@ -36,6 +36,8 @@ async def get_projects():
             "homepage": r.get("homepage"),
             "language": r.get("language"),
             "topics": r.get("topics", []),
+            "image": r.get("image"),
+            "has_image": r.get("has_image"),
             "summary": "" # Will be populated natively or fetched client side if needed
         })
         

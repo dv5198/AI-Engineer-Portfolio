@@ -76,7 +76,7 @@ async def call_groq(prompt: str) -> str:
         return response.choices[0].message.content
     except Exception as e:
         print(f"Groq API Plain Text Error: {e}")
-        return f"Error: {str(e)}"
+        raise e
 
 async def summarize_about(about_list: list) -> str:
     """

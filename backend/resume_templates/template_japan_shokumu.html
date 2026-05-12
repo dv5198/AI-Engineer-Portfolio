@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>職務経歴書 - {{ personal.name_en }}</title>
+<title>職務経歴書 - {{ profile.name }}</title>
 <style>
 /* ============================================================
    PLAYWRIGHT PDF RESET
@@ -157,16 +157,18 @@ p, li { orphans: 3; widows: 3; }
 .project-table th {
   background: #555;
   color: #fff;
-  padding: 3px 6px;
+  padding: 4px 8px;
   text-align: left;
   border: 0.5pt solid #777;
   width: 22%;
+  font-weight: bold;
 }
 .project-table td {
-  padding: 3px 6px;
+  padding: 4px 8px;
   border: 0.5pt solid #ccc;
   vertical-align: top;
   line-height: 1.6;
+  word-break: break-word;
 }
 
 /* ============================================================
@@ -200,9 +202,18 @@ p, li { orphans: 3; widows: 3; }
      ============================================================ -->
 <div class="doc-header">
   <div class="doc-title">職　務　経　歴　書</div>
-  <div class="doc-meta">
-    {{ generated_date }}現在　　氏名：{{ personal.name_en }}
+  <div class="doc-meta" style="margin-bottom: 4px;">
+    {{ generated_date }}現在　　氏名：{{ profile.name }}
   </div>
+  {% if connections %}
+  <div style="font-size: 8pt; color: #555; text-align: right; line-height: 1.4;">
+    {% for conn in connections %}
+      {% if conn.platform | lower in ['github', 'linkedin'] and conn.visible %}
+        <div>{{ conn.platform }} : {{ conn.url }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- ============================================================
@@ -211,7 +222,7 @@ p, li { orphans: 3; widows: 3; }
 <div class="section">
   <div class="section-title section-header">職務要約</div>
   <div class="summary-box">
-    {{ personal.career_summary_ja | default(personal.summary) }}
+    {{ personal.career_summary_ja | default(profile.summary) }}
   </div>
 </div>
 
@@ -231,54 +242,11 @@ p, li { orphans: 3; widows: 3; }
       {% for category in skills %}
       <tr>
         <td style="font-weight:bold; white-space:nowrap;">{{ category.name_ja | default(category.name) }}</td>
-        <td>{{ category.items | join('、') }}</td>
+        <td>{{ category['items'] | join('、') }}</td>
         <td style="text-align:center; white-space:nowrap;">{{ category.years | default('—') }}</td>
         <td style="text-align:center;">{{ category.level | default('実務経験') }}</td>
       </tr>
       {% endfor %}
-    {% else %}
-    <tr>
-      <td style="font-weight:bold;">プログラミング言語</td>
-      <td>Python、SQL</td>
-      <td style="text-align:center;">4年</td>
-      <td style="text-align:center;">実務経験</td>
-    </tr>
-    <tr>
-      <td style="font-weight:bold;">AIフレームワーク</td>
-      <td>TensorFlow、PyTorch、scikit-learn、Hugging Face</td>
-      <td style="text-align:center;">3年</td>
-      <td style="text-align:center;">実務経験</td>
-    </tr>
-    <tr>
-      <td style="font-weight:bold;">バックエンド</td>
-      <td>FastAPI、Django、REST API、GraphQL</td>
-      <td style="text-align:center;">3年</td>
-      <td style="text-align:center;">実務経験</td>
-    </tr>
-    <tr>
-      <td style="font-weight:bold;">データベース</td>
-      <td>PostgreSQL、Redis、MongoDB、MySQL</td>
-      <td style="text-align:center;">3年</td>
-      <td style="text-align:center;">実務経験</td>
-    </tr>
-    <tr>
-      <td style="font-weight:bold;">クラウド・インフラ</td>
-      <td>AWS、GCP</td>
-      <td style="text-align:center;">2年</td>
-      <td style="text-align:center;">実務経験</td>
-    </tr>
-    <tr>
-      <td style="font-weight:bold;">ツール</td>
-      <td>Git、GitHub、Docker、K6、Pandas、NumPy</td>
-      <td style="text-align:center;">4年</td>
-      <td style="text-align:center;">実務経験</td>
-    </tr>
-    <tr>
-      <td style="font-weight:bold;">言語</td>
-      <td>英語（ビジネスレベル）、日本語（学習中）</td>
-      <td style="text-align:center;">—</td>
-      <td style="text-align:center;">—</td>
-    </tr>
     {% endif %}
   </table>
 </div>
@@ -300,20 +268,17 @@ p, li { orphans: 3; widows: 3; }
     </div>
     <div class="job-meta">
       役職：{{ job.role }}　　
-      雇用形態：{{ job.employment_type_ja | default('正社員') }}　　
+      雇用形態：{% if job.employment_type_ja %}{{ job.employment_type_ja }}{% elif 'freelance' in job.company|lower or 'freelance' in job.role|lower %}フリーランス{% else %}正社員{% endif %}　　
       {% if job.team_size %}チーム規模：{{ job.team_size }}名{% endif %}
     </div>
 
-    {% if job.description %}
+    {% set bullet_list = job.bullets if job.bullets else ([job.description] if job.description else []) %}
+    {% if bullet_list %}
     <div class="subsection-title">業務内容</div>
     <ul class="job-bullets">
-      {% if job.description is iterable and job.description is not string %}
-        {% for bullet in job.description %}
-        <li>{{ bullet }}</li>
-        {% endfor %}
-      {% else %}
-        <li>{{ job.description }}</li>
-      {% endif %}
+      {% for bullet in bullet_list %}
+      <li>{{ bullet }}</li>
+      {% endfor %}
     </ul>
     {% endif %}
 
@@ -351,7 +316,7 @@ p, li { orphans: 3; widows: 3; }
       </tr>
       <tr>
         <th>使用技術</th>
-        <td colspan="3">{{ project.tech | join('、') if project.tech is iterable and project.tech is not string else project.tech }}</td>
+        <td colspan="3">{{ project.techStack | default(project.tech, true) }}</td>
       </tr>
       <tr>
         <th>役割・担当</th>
@@ -359,7 +324,7 @@ p, li { orphans: 3; widows: 3; }
       </tr>
       <tr>
         <th>概要・成果</th>
-        <td colspan="3" style="line-height:1.7;">{{ project.description }}</td>
+        <td colspan="3" style="line-height:1.7;">{{ project.summary | default(project.description, true) }}</td>
       </tr>
     </table>
   </div>
@@ -401,6 +366,37 @@ p, li { orphans: 3; widows: 3; }
 <div style="margin-top:10px; text-align:right; font-size:8pt; color:#666;">
   以上
 </div>
+
+<!-- ================================================================
+     添え状 (Cover Letter) — Optional
+     ================================================================ -->
+{% if include_cover %}
+<div class="page" style="page-break-before: always; break-before: page; padding: 25mm 20mm; font-family: Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
+  <div style="text-align: right; font-size: 11pt; margin-bottom: 15mm;">
+    {{ generated_date }}
+  </div>
+  
+  <div style="margin-bottom: 5mm; font-size: 12pt; font-weight: bold;">
+    採用担当者様
+  </div>
+
+  <div style="text-align: center; margin-bottom: 20mm; font-size: 14pt; font-weight: bold; border-bottom: 2px solid #000; display: inline-block; width: 100%; padding-bottom: 8px; text-transform: uppercase;">
+    応募書類の送付につきまして (Application for Position)
+  </div>
+
+  <div style="line-height: 2.0; font-size: 11pt; text-align: justify; white-space: pre-wrap; margin-bottom: 30mm;">
+{{ cover_letter.content or '拝啓\n\n時下ますますご清栄のこととお慶び申し上げます。\nこの度、貴社の求人を拝見し、ぜひ応募させていただきたく、下記の通り書類を送付いたします。\n何卒ご検討いただけますよう、お願い申し上げます。\n\n敬具\n\n記\n\n1. 履歴書　　　　1通\n2. 職務経歴書　　1通\n\n以上' }}
+  </div>
+
+  <div style="text-align: right; font-size: 11pt; line-height: 1.6;">
+    〒{{ profile.postal_code | default('000-0000') }}<br>
+    {{ profile.address }}<br>
+    <span style="font-size: 14pt; font-weight: bold;">{{ profile.name }}</span><br>
+    電話: {{ profile.phone }}<br>
+    Email: {{ profile.email }}
+  </div>
+</div>
+{% endif %}
 
 </body>
 </html>

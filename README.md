@@ -1,6 +1,6 @@
-# Divya Nirankari - Antigravity Portfolio
+# Divya Nirankari - Portfolio
 
-A modern, dynamic personal portfolio built with **React (Vite)** and **Python (FastAPI)**. 
+A modern, dynamic personal portfolio built with **React (Vite)** and **Python (FastAPI)**.
 Features an "Ivory Editorial Antigravity" aesthetic, Framer Motion animations, custom deterministic canvas-generated project cover images, and a fully functional hidden admin dashboard with AI capabilities.
 
 ## 🚀 Completed Features
@@ -18,6 +18,7 @@ Features an "Ivory Editorial Antigravity" aesthetic, Framer Motion animations, c
 - **SEO Optimized**: Semantic HTML5 and meta-tag structure for maximum visibility.
 
 ## 🛠️ Tech Stack
+
 - **Frontend**: React 18, Vite, Tailwind CSS (light-mode only), Framer Motion, Lucide-React
 - **Backend**: FastAPI (Python 3.10+), Uvicorn, httpx, python-dotenv
 - **Database**: Persistent JSON storage (`data.json`)
@@ -28,46 +29,64 @@ Features an "Ivory Editorial Antigravity" aesthetic, Framer Motion animations, c
 ## ⚙️ Setup & Installation
 
 ### 1. Backend Setup
+
 1. Navigate to the `backend` directory:
+
    ```bash
    cd backend
    ```
+
 2. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    # Or install manually:
    pip install fastapi uvicorn httpx python-dotenv
    ```
+
 3. Add your Grok API Key and GitHub Token to `backend/.env`:
+
    ```env
    GROK_API_KEY=your_key_here
    GITHUB_TOKEN=your_token_here
    ```
+
 4. Run the FastAPI server:
+
    ```bash
-   uvicorn main:app --reload --port 8001
+   uvicorn main:app --reload --port 8000
    ```
-   > The server will run on `http://localhost:8001`
+
+   > The server will run on `http://localhost:8000`
 
 ### 2. Frontend Setup
+
 1. Navigate to the `frontend` directory:
+
    ```bash
    cd frontend
    ```
+
 2. Install Node dependencies:
+
    ```bash
    npm install
    ```
+
 3. Start the Vite dev server:
+
    ```bash
    npm run dev
    ```
+
    > The app will run on `http://localhost:5173`
 
 ---
 
 ## 🔒 Admin Access
+
 The admin dashboard is deliberately hidden for security and aesthetics.
+
 - **URL**: [http://localhost:5173/admin](http://localhost:5173/admin)
 - **Passphrase**: Managed via `AdminContext` (Default is typically defined in setup).
 

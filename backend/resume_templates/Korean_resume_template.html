@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>이력서 - {{ profile.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm 15mm 15mm;
+
+            @bottom-right {
+                content: counter(page) " / " counter(pages);
+                font-size: 8pt;
+                color: #999;
+                font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.6;
+            color: #222;
+            background: #fff;
+        }
+
+        .page {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .page:last-child {
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        .no-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* ── Header ── */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .name-block {
+            font-size: 24pt;
+            font-weight: 800;
+            margin-bottom: 5px;
+            color: #000;
+        }
+
+        .pill-container {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            background-color: #f1f3f9;
+            color: #4b5563;
+            border-radius: 100px;
+            font-size: 8.5pt;
+            font-weight: 600;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 20px;
+            font-size: 9pt;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 10px;
+        }
+
+        .info-label {
+            color: #6b7280;
+            min-width: 50px;
+        }
+
+        .info-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        /* ── Photo ── */
+        .photo-container {
+            width: 32mm;
+            height: 42mm;
+            margin-left: 20px;
+        }
+
+        .photo-box {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ── Section Titles ── */
+        .section-title {
+            font-size: 13pt;
+            font-weight: 700;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 4px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            color: #111;
+            display: block;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        /* ── Tables ── */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            page-break-inside: auto !important;
+        }
+        tr {
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+        }
+
+        td, th {
+            padding: 6px 0;
+            vertical-align: top;
+            border: none; /* Kowork style uses borderless rows */
+        }
+
+        /* ── Content Components ── */
+        .intro-text {
+            font-size: 10pt;
+            color: #374151;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .period-text {
+            font-size: 9pt;
+            color: #4b5563;
+            width: 160px;
+            font-weight: 600;
+        }
+
+        .duration-label {
+            font-size: 8.5pt;
+            color: #9ca3af;
+            font-weight: 400;
+            margin-left: 4px;
+            white-space: nowrap;
+            display: inline-block; /* Ensure it stays with the date if possible */
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .institution-name, .company-name {
+            font-size: 10.5pt;
+            font-weight: 700;
+            margin-bottom: 2px;
+            color: #111;
+        }
+
+        .sub-text {
+            font-size: 9pt;
+            color: #4b5563;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .badge-current { background: #dcfce7; color: #166534; }
+        .badge-past { background: #f3f4f6; color: #4b5563; }
+
+        ul.bullets {
+            margin: 6px 0 0 16px;
+            list-style: disc;
+        }
+
+        ul.bullets li {
+            font-size: 9pt;
+            margin-bottom: 4px;
+            color: #374151;
+        }
+
+        /* ── Skills & Tables ── */
+        .skill-table {
+            border: 1px solid #e5e7eb;
+        }
+        .skill-table th {
+            background: #f9fafb;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 9pt;
+            text-align: left;
+        }
+        .skill-table td {
+            padding: 10px 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 8.5pt;
+        }
+
+        /* ── Dots ── */
+        .dot-row { display: flex; gap: 4px; align-items: center; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #e5e7eb; }
+        .dot.filled { background: #374151; }
+
+        /* ── Projects ── */
+        .project-item {
+            border: 1px solid #e5e7eb;
+            margin-bottom: 12px;
+            padding: 10px;
+        }
+        .project-table th {
+            width: 20%;
+            background: #f9fafb;
+            padding: 6px 10px;
+            font-weight: 700;
+            border: 1px solid #e5e7eb;
+            font-size: 8.5pt;
+        }
+        .project-table td {
+            padding: 6px 10px;
+            border: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+
+        /* ── Self PR ── */
+        .jagi-section { margin-bottom: 25px; }
+        .jagi-title {
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #111;
+        }
+        .jagi-content {
+            font-size: 10pt;
+            line-height: 1.8;
+            color: #374151;
+            text-align: justify;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+            text-align: right;
+            font-size: 8pt;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================================================================
+     이력서 — PAGE 1
+     ================================================================ -->
+    <div class="page">
+
+        <!-- HEADER -->
+        <div class="header-container">
+            <div class="header-left">
+                <div class="name-block">{{ profile.name }}</div>
+                <div class="pill-container">
+                    <span class="tag-pill">🌐 해외 거주</span>
+                    {% if personal.korean_level %}
+                    <span class="tag-pill">🗣 한국어 {{ personal.korean_level }}</span>
+                    {% endif %}
+                    {% if personal.visa_type %}
+                    <span class="tag-pill">🛂 {{ personal.visa_type }}</span>
+                    {% endif %}
+                </div>
+                
+                <div style="margin-bottom:15px; font-weight:600; color:#4b5563;">
+                    {% if personal.gender | lower == 'female' %}여성{% else %}남성{% endif %} &nbsp;|&nbsp; 
+                    {{ personal.dob }} &nbsp;|&nbsp; 
+                    {{ personal.nationality }}
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">이메일</span>
+                        <span class="info-value">{{ profile.email }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">연락처</span>
+                        <span class="info-value">{{ profile.phone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">주소</span>
+                        <span class="info-value">{{ profile.address }}</span>
+                    </div>
+                    {% if profile.github %}
+                    <div class="info-item">
+                        <span class="info-label">GitHub</span>
+                        <span class="info-value"><a href="{{ profile.github }}" style="color:inherit; text-decoration:none;">{{ profile.github | replace('https://', '') }}</a></span>
+                    </div>
+                    {% endif %}
+                    {% if profile.linkedin %}
+                    <div class="info-item">
+                        <span class="info-label">LinkedIn</span>
+                        <span class="info-value"><a href="{{ profile.linkedin }}" style="color:inherit; text-decoration:none;">{{ profile.linkedin | replace('https://www.linkedin.com/in/', 'linkedin.com/in/') | replace('https://linkedin.com/in/', 'linkedin.com/in/') }}</a></span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="photo-container">
+                <div class="photo-box">
+                    {% if profile.photo %}
+                    <img src="{{ profile.photo }}" alt="Profile Photo">
+                    {% else %}
+                    <div style="font-size:8pt; color:#999; text-align:center;">PHOTO</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 간단 소개 -->
+        <div class="section-title">간단 소개 (Brief Introduction)</div>
+        <div class="intro-text">{{ personal.summary }}</div>
+
+        <!-- 학력 -->
+        <div class="section-title">학력 (Education)</div>
+        <table>
+            {% set rev_edu = geo_rule.edu_order == 'newest_first' if geo_rule else True %}
+            {% for edu in education | sort(attribute='start', reverse=rev_edu) %}
+            <tr class="no-break">
+                <td class="period-text">
+                    {{ edu.start_year }}/{{ '%02d' | format(edu.start_month) }} ~ {{ edu.end_year }}/{{ '%02d' | format(edu.end_month) }}
+                    <span class="duration-label">{{ edu.duration }}</span>
+                </td>
+                <td class="main-content">
+                    <div class="institution-name">{{ edu.institution }}</div>
+                    <div class="sub-text">
+                        {{ edu.major }}
+                        {% if edu.gpa %} · <span style="font-weight:600;">GPA {{ edu.gpa }}</span>{% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- 경력 -->
+        <div class="section-title">경력 (Work Experience)</div>
+        <table>
+            {% set rev_exp = geo_rule.work_order == 'newest_first' if geo_rule else True %}
+            {% for job in experience | sort(attribute='start', reverse=rev_exp) %}
+            <tr class="no-break">
+                <td class="period-text">
+                    {{ job.start_year }}/{{ '%02d' | format(job.start_month) }} ~ 
+                    {% if job.is_current %}현재{% else %}{{ job.end_year }}/{{ '%02d' | format(job.end_month) }}{% endif %}
+                    <span class="duration-label">{{ job.duration }}</span>
+                </td>
+                <td class="main-content">
+                    <div class="company-name">
+                        {{ job.company }}
+                        <span class="status-badge {% if job.is_current %}badge-current{% else %}badge-past{% endif %}">
+                            {% if job.is_current %}재직중{% else %}퇴직{% endif %}
+                        </span>
+                    </div>
+                    <div class="sub-text" style="font-weight:600; margin-bottom:4px;">
+                        {{ job.role }} &nbsp;|&nbsp; {{ job.employment_type_ko | default('정규직') }}
+                    </div>
+                    {% if job.bullets %}
+                    <ul class="bullets">
+                        {% for bullet in job.bullets %}
+                        <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- 언어 능력 -->
+        <div class="no-break" style="margin-top:15px;">
+            <div class="section-title">언어 능력 (Languages)</div>
+            <table style="margin-top:5px; width:100%; table-layout: fixed; border-collapse: collapse;">
+                {% for lang in languages %}
+                <tr class="no-break">
+                    <td style="width:100px; font-weight:700; color:#111;">{{ lang.name }}</td>
+                    <td style="width:160px;">
+                        <div class="dot-row">
+                            {% for i in range(5) %}
+                            <div class="dot {% if i < lang.level_dots %}filled{% endif %}"></div>
+                            {% endfor %}
+                            <span style="font-size:8pt; color:#666; margin-left:5px;">{{ lang.level_label }}</span>
+                        </div>
+                    </td>
+                    <td style="width:150px; color:#4b5563; font-size:9pt;">{{ lang.cert | default('—') }}</td>
+                    <td style="color:#6b7280; font-size:9pt;">{{ lang.note | default('') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- 스킬 -->
+        <div class="no-break" style="margin-top:20px;">
+            <div class="section-title">스킬 (Skills)</div>
+            <table class="skill-table">
+                <tr>
+                    <th style="width:25%;">카테고리</th>
+                    <th>스킬 / 기술</th>
+                    <th style="width:100px; text-align:center;">숙련도</th>
+                </tr>
+                {% if skills %}
+                {% for category in skills %}
+                <tr class="no-break">
+                    <td style="font-weight:700;">{{ category.name }}</td>
+                    <td>
+                        {% for item in category['items'] %}
+                        <span class="skill-tag">{{ item }}</span>
+                        {% endfor %}
+                    </td>
+                    <td style="text-align:left;">
+                        <div class="dot-row">
+                            {% for i in range(5) %}
+                            <div class="dot {% if i < category.level_dots %}filled{% endif %}"></div>
+                            {% endfor %}
+                        </div>
+                        <div style="font-size:7.5pt; color:#6b7280; margin-top:3px; font-weight:500;">{{ category.level }}</div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </table>
+        </div>
+
+        <!-- 주요 프로젝트 -->
+        {% if projects %}
+        <div class="section-title">주요 프로젝트 (Key Projects)</div>
+        {% for project in projects %}
+        <div class="project-item no-break">
+            <table class="project-table">
+                <tr>
+                    <th>프로젝트명</th>
+                    <td colspan="3" style="font-weight:700; font-size:10pt;">{{ project.name }}</td>
+                </tr>
+                <tr>
+                    <th style="width:15%;">기간</th>
+                    <td style="width:35%;">{{ project.period | default('—') }}</td>
+                    <th style="width:15%;">팀 규모</th>
+                    <td>{{ project.team_size | default('개인') }}</td>
+                </tr>
+                <tr>
+                    <th>사용 기술</th>
+                    <td colspan="3" style="color:#1e40af; font-weight:500;">{{ project.tech }}</td>
+                </tr>
+                <tr>
+                    <th>역할</th>
+                    <td colspan="3">{{ project.role | default('개발자') }}</td>
+                </tr>
+                <tr>
+                    <th>개요 / 성과</th>
+                    <td colspan="3" style="line-height:1.7;">{{ project.summary | default(project.description) }}</td>
+                </tr>
+            </table>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- 자격증 (Certificates) -->
+        {% if certifications %}
+        <div class="no-break" style="margin-top:20px;">
+            <div class="section-title">자격증 (Certificates)</div>
+            <table style="font-size:9pt; width:100%;">
+                {% for cert in certifications %}
+                <tr class="no-break">
+                    <td style="width:100px; color:#666;">{{ cert.year }}/{{ '%02d' | format(cert.month) }}</td>
+                    <td style="font-weight:600;">{{ cert.name }}</td>
+                    <td style="text-align:right; color:#888;">{{ cert.issuer | default('—') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- 수상 (Awards) -->
+        {% if awards %}
+        <div class="no-break" style="margin-top:20px;">
+            <div class="section-title">수상 (Awards)</div>
+            <table style="font-size:9pt; width:100%;">
+                {% for award in awards %}
+                <tr class="no-break">
+                    <td style="width:100px; color:#666;">{{ award.year }}/{{ '%02d' | format(award.month) }}</td>
+                    <td style="font-weight:600;">{{ award.name }}</td>
+                    <td style="text-align:right; color:#888;">{{ award.issuer | default('—') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- 연구 / 논문 -->
+        {% if research %}
+        <div class="section-title">연구 / 논문 (Research)</div>
+        {% for item in research %}
+        <div style="margin-bottom:12px;" class="no-break">
+            <div style="font-weight:700; font-size:10pt;">
+                {{ item.title }}
+                <span style="font-size:8.5pt; color:#6b7280; font-weight:400; margin-left:8px;">
+                    {{ item.status | default('작성 중') }} · {{ item.year }}
+                </span>
+            </div>
+            <div style="font-size:9pt; line-height:1.6; margin-top:4px; color:#374151;">{{ item.description }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="footer">이력서 작성일: {{ generated_date }} &nbsp;|&nbsp; {{ profile.name }}</div>
+
+    </div><!-- end resume part -->
+
+
+    <!-- ================================================================
+     자기소개서 — PAGE 3 (Cover Letter)
+     ================================================================ -->
+    {% if include_cover %}
+    <div class="page" style="page-break-before: always; break-before: page;">
+        <div style="text-align:center; margin-bottom:40px; margin-top:0;">
+            <div style="font-size:22pt; font-weight:800; letter-spacing:10px;">자　기　소　개　서</div>
+            <div style="font-size:10pt; color:#666; margin-top:10px;">{{ profile.name }} &nbsp;|&nbsp; {{ generated_date }}</div>
+        </div>
+
+        <!-- 1. 성장과정 -->
+        <div class="jagi-section no-break">
+            <div class="jagi-title">1. 성장과정 (Background & Growth)</div>
+            <div class="jagi-content">{{ cover_letter.growth_background }}</div>
+        </div>
+
+        <!-- 2. 성격의 장단점 -->
+        <div class="jagi-section no-break">
+            <div class="jagi-title">2. 성격의 장단점 (Strengths & Weaknesses)</div>
+            <div class="jagi-content">{{ cover_letter.strengths_weaknesses }}</div>
+        </div>
+
+        <!-- 3. 지원동기 -->
+        <div class="jagi-section no-break">
+            <div class="jagi-title">3. 지원동기 (Reason for Applying)</div>
+            <div class="jagi-content">{{ cover_letter.motivation }}</div>
+        </div>
+
+        <!-- 4. 입사 후 포부 -->
+        <div class="jagi-section no-break">
+            <div class="jagi-title">4. 입사 후 포부 (Goals After Joining)</div>
+            <div class="jagi-content">{{ cover_letter.goals_after_joining }}</div>
+        </div>
+
+        <div style="text-align:center; margin-top:30mm;">
+            <div style="font-size:12pt; margin-bottom:15mm;">위와 같이 사실과 틀림없음을 확인합니다.</div>
+            <div style="font-size:11pt; color:#222; font-weight:600;">{{ generated_date }}</div>
+            <div style="font-size:16pt; font-weight:800; margin-top:10mm; letter-spacing:2px;">지 원 자: {{ profile.name }} &nbsp;&nbsp;&nbsp; (인)</div>
+        </div>
+
+        <div class="footer">이상 &nbsp;|&nbsp; {{ generated_date }} &nbsp;|&nbsp; {{ profile.name }}</div>
+    </div><!-- end page 3 (자기소개서) -->
+    {% endif %}
+</body>
+</html>

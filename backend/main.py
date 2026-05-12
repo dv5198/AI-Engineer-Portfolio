@@ -9,6 +9,7 @@ import httpx
 from datetime import datetime
 import hashlib
 from dotenv import load_dotenv
+load_dotenv()  # MUST be before any service imports that call os.getenv at module level
 import asyncio
 import sys
 
@@ -71,9 +72,10 @@ app.include_router(dynamic_sections_router, prefix="/api/dynamic", tags=["dynami
 app.include_router(platform_router, prefix="/api/platform", tags=["platform"])
 app.include_router(resume_router, prefix="/api/resume", tags=["resume"])
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/static/templates", StaticFiles(directory=os.path.join(BASE_DIR, "resume_templates")), name="templates")
 
 # Dynamic resume download is handled in routes/resume.py via resume_router
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -2,9 +2,12 @@ import React, { useContext, useEffect, useState } from 'react';
 import { PortfolioContext } from '../context/PortfolioContext';
 import { Moon, Sun } from 'lucide-react';
 
+import { Menu, X } from 'lucide-react';
+
 const Navbar = () => {
   const { data } = useContext(PortfolioContext);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,11 +40,32 @@ const Navbar = () => {
           {sections_visibility?.research && <a href="#research" className="hover:text-accent transition-colors duration-300">Research</a>}
         </div>
 
-        {/* Mobile placeholder (Hidden on md as per requirement, stack grids on css) */}
-        <div className="md:hidden">
-          <span className="font-mono text-xs opacity-50">MENU HIDDEN</span>
+        {/* Mobile Menu Button */}
+        <div className="md:hidden flex items-center">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 -mr-2 text-warmBlack hover:text-accent transition-colors"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
 
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      <div 
+        className={`md:hidden absolute top-full left-0 w-full bg-ivory shadow-lg border-b border-warmBlack/5 transition-all duration-300 overflow-hidden ${
+          mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="flex flex-col px-6 py-4 gap-4 font-mono text-xs uppercase tracking-[0.2em]">
+          {sections_visibility?.about && <a href="#about" onClick={() => setMobileMenuOpen(false)} className="hover:text-accent py-2 transition-colors">About</a>}
+          {sections_visibility?.experience && <a href="#experience" onClick={() => setMobileMenuOpen(false)} className="hover:text-accent py-2 transition-colors">Experience</a>}
+          {sections_visibility?.skills && <a href="#skills" onClick={() => setMobileMenuOpen(false)} className="hover:text-accent py-2 transition-colors">Skills</a>}
+          {sections_visibility?.projects && <a href="#projects" onClick={() => setMobileMenuOpen(false)} className="hover:text-accent py-2 transition-colors">Work</a>}
+          {sections_visibility?.blog && <a href="#blog" onClick={() => setMobileMenuOpen(false)} className="hover:text-accent py-2 transition-colors">Blog</a>}
+          {sections_visibility?.research && <a href="#research" onClick={() => setMobileMenuOpen(false)} className="hover:text-accent py-2 transition-colors">Research</a>}
+        </div>
       </div>
     </nav>
   );

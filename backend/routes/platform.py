@@ -163,8 +163,21 @@ async def github_webhook(request: Request, x_hub_signature_256: str = Header(Non
     if not hmac.compare_digest(signature, x_hub_signature_256 or ""):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # Clear project cache (logic to be implemented in Project service if needed)
-    print("GitHub Push detected. Invalidating cache...")
+    import json
+    try:
+        payload = json.loads(body)
+        repo_name = payload.get("repository", {}).get("name")
+        if repo_name:
+            from services.github import clear_readme_cache_for_repo
+            clear_readme_cache_for_repo(repo_name)
+            print(f"GitHub Push detected for {repo_name}. Invalidated README cache.")
+        else:
+            from services.github import clear_readme_image_cache
+            clear_readme_image_cache()
+            print("GitHub Push detected but repo name not found. Cleared all README caches.")
+    except Exception as e:
+        print(f"Error parsing webhook payload: {e}")
+        
     return {"status": "verified"}
 # --- GitHub Contributions ---
 @router.get("/github/contributions/")

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>个人简历 - {{ profile.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm 15mm 15mm;
+
+            @bottom-right {
+                content: counter(page) " / " counter(pages);
+                font-size: 8pt;
+                color: #999;
+                font-family: "Microsoft YaHei", sans-serif;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "Heiti SC", "Source Han Sans CN", sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+
+        .page {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .page:last-child {
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        .no-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* ── Header ── */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .name-block {
+            font-size: 26pt;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #000;
+            letter-spacing: 2px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px 20px;
+            font-size: 9.5pt;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 10px;
+        }
+
+        .info-label {
+            color: #666;
+            min-width: 45px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #222;
+        }
+
+        /* ── Photo ── */
+        .photo-container {
+            width: 30mm;
+            height: 40mm;
+            margin-left: 20px;
+        }
+
+        .photo-box {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ddd;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fcfcfc;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ── Section Titles ── */
+        .section-title {
+            font-size: 14pt;
+            font-weight: 700;
+            background-color: #f3f4f6;
+            padding: 4px 12px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            color: #000;
+            border-left: 5px solid #333;
+            display: block;
+        }
+
+        /* ── Tables ── */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td {
+            padding: 8px 0;
+            vertical-align: top;
+        }
+
+        .period-text {
+            font-size: 10pt;
+            color: #444;
+            width: 180px;
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .institution-name, .company-name {
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #111;
+        }
+
+        .sub-text {
+            font-size: 10pt;
+            color: #555;
+        }
+
+        ul.bullets {
+            margin: 8px 0 0 20px;
+            list-style: square;
+        }
+
+        ul.bullets li {
+            font-size: 10pt;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        /* ── Skills ── */
+        .skill-group {
+            margin-bottom: 10px;
+        }
+        .skill-cat {
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .skill-items {
+            font-size: 10pt;
+            color: #555;
+        }
+
+        /* ── Projects ── */
+        .project-item {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+        }
+        .project-item:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page">
+        <!-- HEADER -->
+        <div class="header-container">
+            <div class="header-left">
+                <div class="name-block">{{ profile.name }}</div>
+                <div style="margin-bottom:15px; font-weight:600; color:#555; font-size:11pt;">
+                    {% if personal.gender | lower == 'female' %}女{% else %}男{% endif %} | 
+                    {{ personal.dob }} | 
+                    {{ personal.nationality }} | 
+                    {% if personal.korean_level %}韩语 {{ personal.korean_level }}{% endif %}
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">邮箱</span>
+                        <span class="info-value">{{ profile.email }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">电话</span>
+                        <span class="info-value">{{ profile.phone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">地址</span>
+                        <span class="info-value">{{ profile.address }}</span>
+                    </div>
+                    {% if profile.github %}
+                    <div class="info-item">
+                        <span class="info-label">GitHub</span>
+                        <span class="info-value">{{ profile.github | replace('https://', '') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="photo-container">
+                <div class="photo-box">
+                    {% if profile.photo %}
+                    <img src="{{ profile.photo }}" alt="头像">
+                    {% else %}
+                    <div style="font-size:9pt; color:#ccc;">照片</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 自我评价 -->
+        <div class="section-title">自我评价 (Self-Evaluation)</div>
+        <div style="font-size:10.5pt; color:#444; line-height:1.8;">{{ personal.summary }}</div>
+
+        <!-- 教育背景 -->
+        <div class="section-title">教育背景 (Education)</div>
+        <table>
+            {% for edu in education | sort(attribute='year', reverse=True) %}
+            <tr class="no-break">
+                <td class="period-text">{{ edu.year }}</td>
+                <td class="main-content">
+                    <div class="institution-name">{{ edu.institution }}</div>
+                    <div class="sub-text">{{ edu.degree }} | {{ edu.major }} {% if edu.gpa %}| GPA: {{ edu.gpa }}{% endif %}</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- 工作经历 -->
+        <div class="section-title">工作经历 (Experience)</div>
+        {% for job in experience %}
+        <div class="no-break" style="margin-bottom:20px;">
+            <table style="margin-bottom:5px;">
+                <tr>
+                    <td class="period-text">{{ job.duration }}</td>
+                    <td class="main-content">
+                        <div class="company-name">{{ job.company }}</div>
+                        <div class="sub-text" style="font-weight:600;">{{ job.role }}</div>
+                    </td>
+                </tr>
+            </table>
+            {% if job.bullets %}
+            <ul class="bullets">
+                {% for bullet in job.bullets %}
+                <li>{{ bullet }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- 专业技能 -->
+        <div class="section-title">专业技能 (Skills)</div>
+        {% for cat in skills %}
+        <div class="skill-group no-break">
+            <span class="skill-cat">{{ cat.name }}：</span>
+            <span class="skill-items">{{ cat.items | join('、') }}</span>
+        </div>
+        {% endfor %}
+
+        <!-- 项目经验 -->
+        {% if projects %}
+        <div class="section-title">项目经验 (Projects)</div>
+        {% for project in projects %}
+        <div class="project-item no-break">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span style="font-weight:700; font-size:11pt;">{{ project.name }}</span>
+                <span style="color:#666; font-size:9pt;">{{ project.period }}</span>
+            </div>
+            <div style="color:#0056b3; font-size:9pt; font-weight:600; margin-bottom:8px;">技术栈: {{ project.tech }}</div>
+            <div style="font-size:10pt; color:#444;">{{ project.summary }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="footer">
+            简历更新时间：{{ generated_date }} | {{ profile.name }}
+        </div>
+    </div>
+
+    {% if include_cover %}
+    <div class="page" style="page-break-before: always; break-before: page; padding: 20mm;">
+        <div style="text-align: right; font-size: 10pt; margin-bottom: 10mm;">
+            日期：{{ generated_date }}
+        </div>
+        
+        <div style="margin-bottom: 5mm; font-size: 12pt; font-weight: bold;">
+            尊敬的招聘经理：
+        </div>
+
+        <div style="line-height: 2.0; font-size: 11pt; text-align: justify; white-space: pre-wrap; text-indent: 2em;">
+{% if cover_letter.content %}
+{{ cover_letter.content }}
+{% else %}
+您好！
+
+非常感谢您在百忙之中审阅我的求职材料。我写这封信是希望申请贵公司的相关职位。
+
+通过对贵公司的了解，我深感贵公司严谨的治学态度和开拓进取的精神。作为一名应聘者，我渴望能在这个充满活力的团队中贡献自己的才华，并与公司共同成长。
+
+在过去的工作和学习中，我积累了丰富的行业经验，并培养了良好的团队合作精神和解决问题的能力。我相信我的背景和技能能够胜任贵公司的职位要求。
+
+随信附上我的简历，供您参考。期待能有机会与您面谈，进一步探讨我能为贵公司带来的价值。
+
+诚挚地，
+
+{{ profile.name }}
+{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</body>
+
+</html>

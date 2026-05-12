@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ base_css }}">
+    <link rel="stylesheet" href="{{ specific_css }}">
+    <style>
+        /* Embedded overrides for ATS safety if specific_css fails */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.5;
+            color: #333;
+            font-size: 11pt;
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 24pt; margin: 0; text-transform: uppercase; }
+        .header .subtitle { font-size: 14pt; color: #666; margin: 5px 0; }
+        .contact-info { font-size: 10pt; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .section { margin-top: 15px; }
+        .section h2 { 
+            font-size: 13pt; 
+            text-transform: uppercase; 
+            border-bottom: 1px solid #333; 
+            margin-bottom: 8px;
+            padding-bottom: 2px;
+        }
+        .item { margin-bottom: 10px; }
+        .item-header { display: flex; justify-content: space-between; font-weight: bold; }
+        .item-title { font-size: 11pt; }
+        .item-meta { font-size: 10pt; font-weight: normal; }
+        .item-subtitle { font-style: italic; font-size: 10.5pt; }
+        ul { margin-top: 4px; padding-left: 20px; }
+        li { margin-bottom: 2px; }
+        .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .skill-cat { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if geo_rule.show_photo and profile.photo %}
+        <div style="text-align: center; margin-bottom: 15px;">
+            <img src="{{ profile.photo }}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #eee;">
+        </div>
+        {% endif %}
+        <h1>{{ profile.name }}</h1>
+        <div class="subtitle">{{ profile.role }}</div>
+        <div class="contact-info">
+            {{ profile.location }}{% if geo_rule.show_dob and personal.dob %} | {{ personal.dob }}{% endif %} | {{ profile.phone }} | {{ profile.email }}
+            <br>
+            {% if profile.linkedin %}<a href="{{ profile.linkedin }}">LinkedIn</a>{% endif %}
+            {% if profile.github %} | <a href="{{ profile.github }}">GitHub</a>{% endif %}
+        </div>
+    </div>
+
+    {% if profile.summary %}
+    <div class="section">
+        <h2>{{ L.summary }}</h2>
+        <div class="content">{{ profile.summary }}</div>
+    </div>
+    {% endif %}
+
+    {% if experience %}
+    <div class="section">
+        <h2>{{ L.experience }}</h2>
+        {% set rev_exp = geo_rule.work_order == 'newest_first' if geo_rule else True %}
+        {% for exp in experience | sort(attribute='start', reverse=rev_exp) %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ exp.company }}</span>
+                <span class="item-meta">{{ exp.startDate }} &mdash; {{ exp.endDate }}</span>
+            </div>
+            <div class="item-subtitle">{{ exp.role }}</div>
+            {% if exp.bullets %}
+            <ul>
+                {% for bullet in exp.bullets %}
+                <li>{{ bullet }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if education %}
+    <div class="section">
+        <h2>{{ L.education }}</h2>
+        {% set rev_edu = geo_rule.edu_order == 'newest_first' if geo_rule else True %}
+        {% for edu in education | sort(attribute='start', reverse=rev_edu) %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ edu.university }}</span>
+                <span class="item-meta">{{ edu.year }}</span>
+            </div>
+            <div class="item-subtitle">{{ edu.degree }}{% if edu.major %} in {{ edu.major }}{% endif %}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if skills or skillCategories %}
+    <div class="section">
+        <h2>{{ L.skills }}</h2>
+        {% if skillCategories %}
+            {% for cat in skillCategories %}
+            <div class="item">
+                <span class="skill-cat">{{ cat.label }}:</span> {{ cat['items'] | join(', ') }}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="content">{{ skills | join(', ') }}</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if projects %}
+    <div class="section">
+        <h2>{{ L.projects }}</h2>
+        {% for proj in projects %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ proj.name }}</span>
+                {% if proj.period %}<span class="item-meta">{{ proj.period }}</span>{% endif %}
+            </div>
+            <div class="content">{{ proj.summary or proj.description }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if research %}
+    <div class="section">
+        <h2>{{ L.research }}</h2>
+        {% for res in research %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ res.title or res.topic }}</span>
+                <span class="item-meta">{{ res.year }}</span>
+            </div>
+            <div class="content">{{ res.description or res.summary }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if achievements %}
+    <div class="section">
+        <h2>{{ L.awards }}</h2>
+        {% for ach in achievements %}
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">{{ ach.title }}</span>
+                <span class="item-meta">{{ ach.year }}</span>
+            </div>
+            <div class="item-subtitle">{{ ach.issuer }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if include_cover %}
+    <div style="page-break-before: always; break-before: page; padding: 0;">
+        <h1 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 0; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; font-family: Arial, sans-serif;">Cover Letter</h1>
+        <div style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <div style="font-size: 14pt; font-weight: bold;">{{ profile.name }}</div>
+                <div style="font-size: 10pt; color: #666;">{{ profile.location }}</div>
+                <div style="font-size: 10pt; color: #666;">{{ profile.email }}</div>
+            </div>
+            <div style="text-align: right; font-size: 11pt;">
+                {{ generated_date }}
+            </div>
+        </div>
+
+
+        <div style="margin-bottom: 20px; font-weight: bold;">
+            To the Hiring Manager,
+        </div>
+
+        <div style="line-height: 1.8; text-align: justify; white-space: pre-wrap; font-size: 11pt;">
+{{ cover_letter.content or cover_letter.body or 'I am writing to express my interest in the position at your company. With my background in AI Engineering and professional experience, I am confident in my ability to contribute effectively to your team.' }}
+        </div>
+
+        <div style="margin-top: 40px;">
+            <div>Sincerely,</div>
+            <div style="font-weight: bold; margin-top: 10px;">{{ profile.name }}</div>
+        </div>
+    </div>
+    {% endif %}
+</body>
+</html>

@@ -8,8 +8,14 @@ const ProjectCard = ({ project, idx }) => {
   const [cover, setCover] = useState(null);
 
   useEffect(() => {
-    setCover(generateProjectCover(project.name));
-  }, [project.name]);
+    if (!project.image) {
+      setCover(generateProjectCover(project.name));
+    } else {
+      setCover(null); // Clear cover to use actual image
+    }
+  }, [project.name, project.image]);
+
+  const [imageError, setImageError] = useState(false);
 
   return (
     <motion.div
@@ -19,17 +25,28 @@ const ProjectCard = ({ project, idx }) => {
       viewport={{ once: true }}
       transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
     >
-      <div className="h-56 overflow-hidden relative border-b border-textPrimary/5">
-        {cover ? (
-          <img 
-            src={cover} 
-            alt={project.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
-          />
-        ) : (
-          <div className="w-full h-full bg-[#f2ede0] animate-pulse" />
-        )}
-      </div>
+      {!imageError && (
+        <div className="h-56 overflow-hidden relative border-b border-textPrimary/5 bg-[#f2ede0]">
+          {project.image ? (
+            <img 
+              src={project.image} 
+              alt={project.name} 
+              loading="lazy"
+              onError={() => setImageError(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
+            />
+          ) : cover ? (
+            <img 
+              src={cover} 
+              alt={project.name} 
+              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
+            />
+          ) : (
+            <div className="w-full h-full animate-pulse" />
+          )}
+        </div>
+      )}
       
       <div className="p-8 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-4">
@@ -85,7 +102,18 @@ const Projects = () => {
         // Combine Admin Projects with GitHub Repos
         // Priority: Admin Manual Projects > GitHub Repos
         const adminProjects = data.projects || [];
-        const combined = [...adminProjects];
+        const combined = adminProjects.map(p => {
+          const repo = githubRepos.find(r => r.name === p.name);
+          const pCopy = { ...p };
+          if (pCopy.image_override) {
+            pCopy.image = pCopy.image_override.startsWith('http') ? pCopy.image_override : `http://localhost:8000/${pCopy.image_override}`;
+            pCopy.has_image = true;
+          } else if (repo && repo.image) {
+            pCopy.image = repo.image;
+            pCopy.has_image = true;
+          }
+          return pCopy;
+        });
         
         // Add repos that aren't already in manual projects
         githubRepos.forEach(repo => {
@@ -96,6 +124,8 @@ const Projects = () => {
               techStack: repo.language,
               github: repo.html_url,
               demo: repo.homepage,
+              image: repo.image,
+              has_image: repo.has_image,
               visible: true
             });
           }

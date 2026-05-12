@@ -109,6 +109,54 @@ async def rewrite_summary_route(req: SummarizeRequest):
     res = await summarize_about(req.about_list)
     return {"rewritten": res}
 
+class CoverLetterGenerateRequest(BaseModel):
+    about: List[str]
+    experience: List[dict]
+    region: str = "international"
+    lang: str = "en"
+
+@router.post("/generate-cover-letter/")
+async def generate_cover_letter_route(req: CoverLetterGenerateRequest):
+    from services.groq_service import call_groq_json
+    
+    about_text = "\n".join(req.about)
+    exp_summary = "\n".join([f"- {e.get('role')} at {e.get('company')}: {e.get('description', '')}" for e in req.experience[:3]])
+    
+    system_prompt = "You are an expert Global Career Consultant. Return ONLY a JSON object."
+    
+    user_prompt = f"""
+    Create a professional cover letter based on this candidate's data.
+    Target Region: {req.region}
+    Target Language: {req.lang} (Return the content in this language!)
+    
+    Candidate Background:
+    {about_text}
+    
+    Recent Experience:
+    {exp_summary}
+    
+    If the region is 'korea', return these EXACT 4 keys:
+    "growth_background", "strengths_weaknesses", "motivation", "goals_after_joining"
+    
+    If the region is 'japan', return these EXACT keys:
+    "content" (Full body of the 'Soe-jo' (添え状) following this 3-part Daijob.com structure:
+        1. Background (Paragraph 1): Position interest and why (貴社の求人概要を拝見し、応募させていただきました).
+        2. Experience Summary (Paragraph 2): Skills matching and what you bring (Why you are a fit).
+        3. Interview Request (Paragraph 3): Mention availability and contact info.
+        Use formal Japanese honorifics. Start with '採用ご担当者様' and '[Name]と申します。'.
+        End with 'お忙しいなか恐縮ですが、どうぞ宜しくお願い致します。'),
+    "self_pr_ja" (A separate Self-PR section for the Rirekisho)
+    
+    For all other regions, return:
+    "content" (Full body in professional standard style)
+    
+    Tone: Sophisticated, impactful, and tailored to the {req.region} professional culture.
+    Return ONLY JSON.
+    """
+    
+    res = await call_groq_json(system_prompt, user_prompt)
+    return res
+
 class GenerateBulletsRequest(BaseModel):
     role: str
     company: str
@@ -165,3 +213,55 @@ async def upload_profile_photo(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     
     return {"url": "http://localhost:8001/uploads/profile_photo.jpg"}
+
+@router.post("/project-image/")
+async def upload_project_image(file: UploadFile = File(...)):
+    import uuid
+    UPLOAD_DIR = "uploads"
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+    
+    filename = f"project_{uuid.uuid4().hex}.jpg"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    return {"url": f"uploads/{filename}"}
+
+# --- Translation Management ---
+from database import get_all_translations, delete_translation_db, DB_FILE, LOCK_FILE
+from filelock import FileLock
+import sqlite3
+
+class TranslationUpdateRequest(BaseModel):
+    id: int
+    translated_text: str
+    is_verified: bool
+
+@router.get("/translations/")
+def list_translations():
+    return get_all_translations()
+
+@router.post("/translations/update/")
+def update_translation(req: TranslationUpdateRequest):
+    with FileLock(LOCK_FILE, timeout=10):
+        with sqlite3.connect(DB_FILE) as conn:
+            conn.execute(
+                "UPDATE translations SET translated_text = ?, is_verified = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (req.translated_text, 1 if req.is_verified else 0, req.id)
+            )
+            conn.commit()
+    return {"message": "Translation updated"}
+
+@router.delete("/translations/{t_id}")
+def delete_translation(t_id: int):
+    delete_translation_db(t_id)
+    return {"message": "Translation deleted"}
+
+@router.post("/translations/clear-cache/")
+def clear_trans_cache():
+    with FileLock(LOCK_FILE, timeout=10):
+        with sqlite3.connect(DB_FILE) as conn:
+            conn.execute("DELETE FROM translations WHERE is_verified = 0")
+            conn.commit()
+    return {"message": "Unverified translations cleared"}
