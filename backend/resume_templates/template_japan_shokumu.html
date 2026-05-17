@@ -45,9 +45,9 @@ p, li { orphans: 3; widows: 3; }
   border-bottom: 2pt solid #000;
 }
 .doc-title {
-  font-size: 16pt;
+  font-size: 18pt;
   font-weight: bold;
-  letter-spacing: 6px;
+  margin-bottom: 2px;
 }
 .doc-meta {
   font-size: 8.5pt;
@@ -204,12 +204,14 @@ p, li { orphans: 3; widows: 3; }
   <div class="doc-title">{{ L.shokumu_title }}</div>
   <div class="doc-meta" style="margin-bottom: 4px;">
     {% if lang == 'en' %}{{ L.as_of }} {{ generated_date }}{% else %}{{ generated_date }}{{ L.as_of }}{% endif %}　　{{ L.name_label | default(L.name) }}{% if lang == 'en' %}: {% else %}：{% endif %}{{ profile.name }}
+    <br>
+    {% if profile.address %}{{ profile.address }}{% endif %}
   </div>
   {% if connections %}
   <div style="font-size: 8pt; color: #555; text-align: right; line-height: 1.4;">
     {% for conn in connections %}
       {% if conn.platform | lower in ['github', 'linkedin'] and conn.visible %}
-        <div>{{ conn.platform }} : {{ conn.url }}</div>
+        <div>{{ conn.platform }} : <a href="{{ conn.url }}" style="color: inherit; text-decoration: none;">{{ conn.url | replace('https://', '') }}</a></div>
       {% endif %}
     {% endfor %}
   </div>
@@ -350,15 +352,7 @@ p, li { orphans: 3; widows: 3; }
 </div>
 {% endif %}
 
-<!-- ============================================================
-     6. 自己PR — Self PR (detailed)
-     ============================================================ -->
-<div class="section">
-  <div class="section-title section-header">{{ L.summary }} (Detailed)</div>
-  <div class="self-pr-box">
-    {{ personal.self_pr_ja_detailed | default(personal.self_pr_ja) }}
-  </div>
-</div>
+
 
 <!-- ============================================================
      FOOTER
@@ -375,17 +369,14 @@ p, li { orphans: 3; widows: 3; }
   <div style="text-align: right; font-size: 11pt; margin-bottom: 15mm;">
     {{ generated_date }}
   </div>
-  
-  <div style="margin-bottom: 5mm; font-size: 12pt; font-weight: bold;">
-    {{ L.salutation | default('採用担当者様') }}
-  </div>
+
 
   <div style="text-align: center; margin-bottom: 20mm; font-size: 14pt; font-weight: bold; border-bottom: 2px solid #000; display: inline-block; width: 100%; padding-bottom: 8px; text-transform: uppercase;">
     {{ L.cl_header | default('応募書類の送付につきまして (Application for Position)') }}
   </div>
 
   <div style="line-height: 2.0; font-size: 11pt; text-align: justify; white-space: pre-wrap; margin-bottom: 30mm;">
-{{ cover_letter.content or '拝啓\n\n時下ますますご清栄のこととお慶び申し上げます。\nこの度、貴社の求人を拝见し、ぜひ応募させていただきたく、下記の通り書類を送付いたします。\n何卒ご検討いただけますよう、お願い申し上げます。\n\n敬具\n\n記\n\n1. 履歴書　　　　1通\n2. 職務経歴書　　1通' }}
+{{ (cover_letter.content or '拝啓\n\n時下ますますご清栄のこととお慶び申し上げます。\nこの度、貴社の求人を拝见し、ぜひ応募させていただきたく、下記の通り書類を送付いたします。\n何卒ご検討いただけますよう、お願い申し上げます。\n\n敬具\n\n記\n\n1. 履歴書　　　　1通\n2. 職務経歴書　　1通') | safe }}
   </div>
 
   <div style="text-align: right; font-size: 11pt; line-height: 1.6;">

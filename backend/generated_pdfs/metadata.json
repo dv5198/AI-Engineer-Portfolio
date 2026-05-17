@@ -1,0 +1,80 @@
+{
+  "status": "ready",
+  "last_generated": "2026-05-17T19:35:10.605337+00:00",
+  "variants": {
+    "international_en.pdf": {
+      "ok": true,
+      "elapsed": "15.7s",
+      "region": "international",
+      "lang": "en"
+    },
+    "ats_usa_en.pdf": {
+      "ok": true,
+      "elapsed": "4.3s",
+      "region": "ats_usa",
+      "lang": "en"
+    },
+    "ats_uk_en.pdf": {
+      "ok": true,
+      "elapsed": "4.4s",
+      "region": "ats_uk",
+      "lang": "en"
+    },
+    "india_en.pdf": {
+      "ok": true,
+      "elapsed": "4.2s",
+      "region": "india",
+      "lang": "en"
+    },
+    "germany_en.pdf": {
+      "ok": true,
+      "elapsed": "19.5s",
+      "region": "germany",
+      "lang": "en"
+    },
+    "middleeast_en.pdf": {
+      "ok": true,
+      "elapsed": "4.6s",
+      "region": "middleeast",
+      "lang": "en"
+    },
+    "japan_ja.pdf": {
+      "ok": true,
+      "elapsed": "19.9s",
+      "region": "japan",
+      "lang": "ja"
+    },
+    "japan_en.pdf": {
+      "ok": true,
+      "elapsed": "16.9s",
+      "region": "japan",
+      "lang": "en"
+    },
+    "korea_ko.pdf": {
+      "ok": true,
+      "elapsed": "19.1s",
+      "region": "korea",
+      "lang": "ko"
+    },
+    "korea_en.pdf": {
+      "ok": true,
+      "elapsed": "10.6s",
+      "region": "korea",
+      "lang": "en"
+    },
+    "china_zh.pdf": {
+      "ok": true,
+      "elapsed": "29.8s",
+      "region": "china",
+      "lang": "zh"
+    },
+    "china_en.pdf": {
+      "ok": true,
+      "elapsed": "13.6s",
+      "region": "china",
+      "lang": "en"
+    }
+  },
+  "triggered_by": "manual_scratch",
+  "started_at": "2026-05-17T19:32:24.740742+00:00"
+}

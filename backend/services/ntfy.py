@@ -27,7 +27,7 @@ async def send_ntfy_notification(title: str, message: str, priority: int = 3, ta
     
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(url, content=message, headers=headers)
+            response = await client.post(url, content=message, headers=headers, timeout=5.0)
             response.raise_for_status()
             return True
         except Exception as e:

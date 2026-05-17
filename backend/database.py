@@ -10,6 +10,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_FILE = os.path.join(BASE_DIR, "portfolio.db")
 LOCK_FILE = os.path.join(BASE_DIR, "portfolio.db.lock")
 
+# ── In-memory data cache ──────────────────────────────────────────────────────
+# load_data() is called on EVERY request. Caching in RAM eliminates the SQLite
+# round-trip + JSON parse overhead. Invalidated whenever save_data() is called.
+_data_cache: dict | None = None
+_data_cache_ts: float = 0.0
+DATA_CACHE_TTL = 60  # seconds — safety net; admin saves always invalidate immediately
+
+def _invalidate_cache():
+    global _data_cache, _data_cache_ts
+    _data_cache = None
+    _data_cache_ts = 0.0
+
 def init_db():
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute(
@@ -50,7 +62,7 @@ DEFAULT_DATA = {
         "email": "dvnirankari@gmail.com",
         "phone": "+91 9265768306",
         "location": "Surat, Gujarat, India",
-        "summary": "Python and AI/ML Engineer with 3+ years of experience building production-ready machine learning systems, with a deep focus on Healthcare AI and biomedical signal processing. At Logixbuilt Infotech, I developed high-throughput REST APIs (10k+ daily requests, 99.9% uptime) and reduced database response times by 40% through PostgreSQL query optimisation. As a freelance engineer, I have designed ECG cardiac abnormality detection models achieving 94% F1-score using 1D CNN and ResNet architectures on the PhysioNet dataset, and built real-time AI-powered chatbots integrated across WhatsApp, Telegram, and Messenger. I am currently authoring a research paper on deep learning-based ECG analysis and am actively studying Japanese, with the goal of contributing to Japan's world-class AI research and healthcare technology ecosystem.",
+        "summary": "Python and AI/ML Engineer building production-ready machine learning systems, with a deep focus on Healthcare AI and biomedical signal processing. At Logixbuilt Infotech, I developed high-throughput REST APIs (10k+ daily requests, 99.9% uptime) and reduced database response times by 40% through PostgreSQL query optimisation. As a freelance engineer, I have designed ECG cardiac abnormality detection models achieving 94% F1-score using 1D CNN and ResNet architectures on the PhysioNet dataset, and built real-time AI-powered chatbots integrated across WhatsApp, Telegram, and Messenger. I am currently authoring a research paper on deep learning-based ECG analysis and am actively studying Japanese, with the goal of contributing to Japan's world-class AI research and healthcare technology ecosystem.",
         "bio": "Python and AI/ML Engineer specialising in Healthcare AI and biomedical signal processing. I build production-grade ML systems and scalable backends — from ECG cardiac detection models to real-time chatbot integrations.",
         "personal": {
             "dob": "1998-01-05",
@@ -69,14 +81,23 @@ DEFAULT_DATA = {
             "has_spouse": False,
             "spouse_dependency": False,
             "self_pr_ja": "Python・AI/MLエンジニアとして、医療AI分野に特化した実務経験を持ちます。ECG信号を用いた心臓異常検知モデル（1D CNN / ResNet、F1スコア94%）や、FastAPIを活用したスケーラブルなバックエンドシステムの開発に携わってまいりました。現在、日本語を積極的に学習中であり、日本の先進的なAI研究・開発環境において貢献したいと考えています。",
-            "self_pr_ja_detailed": "Python・AI/MLエンジニアとして約3年の実務経験を有し、医療AIおよびバックエンド開発に注力してまいりました。Logixbuilt Infotech社ではFastAPIによるREST API開発・PostgreSQLクエリ最適化・自動テストパイプライン構築に従事し、フリーランスとして国際的なクライアント向けにPyTorchを用いた本番環境MLモデルの設計・ECG心臓異常検知システム（1D ResNet、PhysioNetデータセット使用）の開発を担当しました。現在は1D ResNetを用いた心臓異常検知に関する研究論文を執筆中です。在学中には「Data Structure Excellence Award」「Student of the Year」等の学業表彰を受けており、日本の医療AI・ヘルスケアテック分野でその専門性を活かし、社会に貢献することを目指しています。",
-            "career_summary_ja": "Python・AI/MLエンジニアとして約3年の実務経験を有し、医療AIおよびバックエンド開発に注力してまいりました。Logixbuilt Infotech社ではFastAPIによるREST API開発・PostgreSQLクエリ最適化・自動テストパイプライン構築に従事し、フリーランスとして国際的なクライアント向けにPyTorchを用いた本番環境MLモデルの設計・ECG心臓異常検知システム（1D ResNet、PhysioNetデータセット使用）の開発を担当しました。現在は1D ResNetを用いた心臓異常検知に関する研究論文を執筆中であり、日本の医療AI・ヘルスケアテック分野でその専門性を活かし、社会に貢献することを目指しています。",
+            "self_pr_ja_detailed": "Python・AI/MLエンジニアとして、医療AIおよびバックエンド開発に注力してまいりました。Logixbuilt Infotech社ではFastAPIによるREST API開発・PostgreSQLクエリ最適化・自動テストパイプライン構築に従事し、フリーランスとして国際的なクライアント向けにPyTorchを用いた本番環境MLモデルの設計・ECG心臓異常検知システム（1D ResNet、PhysioNetデータセット使用）の開発を担当しました。現在は1D ResNetを用いた心臓異常検知に関する研究論文を執筆中です。在学中には「Data Structure Excellence Award」「Student of the Year」等の学業表彰を受けており、日本の医療AI・ヘルスケアテック分野でその専門性を活かし、社会に貢献することを目指しています。",
+            "career_summary_ja": "Python・AI/MLエンジニアとして、医療AIおよびバックエンド開発に注力してまいりました。Logixbuilt Infotech社ではFastAPIによるREST API開発・PostgreSQLクエリ最適化・自動テストパイプライン構築に従事し、フリーランスとして国際的なクライアント向けにPyTorchを用いた本番環境MLモデルの設計・ECG心臓異常検知システム（1D ResNet、PhysioNetデータセット使用）の開発を担当しました。現在は1D ResNetを用いた心臓異常検知に関する研究論文を執筆中であり、日本の医療AI・ヘルスケアテック分野でその専門性を活かし、社会に貢献することを目指しています。",
             "desired_conditions_ja": "貴社の規定に従います。"
         },
         "visa_info": {
             "visaType": "",
             "visaIssueDate": "",
             "visaExpiryDate": ""
+        },
+        "visa": {
+            "CN": "需要工作签证",
+            "CN_EN": "Z work visa sponsorship required",
+            "JP": "就労ビザが必要",
+            "JP_EN": "Engineer / Specialist in Humanities visa sponsorship required",
+            "KR": "비자 스폰서십 필요",
+            "KR_EN": "E-7 visa sponsorship required",
+            "GLOBAL": "Relocation sponsorship required"
         }
     },
     "connections": [
@@ -175,8 +196,8 @@ DEFAULT_DATA = {
             "university": "Veer Narmad South Gujarat University",
             "degree": "Master of Computer Applications (MCA)",
             "major": "Computer Application",
-            "year": "2020 – 2022",
-            "awarded": "2023",
+            "year": "2022 – 2024",
+            "awarded": "2024",
             "gpa": "A+",
             "notes": "Specialization in Artificial Intelligence",
             "visible": True,
@@ -187,8 +208,8 @@ DEFAULT_DATA = {
             "university": "Vivekanand College of Computer Science",
             "degree": "Bachelor of Computer Applications (BCA)",
             "major": "Computer Application",
-            "year": "2017 – 2020",
-            "awarded": "2020",
+            "year": "2019 – 2022",
+            "awarded": "2022",
             "gpa": "",
             "notes": "",
             "visible": True,
@@ -220,6 +241,12 @@ DEFAULT_DATA = {
 }
 
 def load_data():
+    global _data_cache, _data_cache_ts
+
+    # ── Fast path: return from RAM cache ─────────────────────────────────────
+    if _data_cache is not None and (time.time() - _data_cache_ts) < DATA_CACHE_TTL:
+        return _data_cache
+
     with FileLock(LOCK_FILE, timeout=10):
         with sqlite3.connect(DB_FILE) as conn:
             cursor = conn.cursor()
@@ -227,88 +254,152 @@ def load_data():
             row = cursor.fetchone()
             
             if not row:
-                # DB is empty, seed it with DEFAULT_DATA
                 conn.execute(
                     "INSERT INTO portfolio_data (id, data, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)",
                     (json.dumps(DEFAULT_DATA, ensure_ascii=False),)
                 )
                 conn.commit()
+                _data_cache = DEFAULT_DATA
+                _data_cache_ts = time.time()
                 return DEFAULT_DATA
             
             data = json.loads(row[0])
             changed = False
     
-            # Migration 1: Move legacy flat profile fields to nested structures
             if "profile" in data:
                 profile = data["profile"]
-                
-                # Setup nested objects if missing
                 if "personal" not in profile:
                     profile["personal"] = DEFAULT_DATA["profile"]["personal"].copy()
                     changed = True
-                
                 if "visa_info" not in profile:
                     profile["visa_info"] = DEFAULT_DATA["profile"]["visa_info"].copy()
                     changed = True
-                
-                # Move flat fields into personal/visa_info
+                if "visa" not in profile:
+                    profile["visa"] = DEFAULT_DATA["profile"]["visa"].copy()
+                    changed = True
                 flat_to_personal = ["dob", "dateOfBirth", "gender", "nationality", "military_service", "marital_status"]
                 for field in flat_to_personal:
                     if field in profile:
-                        # 'dateOfBirth' maps to 'dob' for consistency in some generic contexts, but keep field name if preferred
                         target_field = "dob" if field == "dateOfBirth" else field
                         profile["personal"][target_field] = profile.pop(field)
                         changed = True
-                
                 flat_to_visa = ["visaType", "visaIssueDate", "visaExpiryDate"]
                 for field in flat_to_visa:
                     if field in profile:
                         profile["visa_info"][field] = profile.pop(field)
                         changed = True
-    
-                # Migration 1.5: Ensure all personal fields exist safely
                 japan_fields = {
-                    "name_furigana": "",
-                    "nationality_ja": "",
-                    "address_furigana": "",
-                    "commute_time": "",
-                    "dependents_count": 0,
-                    "has_spouse": False,
-                    "spouse_dependency": False,
-                    "self_pr_ja": "",
-                    "self_pr_ja_detailed": "",
-                    "career_summary_ja": "",
-                    "desired_conditions_ja": "貴社の規定に従います。"
+                    "name_furigana": "", "nationality_ja": "", "address_furigana": "",
+                    "commute_time": "", "dependents_count": 0, "has_spouse": False,
+                    "spouse_dependency": False, "self_pr_ja": "", "self_pr_ja_detailed": "",
+                    "career_summary_ja": "", "desired_conditions_ja": "貴社の規定に従います。"
                 }
                 if "personal" in profile:
                     for k, v in japan_fields.items():
                         if k not in profile["personal"]:
                             profile["personal"][k] = v
                             changed = True
-    
-            # Migration 2: Ensure all DEFAULT_DATA keys exist
             for k, v in DEFAULT_DATA.items():
                 if k not in data:
                     data[k] = v
                     changed = True
+
+            # ── Trim activityLog to 50 entries max ────────────────────────────
+            if "activityLog" in data and len(data["activityLog"]) > 50:
+                data["activityLog"] = data["activityLog"][:50]
+                changed = True
                     
             if changed:
                 _save_data_internal(data)
-            return data
+
+    # ── Calculate dynamic Stats (Metric Flux) ──────────────────────────────────
+    if "stats" not in data:
+        data["stats"] = {}
+
+    # 1. Years of Experience
+    from datetime import datetime
+    import re
+    earliest_date = None
+    for exp in data.get("experience", []):
+        if not exp.get("visible", True):
+            continue
+        start_str = exp.get("startDate", "").strip()
+        if not start_str:
+            continue
+        try:
+            dt = datetime.strptime(start_str, "%b %Y")
+        except ValueError:
+            try:
+                dt = datetime.strptime(start_str[:7], "%Y-%m")
+            except ValueError:
+                match = re.search(r'\b(20\d{2}|19\d{2})\b', start_str)
+                if match:
+                    dt = datetime(int(match.group(1)), 1, 1)
+                else:
+                    continue
+        if earliest_date is None or dt < earliest_date:
+            earliest_date = dt
+            
+    if earliest_date:
+        now = datetime.now()
+        diff = now.year - earliest_date.year - ((now.month, now.day) < (earliest_date.month, earliest_date.day))
+        data["stats"]["years_experience"] = f"{max(diff, 0)}+"
+    else:
+        data["stats"]["years_experience"] = "4+"
+
+    # 2. Projects Count
+    manual_count = sum(1 for p in data.get("projects", []) if p.get("visible") is not False)
+    github_count = sum(1 for k, v in data.get("project_visibility", {}).items() if v is not False)
+    total_projects = manual_count + github_count
+    data["stats"]["projects_count"] = f"{max(total_projects, 12)}+"
+
+    # 3. ML Models / Systems Built
+    ml_keywords = {"pytorch", "tensorflow", "keras", "scikit-learn", "sklearn", "cnn", "resnet", "lstm", "random forest", "nlp", "computer vision", "biomedical signal processing", "ecg", "ml", "machine learning", "deep learning", "physionet", "1d cnn"}
+    ml_count = 0
+    for p in data.get("projects", []):
+        text = f"{p.get('name', '')} {p.get('description', '')} {p.get('summary', '')} {p.get('techStack', '')}".lower()
+        if any(kw in text for kw in ml_keywords):
+            ml_count += 1
+            
+    for exp in data.get("experience", []):
+        full_text = f"{exp.get('company', '')} {exp.get('role', '')} {' '.join(exp.get('bullets', []))}".lower()
+        if "ecg" in full_text or "cardiac" in full_text:
+            ml_count += 1
+        if "chatbot" in full_text or "nlp" in full_text:
+            ml_count += 1
+        if "prediction" in full_text or "model" in full_text:
+            ml_count += 1
+            
+    for k in data.get("project_visibility", {}).keys():
+        k_lower = k.lower()
+        if any(kw in k_lower for kw in ["ml", "ai", "model", "detection", "prediction", "classifier", "neural", "parkinson", "ecg"]):
+            ml_count += 1
+            
+    data["stats"]["ml_models"] = f"{max(ml_count, 6)}+"
+
+    if not data["stats"].get("fun_stat"):
+        data["stats"]["fun_stat"] = "94% F1-Score on ECG Model"
+
+    # ── Update RAM cache ──────────────────────────────────────────────────────
+    _data_cache = data
+    _data_cache_ts = time.time()
+    return data
 
 def save_data(data):
+    _invalidate_cache()  # Bust RAM cache immediately
     with FileLock(LOCK_FILE, timeout=10):
         _save_data_internal(data)
 
 def _save_data_internal(data):
+    # Trim activityLog before every save
+    if "activityLog" in data and len(data["activityLog"]) > 50:
+        data["activityLog"] = data["activityLog"][:50]
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute(
             "INSERT OR REPLACE INTO portfolio_data (id, data, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)",
             (json.dumps(data, ensure_ascii=False),)
         )
         conn.commit()
-    
-    # Clear PDF cache
     _clear_pdf_cache_db_internal()
 
 def log_resume_download(ip: str, country: str, region: str, format_label: str):
@@ -349,6 +440,7 @@ def log_resume_download(ip: str, country: str, region: str, format_label: str):
                 (json.dumps(data, ensure_ascii=False),)
             )
             conn.commit()
+            _invalidate_cache()
             
     return event_entry
 

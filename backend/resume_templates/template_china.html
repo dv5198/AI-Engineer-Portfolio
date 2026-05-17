@@ -586,6 +586,9 @@
                 {% if profile.name_zh %}
                 <div class="personal-name-en">{{ profile.name }}</div>
                 {% endif %}
+                <div style="font-size: 11pt; font-weight: 700; color: #1f2937; margin: 4px 0 10px 0;">
+                    {% if lang == 'zh' %}<span style="color: #3b82f6;">求职意向：</span>{{ profile.role }}{% else %}<span style="color: #3b82f6;">Target Role:</span> {{ profile.role }}{% endif %}
+                </div>
                 <div class="info-grid">
                     <div class="info-row">
                         <span class="info-label">{{ L.gender }}</span>
@@ -599,12 +602,13 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">{{ L.nationality }}</span>
-                        <span class="info-value">{{ personal.nationality_zh | default(L.nationality_default) }}</span>
+                        <span class="info-value">{% if lang == 'zh' %}{{ profile.nationality_zh | default('印度') }}{% else %}{{ profile.nationality_en | default(profile.nationality | default('India')) }}{% endif %}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">{{ L.address }}</span>
                         <span class="info-value">{{ profile.address }}</span>
                     </div>
+
                     <div class="info-row">
                         <span class="info-label">{{ L.phone }}</span>
                         <span class="info-value">{{ profile.phone }}</span>
@@ -628,14 +632,20 @@
                     {% if personal.marital_status %}
                     <div class="info-row">
                         <span class="info-label">{{ L.marital_status }}</span>
-                        <span class="info-value">{{ personal.marital_status }}</span>
+                        <span class="info-value">
+                            {% if lang == 'zh' %}
+                                {% if personal.marital_status | lower in ('single', 'unmarried') %}未婚{% elif personal.marital_status | lower in ('married', 'wed') %}已婚{% else %}{{ personal.marital_status }}{% endif %}
+                            {% else %}
+                                {% if personal.marital_status | lower in ('single', '未婚', 'unmarried') %}Unmarried{% elif personal.marital_status | lower in ('married', '已婚') %}Married{% else %}{{ personal.marital_status }}{% endif %}
+                            {% endif %}
+                        </span>
                     </div>
                     {% endif %}
                     {% for conn in connections %}
-                    {% if conn.visible and conn.platform | lower == 'github' %}
+                    {% if conn.visible %}
                     <div class="info-row">
-                        <span class="info-label">GitHub</span>
-                        <span class="info-value">{{ conn.url }}</span>
+                        <span class="info-label">{{ conn.platform }}</span>
+                        <span class="info-value"><a href="{{ conn.url }}" style="color: inherit; text-decoration: none;">{{ conn.url | replace('https://', '') | replace('www.', '') }}</a></span>
                     </div>
                     {% endif %}
                     {% endfor %}
@@ -657,7 +667,9 @@
                 <span class="section-title-zh">{{ L.summary }}</span>
                 {% if lang != 'en' %}<span class="section-title-en">Personal Summary</span>{% endif %}
             </div>
-            <div class="summary-box">{{ personal.summary }}</div>
+            <div class="summary-box">
+                {{ personal.summary }}
+            </div>
         </div>
 
         <!-- ── 专业能力 Skills ── -->
@@ -961,24 +973,9 @@
     </div><!-- end page 2 -->
     {% if include_cover %}
     <div style="page-break-before: always; break-before: page;"></div>
-    <div class="cover-letter-page">
-        <div class="doc-date">{{ L.generated_at }}：{{ generated_date }}</div>
-        <div class="greeting">{{ L.salutation }}</div>
-        <div class="cl-content">{{ cover_letter.content | safe }}</div>
-        <div class="closing">
-            {% if ' ' in L.valediction %}
-            <div style="margin-bottom: 8px;">{{ L.valediction.split(' ')[0] }}</div>
-            <div>{{ L.valediction.split(' ')[1] }}</div>
-            {% else %}
-            <div>{{ L.valediction }}</div>
-            {% endif %}
-        </div>
-        <div class="signature">
-            <div class="sig-name">{{ profile.name_zh | default(profile.name) }}</div>
-            <div class="sig-contact">
-                {{ profile.email }} | {{ profile.phone }}
-            </div>
-        </div>
+    <div class="cover-letter-page" style="padding: 40px 60px; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;">
+        <div class="doc-date" style="text-align: right; color: #666; font-size: 10pt; margin-bottom: 30px;">{{ L.generated_at }}：{{ generated_date }}</div>
+        <div class="cl-content" style="white-space: pre-wrap; font-size: 11pt; line-height: 1.8; text-align: justify; color: #333;">{{ cover_letter.content | safe }}</div>
     </div>
     {% endif %}
 </body>

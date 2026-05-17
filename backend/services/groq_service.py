@@ -9,13 +9,21 @@ load_dotenv()
 # We use GROQ_API_KEY and the openai client
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-# Good standard model on Groq
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# Good standard model on Groq - Use 8B for most tasks to avoid TPM limits
+GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL_70B = "llama-3.3-70b-versatile"
 
 client = AsyncOpenAI(
     api_key=GROQ_API_KEY,
     base_url=GROQ_BASE_URL
 )
+
+class GroqError(Exception):
+    def __init__(self, message, solution, error_type="unknown"):
+        self.message = message
+        self.solution = solution
+        self.error_type = error_type
+        super().__init__(self.message)
 
 async def call_groq_json(system_prompt: str, user_prompt: str) -> dict:
     """
@@ -39,7 +47,46 @@ async def call_groq_json(system_prompt: str, user_prompt: str) -> dict:
         return json.loads(content)
     except Exception as e:
         print(f"Groq API Error: {e}")
-        return {"error": str(e)}
+        err_info = handle_groq_error(e)
+        raise GroqError(err_info["error"], err_info["solution"], err_info["type"])
+
+def handle_groq_error(e: Exception) -> dict:
+    """Translates technical Groq/OpenAI errors into user-friendly solutions."""
+    err_str = str(e)
+    
+    if "429" in err_str:
+        return {
+            "error": "Rate Limit Reached (429)",
+            "solution": "The AI is currently busy. Please wait 30-60 seconds and try again. This limit resets every minute.",
+            "type": "rate_limit"
+        }
+    
+    if "authentication" in err_str.lower() or "api_key" in err_str.lower() or "401" in err_str:
+        return {
+            "error": "Authentication Failed",
+            "solution": "The Groq API Key is missing or invalid. Please verify the GROQ_API_KEY in your .env file.",
+            "type": "auth"
+        }
+        
+    if "timeout" in err_str.lower() or "deadline" in err_str.lower():
+        return {
+            "error": "Request Timeout",
+            "solution": "The connection to the AI service timed out. Please check your internet or try again in a moment.",
+            "type": "timeout"
+        }
+        
+    if "insufficient_quota" in err_str.lower():
+        return {
+            "error": "Quota Exceeded",
+            "solution": "Your Groq account has run out of credits or reached its monthly limit. Please check your Groq dashboard.",
+            "type": "quota"
+        }
+
+    return {
+        "error": "AI Service Error",
+        "solution": f"An unexpected error occurred: {err_str}. Please try again in a few minutes.",
+        "type": "unknown"
+    }
 
 async def rewrite_text(text: str, instruction: str) -> str:
     """Generic text rewriter for About/Bio edits in admin panel."""
@@ -58,6 +105,118 @@ async def execute_admin_command(command: str, current_data: dict) -> dict:
     """
     return await call_groq_json(system, user)
 
+# ── Regional Cover Letter Prompt Map (G6) ────────────────────────────────────
+COVER_LETTER_PROMPTS = {
+    "JP": {
+        "ecosystem": "Japan's healthcare AI and medical robotics sector",
+        "tone": "formal and respectful, Japanese business culture aware",
+        "visa": "willing to relocate to Japan and apply for the Engineer/Specialist visa (技術・人文知識・国際業務)",
+        "language_note": "currently studying Japanese and committed to cultural integration"
+    },
+    "JP_EN": {
+        "ecosystem": "Japan's healthcare AI and medical robotics sector",
+        "tone": "formal and respectful, Japanese business culture aware",
+        "visa": "willing to relocate to Japan and apply for the Engineer/Specialist visa (Engineer/Specialist in Humanities/International Services)",
+        "language_note": "currently studying Japanese and committed to cultural integration"
+    },
+    "KR": {
+        "ecosystem": "Korea's world-class AI research institutions and semiconductor-driven tech sector",
+        "tone": "professional and achievement-oriented, Korean business culture aware",
+        "visa": "willing to relocate to Korea and apply for E-7 Specially Designated Activities visa",
+        "language_note": "currently studying Korean"
+    },
+    "KR_EN": {
+        "ecosystem": "Korea's world-class AI research institutions and semiconductor-driven tech sector",
+        "tone": "professional and achievement-oriented, Korean business culture aware",
+        "visa": "willing to relocate to Korea and apply for E-7 Specially Designated Activities visa",
+        "language_note": "currently studying Korean"
+    },
+    "CN": {
+        "ecosystem": "China's leading AI research institutions and healthtech companies",
+        "tone": "professional, collaborative",
+        "visa": "willing to relocate to China and apply for Z work visa through employer sponsorship",
+        "language_note": "currently studying Mandarin Chinese"
+    },
+    "CN_EN": {
+        "ecosystem": "China's leading AI research institutions and healthtech companies",
+        "tone": "professional, collaborative",
+        "visa": "willing to relocate to China and apply for Z work visa through employer sponsorship",
+        "language_note": "currently studying Mandarin Chinese"
+    },
+    "DE": {
+        "ecosystem": "Germany's engineering-led MedTech and Industry 4.0 ecosystem",
+        "tone": "precise, formal, achievement-focused — German professional culture",
+        "visa": "eligible for EU Blue Card as a qualified non-EU engineer — requires employer sponsorship",
+        "language_note": ""
+    },
+    "UK": {
+        "ecosystem": "the UK's growing AI and digital health innovation sector",
+        "tone": "professional but approachable, British business style",
+        "visa": "requires UK Skilled Worker visa sponsorship",
+        "language_note": ""
+    },
+    "US": {
+        "ecosystem": "the US's leading AI research labs and healthtech startup ecosystem",
+        "tone": "confident, results-driven, American professional style",
+        "visa": "requires H-1B visa sponsorship",
+        "language_note": ""
+    },
+    "IN": {
+        "ecosystem": "India's rapidly expanding AI product companies, deep-tech startups, and research institutions",
+        "tone": "professional, enthusiastic",
+        "visa": "Indian national — no visa required, immediately eligible to work",
+        "language_note": ""
+    },
+    "AE": {
+        "ecosystem": "UAE's AI Strategy 2031, smart city technology, and fintech sector",
+        "tone": "professional, results-oriented",
+        "visa": "requires UAE employment visa — open to relocation",
+        "language_note": ""
+    },
+    "GLOBAL": {
+        "ecosystem": "the global AI research and healthcare technology ecosystem",
+        "tone": "neutral, professional, internationally aware",
+        "visa": "open to worldwide relocation — requires work visa sponsorship depending on country",
+        "language_note": ""
+    },
+}
+
+
+async def generate_regional_cover_letter(region: str, experience_years: str = "3+") -> str:
+    """
+    Generates a country-specific cover letter using the regional prompt map.
+    Returns a plain text cover letter body.
+    """
+    ctx = COVER_LETTER_PROMPTS.get(region, COVER_LETTER_PROMPTS["GLOBAL"])
+    language_line = f"- Language commitment: {ctx['language_note']}" if ctx['language_note'] else ""
+
+    prompt = f"""Write a strong, specific professional cover letter for a Python and AI/ML Engineer
+applying to companies in {region}.
+
+Candidate background:
+- {experience_years} years of Python/AI/ML engineering experience
+- Specialises in Healthcare AI, ECG signal processing, deep learning (1D ResNet, CNN, LSTM)
+- Research paper in progress on ECG cardiac abnormality detection (PhysioNet dataset)
+- Key achievements: 94% F1-score ECG classification model, REST APIs serving 10k+ daily requests at 99.9% uptime, 40% database query optimisation
+
+Country context:
+- Target ecosystem: {ctx['ecosystem']}
+- Tone: {ctx['tone']}
+- Visa situation: {ctx['visa']}
+{language_line}
+
+Rules:
+- Do NOT use generic phrases like "global tech ecosystem" or "I am driven to contribute"
+- Do NOT say "propelled me towards" or "strong professional evolution"
+- Reference the specific country or ecosystem by name at least once
+- Be specific about technical achievements — use the numbers above
+- Maximum 4 paragraphs
+- Each cover letter must feel written for {region}, not copy-pasted from another country
+- Return ONLY the cover letter body text, no subject line, no salutation header"""
+
+    return await call_groq(prompt)
+
+
 async def call_groq(prompt: str) -> str:
     """
     Generic helper to call Groq API for plain text responses.
@@ -65,9 +224,10 @@ async def call_groq(prompt: str) -> str:
     if not GROQ_API_KEY:
         return "GROQ API Key not configured."
 
+    model_to_use = GROQ_MODEL_70B if "cover letter" in prompt.lower() else GROQ_MODEL
     try:
         response = await client.chat.completions.create(
-            model=GROQ_MODEL,
+            model=model_to_use,
             messages=[
                 {"role": "user", "content": prompt}
             ],
@@ -75,8 +235,24 @@ async def call_groq(prompt: str) -> str:
         )
         return response.choices[0].message.content
     except Exception as e:
-        print(f"Groq API Plain Text Error: {e}")
-        raise e
+        print(f"Groq API Plain Text Error on {model_to_use}: {e}")
+        if model_to_use == GROQ_MODEL_70B:
+            print("Falling back to llama-3.1-8b-instant...")
+            try:
+                response = await client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.5
+                )
+                return response.choices[0].message.content
+            except Exception as fallback_e:
+                print(f"Fallback Groq API Plain Text Error: {fallback_e}")
+                e = fallback_e
+
+        err_info = handle_groq_error(e)
+        raise GroqError(err_info["error"], err_info["solution"], err_info["type"])
 
 async def summarize_about(about_list: list) -> str:
     """

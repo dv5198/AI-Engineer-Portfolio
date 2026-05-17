@@ -1,12 +1,14 @@
 import time
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, BackgroundTasks
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List
 from services.groq_service import (
     rewrite_text, 
     execute_admin_command,
     call_groq,
-    summarize_about
+    summarize_about,
+    GroqError
 )
 from database import load_data, save_data
 from services.github import fetch_github_projects
@@ -52,62 +54,77 @@ def login(req: LoginRequest, request: Request):
     login_attempts[ip] = attempts
     raise HTTPException(status_code=401, detail="Invalid password")
 
-from fastapi import BackgroundTasks
-
 @router.post("/command/")
 async def process_command(req: CommandRequest, background_tasks: BackgroundTasks):
     current_data = load_data()
-    # Execute command using Claude to get structural changes
-    changes = await execute_admin_command(req.command, current_data)
-    
-    if "error" in changes:
-        raise HTTPException(status_code=500, detail=changes["error"])
+    try:
+        changes = await execute_admin_command(req.command, current_data)
         
-    # Apply changes natively here, simulating what portfolio update does
-    def deep_update(d, u):
-        for k, v in u.items():
-            if isinstance(v, dict) and k in d and isinstance(d[k], dict):
-                d[k] = deep_update(d.get(k, {}), v)
-            else:
-                d[k] = v
-        return d
+        # Apply changes natively here, simulating what portfolio update does
+        def deep_update(d, u):
+            for k, v in u.items():
+                if isinstance(v, dict) and k in d and isinstance(d[k], dict):
+                    d[k] = deep_update(d.get(k, {}), v)
+                else:
+                    d[k] = v
+            return d
+            
+        updated = deep_update(current_data, changes)
+        save_data(updated)
         
-    updated = deep_update(current_data, changes)
-    save_data(updated)
-    
-    from routes.dynamic_sections import log_activity
-    log_activity(f"Applied AI command: {req.command}", "Admin AI", changes)
-    
-    from services.groq_service import auto_regenerate_summary_task
-    background_tasks.add_task(auto_regenerate_summary_task)
-    
-    return {"message": "Command executed successfully", "changes_applied": changes, "new_data": updated}
+        from routes.dynamic_sections import log_activity
+        log_activity(f"Applied AI command: {req.command}", "Admin AI", changes)
+        
+        from services.groq_service import auto_regenerate_summary_task
+        background_tasks.add_task(auto_regenerate_summary_task)
+        
+        return {"message": "Command executed successfully", "changes_applied": changes, "new_data": updated}
+        
+    except GroqError as ge:
+        return JSONResponse(
+            status_code=400, 
+            content={"error": ge.message, "solution": ge.solution, "type": ge.error_type}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/rewrite-bio/")
 async def rewrite_bio_route(req: RewriteRequest):
-    new_text = await rewrite_text(req.text, req.instruction)
-    return {"rewritten": new_text}
-    
+    try:
+        new_text = await rewrite_text(req.text, req.instruction)
+        return {"rewritten": new_text}
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
+
 @router.post("/rewrite-about/")
 async def rewrite_about_route(req: RewriteRequest):
-    new_text = await rewrite_text(req.text, req.instruction)
-    return {"rewritten": new_text}
+    try:
+        new_text = await rewrite_text(req.text, req.instruction)
+        return {"rewritten": new_text}
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
     
 class GroqTestRequest(BaseModel):
     message: str
 
 @router.post("/test-groq/")
 async def test_groq_route(req: GroqTestRequest):
-    res = await call_groq(req.message)
-    return {"response": res}
+    try:
+        res = await call_groq(req.message)
+        return {"response": res}
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
 
 class SummarizeRequest(BaseModel):
     about_list: List[str]
 
 @router.post("/rewrite-summary/")
 async def rewrite_summary_route(req: SummarizeRequest):
-    res = await summarize_about(req.about_list)
-    return {"rewritten": res}
+    try:
+        res = await summarize_about(req.about_list)
+        return {"rewritten": res}
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
 
 class CoverLetterGenerateRequest(BaseModel):
     about: List[str]
@@ -139,12 +156,7 @@ async def generate_cover_letter_route(req: CoverLetterGenerateRequest):
     "growth_background", "strengths_weaknesses", "motivation", "goals_after_joining"
     
     If the region is 'japan', return these EXACT keys:
-    "content" (Full body of the 'Soe-jo' (添え状) following this 3-part Daijob.com structure:
-        1. Background (Paragraph 1): Position interest and why (貴社の求人概要を拝見し、応募させていただきました).
-        2. Experience Summary (Paragraph 2): Skills matching and what you bring (Why you are a fit).
-        3. Interview Request (Paragraph 3): Mention availability and contact info.
-        Use formal Japanese honorifics. Start with '採用ご担当者様' and '[Name]と申します。'.
-        End with 'お忙しいなか恐縮ですが、どうぞ宜しくお願い致します。'),
+    "content" (Full body of the 'Soe-jo' (添え状) following this 3-part Daijob.com structure),
     "self_pr_ja" (A separate Self-PR section for the Rirekisho)
     
     For all other regions, return:
@@ -154,8 +166,11 @@ async def generate_cover_letter_route(req: CoverLetterGenerateRequest):
     Return ONLY JSON.
     """
     
-    res = await call_groq_json(system_prompt, user_prompt)
-    return res
+    try:
+        res = await call_groq_json(system_prompt, user_prompt)
+        return res
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
 
 class GenerateBulletsRequest(BaseModel):
     role: str
@@ -165,13 +180,14 @@ class GenerateBulletsRequest(BaseModel):
 @router.post("/generate-bullets/")
 async def generate_bullets_route(req: GenerateBulletsRequest):
     prompt = f"Generate 3 professional, action-oriented resume bullets for a {req.role} at {req.company} based on this description: {req.description}. Return ONLY the bullets starting with a dash (-). No introductory text."
-    res = await call_groq(prompt)
-    # Llama/Groq often uses '*' or '-' and might still include empty lines
-    bullets = [b.strip().lstrip('-').lstrip('*').strip() for b in res.split('\n') if b.strip() and (b.strip().startswith('-') or b.strip().startswith('*'))]
-    if not bullets:
-        # Fallback if the model didn't use list markers
-        bullets = [b.strip() for b in res.split('\n') if b.strip() and len(b.strip()) > 15]
-    return {"bullets": bullets}
+    try:
+        res = await call_groq(prompt)
+        bullets = [b.strip().lstrip('-').lstrip('*').strip() for b in res.split('\n') if b.strip() and (b.strip().startswith('-') or b.strip().startswith('*'))]
+        if not bullets:
+            bullets = [b.strip() for b in res.split('\n') if b.strip() and len(b.strip()) > 15]
+        return {"bullets": bullets}
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
     
 @router.get("/projects/all/")
 async def get_all_projects_admin():
@@ -279,8 +295,11 @@ class SynthesisRequest(BaseModel):
 @router.post("/translations/synthesize/")
 async def synthesize_translation(req: SynthesisRequest):
     from services.translations import synthesize_text
-    synthesized = await synthesize_text(req.original_text, req.locale, req.field_name)
-    return {"synthesized_text": synthesized}
+    try:
+        synthesized = await synthesize_text(req.original_text, req.locale, req.field_name)
+        return {"synthesized_text": synthesized}
+    except GroqError as ge:
+        return JSONResponse(status_code=400, content={"error": ge.message, "solution": ge.solution})
 
 @router.delete("/translations/{t_id}")
 def delete_translation(t_id: int):
@@ -294,3 +313,25 @@ def clear_trans_cache():
             conn.execute("DELETE FROM translations WHERE is_verified = 0")
             conn.commit()
     return {"message": "Unverified translations cleared"}
+
+
+# ── Resume Pre-generation ──────────────────────────────────────────────────────
+
+@router.get("/resume-status/")
+def resume_status():
+    """Returns the current pre-generation status — used by admin panel."""
+    from services.pregenerator import get_status
+    return get_status()
+
+
+@router.post("/regenerate-resumes/")
+async def regenerate_resumes(background_tasks: BackgroundTasks):
+    """
+    Triggers background regeneration of all 12 pre-built resume PDFs.
+    Returns immediately — generation runs in the background.
+    """
+    from services.pregenerator import regenerate_all, _is_generating
+    if _is_generating:
+        return {"status": "already_running", "message": "Generation already in progress. Check /resume-status for updates."}
+    background_tasks.add_task(regenerate_all, "admin_manual")
+    return {"status": "started", "message": "Regeneration started in background. All 12 variants will be rebuilt."}

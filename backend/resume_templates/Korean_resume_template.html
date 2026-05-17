@@ -311,12 +311,12 @@
             <div class="header-left">
                 <div class="name-block">{{ profile.name }}</div>
                 <div class="pill-container">
-                    <span class="tag-pill">🌐 {{ L.overseas | default('해외 거주') }}</span>
+                    <span class="tag-pill">{% if lang == 'ko' %}🌐 {% endif %}{{ L.overseas }}</span>
                     {% if personal.korean_level %}
-                    <span class="tag-pill">🗣 {{ L.korean_level | default('한국어') }} {{ personal.korean_level }}</span>
+                    <span class="tag-pill">{% if lang == 'ko' %}🗣 {% endif %}{{ L.korean_level }}: {{ personal.korean_level }}</span>
                     {% endif %}
                     {% if geo_rule.show_visa and personal.visa_type %}
-                    <span class="tag-pill">🛂 {{ personal.visa_type }}</span>
+                    <span class="tag-pill">{% if lang == 'ko' %}🛂 {% endif %}{{ personal.visa_type }}</span>
                     {% endif %}
                 </div>
                 
@@ -367,7 +367,9 @@
 
         <!-- 간단 소개 -->
         <div class="section-title">{{ L.summary }}</div>
-        <div class="intro-text">{{ personal.summary }}</div>
+        <div class="intro-text">
+            {{ profile.summary }}
+        </div>
 
         <!-- 학력 -->
         <div class="section-title">{{ L.education }}</div>
@@ -489,9 +491,9 @@
                 </tr>
                 <tr>
                     <th style="width:15%;">{{ L.period_label }}</th>
-                    <td style="width:35%;">{{ project.period | default('—') }}</td>
+                    <td style="width:35%;">{% if project.period %}{{ project.period }}{% else %}—{% endif %}</td>
                     <th style="width:15%;">{{ L.team_size_label }}</th>
-                    <td>{{ project.team_size | default(L.individual) }}</td>
+                    <td>{{ project.team_size if project.team_size else (L.individual if lang == 'ko' else 'Individual') }}</td>
                 </tr>
                 <tr>
                     <th>{{ L.tech_stack_label }}</th>
@@ -499,7 +501,7 @@
                 </tr>
                 <tr>
                     <th>{{ L.role_label }}</th>
-                    <td colspan="3">{{ project.role | default(L.developer) }}</td>
+                    <td colspan="3">{{ project.role if project.role else (L.developer if lang == 'ko' else 'Developer') }}</td>
                 </tr>
                 <tr>
                     <th>{{ L.outcomes_label }}</th>
@@ -529,7 +531,7 @@
         <!-- 수상 (Awards) -->
         {% if awards %}
         <div class="no-break" style="margin-top:20px;">
-            <div class="section-title">{{ L.awards }}</div>
+            <div class="section-title">{% if lang == 'ko' %}🏆 {% endif %}{{ L.awards }}</div>
             <table style="font-size:9pt; width:100%;">
                 {% for award in awards %}
                 <tr class="no-break">
@@ -544,7 +546,7 @@
 
         <!-- 연구 / 논문 -->
         {% if research %}
-        <div class="section-title">{{ L.research }}</div>
+        <div class="section-title">{% if lang == 'ko' %}🔬 {% endif %}{{ L.research }}</div>
         {% for item in research %}
         <div style="margin-bottom:12px;" class="no-break">
             <div style="font-weight:700; font-size:10pt;">
@@ -573,25 +575,29 @@
             <div style="font-size:10pt; color:#666; margin-top:10px;">{{ profile.name }} &nbsp;|&nbsp; {{ generated_date }}</div>
         </div>
 
-        <div class="jagi-section no-break">
-            <div class="jagi-title">1. {{ L.cl_growth }}</div>
-            <div class="jagi-content">{{ cover_letter.growth_background }}</div>
-        </div>
+        {% if cover_letter.content %}
+            <div class="jagi-content" style="white-space: pre-wrap; font-size: 10pt;">{{ cover_letter.content | safe }}</div>
+        {% else %}
+            <div class="jagi-section no-break">
+                <div class="jagi-title">1. {{ L.cl_growth }}</div>
+                <div class="jagi-content">{{ cover_letter.growth_background }}</div>
+            </div>
 
-        <div class="jagi-section no-break">
-            <div class="jagi-title">2. {{ L.cl_strengths }}</div>
-            <div class="jagi-content">{{ cover_letter.strengths_weaknesses }}</div>
-        </div>
+            <div class="jagi-section no-break">
+                <div class="jagi-title">2. {{ L.cl_strengths }}</div>
+                <div class="jagi-content">{{ cover_letter.strengths_weaknesses }}</div>
+            </div>
 
-        <div class="jagi-section no-break">
-            <div class="jagi-title">3. {{ L.cl_motivation }}</div>
-            <div class="jagi-content">{{ cover_letter.motivation }}</div>
-        </div>
+            <div class="jagi-section no-break">
+                <div class="jagi-title">3. {{ L.cl_motivation }}</div>
+                <div class="jagi-content">{{ cover_letter.motivation }}</div>
+            </div>
 
-        <div class="jagi-section no-break">
-            <div class="jagi-title">4. {{ L.cl_goals }}</div>
-            <div class="jagi-content">{{ cover_letter.goals_after_joining }}</div>
-        </div>
+            <div class="jagi-section no-break">
+                <div class="jagi-title">4. {{ L.cl_goals }}</div>
+                <div class="jagi-content">{{ cover_letter.goals_after_joining }}</div>
+            </div>
+        {% endif %}
 
         <div style="text-align:center; margin-top:30mm;">
             <div style="font-size:12pt; margin-bottom:15mm;">{{ L.confirmation_text }}</div>

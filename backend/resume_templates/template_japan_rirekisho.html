@@ -306,8 +306,8 @@
                 <div style="font-size:8.5pt;">{{ personal.nationality_ja | default('India' if lang == 'en' else 'インド') }}</div>
               </td>
               <td style="border-left:0.75pt solid #000; padding:1px 4px; width:40%;">
-                <div style="font-size:7pt; color:#555;">{{ L.dob }}（{{ L.age }}）</div>
-                <div style="font-size:8.5pt;">{{ personal.japanese_dob_era }}（{{ L.age }}{{ personal.age }}{{ L.year }}）</div>
+                <div style="font-size:7pt; color:#555;">{{ L.dob }} ({% if lang == 'en' %}Age{% else %}{{ L.age }}{% endif %})</div>
+                <div style="font-size:8.5pt;">{{ personal.japanese_dob_era }} ({% if lang == 'en' %}{{ personal.age }}{% else %}{{ personal.age }}{{ L.age_suffix | default('歳') }}{% endif %})</div>
               </td>
               <td style="border-left:0.75pt solid #000; padding:1px 4px; width:18%;">
                 <div style="font-size:7pt; color:#555;">{{ L.gender }}</div>
@@ -418,7 +418,13 @@
       <tr class="history-row no-break">
         <td class="year-col">{{ job.start_year }}</td>
         <td class="month-col">{{ job.start_month }}</td>
-        <td>{{ job.company }}{% if lang == 'ja' %}　{% else %} - {% endif %}{{ L.joining }}</td>
+        <td>
+          {% if 'フリーランス' in job.company or 'freelance' in job.company.lower() %}
+            {% if lang == 'ja' %}フリーランス（個人事業主）として活動開始{% else %}Started activities as a Freelancer{% endif %}
+          {% else %}
+            {{ job.company }}{% if lang == 'ja' %}　{% else %} - {% endif %}{{ L.joining }}
+          {% endif %}
+        </td>
       </tr>
       <tr class="history-row no-break">
         <td class="year-col"></td>
@@ -438,7 +444,7 @@
       <tr class="history-row">
         <td class="year-col"></td>
         <td class="month-col"></td>
-        <td></td>
+        <td>{% if lang == 'ja' %}　現在に至る{% else %}　Present{% endif %}</td>
       </tr>
       <tr class="history-row close-row">
         <td class="year-col"></td>

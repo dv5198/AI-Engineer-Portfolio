@@ -2,7 +2,8 @@ import json
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import httpx
@@ -28,6 +29,9 @@ from database import load_data, save_data
 
 app = FastAPI(title="Divya Nirankari Portfolio API")
 
+# Gzip compress all responses > 1KB — reduces JSON payload ~70%
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Mount static files
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
@@ -52,18 +56,33 @@ def startup_event():
     load_data()
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
-        
-    # Warm up Playwright in the background to prevent the first resume request from timing out
+
     import threading
-    def warmup_pdf():
+
+    def warmup_and_pregen():
+        """Warm up Playwright, then trigger cold-start PDF pre-generation."""
+        import asyncio
+
+        # Step 1: Playwright warmup (prevents first request timeout)
         try:
             from services.pdf_playwright import _generate_pdf_sync
             _generate_pdf_sync("<html><body>warmup</body></html>", "A4", {"top": "0"})
             print("Playwright warmed up successfully.")
         except Exception as e:
             print(f"Playwright warmup failed: {e}")
-            
-    threading.Thread(target=warmup_pdf, daemon=True).start()
+
+        # Step 2: Cold-start pre-generation (only if no PDFs exist yet)
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            from services.pregenerator import regenerate_if_empty
+            loop.run_until_complete(regenerate_if_empty())
+            loop.close()
+        except Exception as e:
+            print(f"Cold-start pre-generation failed: {e}")
+
+    threading.Thread(target=warmup_and_pregen, daemon=True).start()
+
 
 app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
 app.include_router(projects_router, prefix="/api/projects", tags=["projects"])

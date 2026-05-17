@@ -12,7 +12,16 @@ router = APIRouter()
 @router.get("/")
 def get_portfolio():
     from database import load_data
-    return load_data()
+    from fastapi.responses import JSONResponse
+    data = load_data()
+
+    # Strip private/admin-only keys from public response
+    PRIVATE_KEYS = {
+        "activityLog", "analytics", "contactMessages",
+        "resumeSettings", "cover_letter", "hiddenProjects", "projectSummaries",
+    }
+    public = {k: v for k, v in data.items() if k not in PRIVATE_KEYS}
+    return JSONResponse(content=public, headers={"Cache-Control": "public, max-age=30"})
 
 from fastapi import BackgroundTasks
 
