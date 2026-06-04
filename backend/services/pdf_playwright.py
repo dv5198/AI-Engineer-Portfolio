@@ -1489,13 +1489,12 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
     apply_phone_display(profile)
             
     # 1.5 G1: Dynamic summary sentence — inject language_study + target_ecosystem per region
-    # Determine region key for lookup
     region_key_map = {
         'japan': 'JP', 'japan_english': 'JP_EN',
         'korea': 'KR', 'korea_english': 'KR_EN',
         'china': 'CN', 'china_english': 'CN_EN',
         'germany': 'DE', 'uk': 'UK', 'usa': 'US',
-        'india': 'IN', 'uae': 'AE', 'international': 'GLOBAL'
+        'india': 'IN', 'uae': 'AE', 'middleeast': 'AE', 'international': 'GLOBAL'
     }
     region_key = region_key_map.get(region, 'GLOBAL')
     lang_study_map  = personal.get('language_study_en', {})
@@ -1545,8 +1544,14 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
         cl = data.get('cover_letter', {})
         
         # Resolve any manual cover letter text
-        specific_native = reg_cl.get(f"{region}_{lang}", "").strip()
-        regional_base = reg_cl.get(region, "").strip()
+        if region == 'middleeast':
+            lookup_region = 'uae'
+        elif region == 'international':
+            lookup_region = 'global'
+        else:
+            lookup_region = region
+        specific_native = reg_cl.get(f"{lookup_region}_{lang}", "").strip()
+        regional_base = reg_cl.get(lookup_region, "").strip()
         global_content = cl.get('content', "").strip()
         
         growth = cl.get('growth_background', "") or ""
@@ -1558,10 +1563,10 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
         # Decide if we have a manual cover letter
         # We only treat it as a manual cover letter if the text is long (>= 500 chars),
         # meaning the user has written/customized it, rather than it being a short default stub.
-        if specific_native and len(specific_native) >= 250:
+        if specific_native and len(specific_native) >= 500:
             manual_cover_content = specific_native
             is_manual_cover = True
-        elif (regional_base or global_content or merged_sections) and len(regional_base or global_content or merged_sections) >= 250:
+        elif (regional_base or global_content or merged_sections) and len(regional_base or global_content or merged_sections) >= 500:
             manual_cover_content = regional_base or global_content or merged_sections
             is_manual_cover = True
             # If target language is not English and we fall back to an English manual letter, JIT-translate it!
@@ -1653,12 +1658,6 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
 
     if profile.get('summary'):
         profile['summary'] = clean_years(profile['summary'])
-    if personal.get('career_summary_ja'):
-        personal['career_summary_ja'] = clean_years(personal['career_summary_ja'])
-    if personal.get('self_pr_ja'):
-        personal['self_pr_ja'] = clean_years(personal['self_pr_ja'])
-    if personal.get('self_pr_ja_detailed'):
-        personal['self_pr_ja_detailed'] = clean_years(personal['self_pr_ja_detailed'])
     if personal.get('summary'):
         personal['summary'] = clean_years(personal['summary'])
 
@@ -1702,7 +1701,13 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
             # Fallback to static
             reg_cl = data.get('regional_cover_letters', {})
             cl = data.get('cover_letter', {})
-            static_content = (reg_cl.get(f"{region}_{lang}") or reg_cl.get(region) or cl.get('content') or 
+            if region == 'middleeast':
+                lookup_region = 'uae'
+            elif region == 'international':
+                lookup_region = 'global'
+            else:
+                lookup_region = region
+            static_content = (reg_cl.get(f"{lookup_region}_{lang}") or reg_cl.get(lookup_region) or cl.get('content') or 
                              "\n\n".join(filter(None, [cl.get('growth_background'), cl.get('strengths_weaknesses'), cl.get('motivation'), cl.get('goals_after_joining')])))
             html_static = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', static_content)
             html_static = re.sub(r'\*(.*?)\*', r'<em>\1</em>', html_static)
@@ -2173,6 +2178,10 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
         template_shokumu = env.get_template('template_japan_shokumu.html')
         html_shokumu = template_shokumu.render(**japan_context)
         
+        # Apply Parkinson apostrophe replacement
+        html_rirekisho = html_rirekisho.replace("Parkinson' s", "Parkinson’s").replace("Parkinson's", "Parkinson’s")
+        html_shokumu = html_shokumu.replace("Parkinson' s", "Parkinson’s").replace("Parkinson's", "Parkinson’s")
+        
         if return_html:
             html_content = html_rirekisho + "\n<div style='page-break-after: always; height: 20px; background: #eee;'></div>\n" + html_shokumu
         else:
@@ -2199,6 +2208,9 @@ async def generate_resume_playwright(data, live_projects=None, region="internati
     else:
         template = env.get_template(template_name)
         html_content = template.render(**view_data)
+
+    # Apply Parkinson apostrophe replacement
+    html_content = html_content.replace("Parkinson' s", "Parkinson’s").replace("Parkinson's", "Parkinson’s")
 
     if return_html:
         # Inject Neural Scroll Sync Script

@@ -50,7 +50,7 @@
         <h1>{{ profile.name }}</h1>
         <div class="subtitle">{{ profile.role }}</div>
         <div class="contact-info">
-            {{ profile.location }}{% if geo_rule.show_dob and personal.dob %} | {{ personal.dob }}{% endif %} | {{ profile.phone }} | {{ profile.email }}
+            {{ profile.location }}{% if geo_rule.show_dob and personal.dob and not show_extended_personal %} | {{ personal.dob }}{% endif %} | {{ profile.phone }} | {{ profile.email }}
             {% if show_extended_personal %}
             <br>
             DOB: {{ personal.dob }} | Nationality: {{ personal.nationality }} | Marital Status: {{ personal.marital_status }}

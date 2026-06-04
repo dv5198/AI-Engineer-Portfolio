@@ -4,7 +4,9 @@ import os
 
 def update_content():
     # 1. Load data
-    with open('data.json', 'r', encoding='utf-8') as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.join(base_dir, 'data.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     # G2: Dynamic experience years already handled, but let's double check summary
@@ -101,11 +103,11 @@ def update_content():
             cat['years'] = 3
 
     # Save to JSON
-    with open('data.json', 'w', encoding='utf-8') as f:
+    with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     
     # Save to portfolio.db
-    db_path = "portfolio.db"
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'portfolio.db')
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()

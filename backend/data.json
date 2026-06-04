@@ -5,7 +5,7 @@
     "email": "dvnirankari@gmail.com",
     "phone": "+91 9265768306",
     "location": "Surat, Gujarat, India",
-    "summary": "AI/ML Engineer specializing in healthcare AI and production-grade machine learning systems. Developed a high-accuracy ECG cardiac abnormality detection model (94% F1-score) using 1D ResNet architectures. Proven expertise in building scalable REST APIs (10k+ daily requests) and optimizing database performance (40% faster query times) using FastAPI and PostgreSQL.",
+    "summary": "AI/ML Engineer with 4+ years of experience specializing in healthcare AI and production-grade machine learning systems. Developed a high-accuracy ECG cardiac abnormality detection model (94% F1-score) using 1D ResNet architectures on the PhysioNet/CinC Challenge dataset. Proven expertise in building scalable REST APIs (10,000+ daily requests, 99.9% uptime) and optimizing database performance (40% faster query times) using FastAPI and PostgreSQL. Skilled in Python, PyTorch, and deep learning, with a focus on bridging the gap between research and real-world deployment.",
     "bio": "As a seasoned software development expert, I possess a unique ability to craft and deploy high-performance, scalable web applications that harness the power of cutting-edge technologies, including the design and implementation of innovative machine learning models that catalyze business growth, optimize operational efficiency, and inform strategic decision-making, ultimately driving transformative outcomes and propelling organizations forward.",
     "postal_code": "395001",
     "address": "Surat, Gujarat, India",
@@ -66,7 +66,7 @@
     "name_furigana": "ディヴィア・ニランカリ",
     "address_furigana": "インド、グジャラート州、スーラト",
     "summary_zh": "资深Python与AI/ML工程师，专注于医疗AI及生物医学信号处理。曾在Logixbuilt Infotech主导高并发REST API开发（日均请求1万+，可用性99.9%），并通过PostgreSQL优化将响应速度提升40%。独立开发基于PhysioNet数据集的ECG心脏异常检测模型，采用1D ResNet架构，F1分数达94%。具备从科研到生产环境落地的全栈能力。",
-    "summary_ko": "Python 및 AI/ML 엔지니어로, 의료 AI 및 생체 신호 처리 분야에 전문성을 갖추고 있습니다. Logixbuilt Infotech에서 일일 1만 건 이상의 요청을 처리하는 고가용성 REST API를 개발하고 PostgreSQL 쿼리 최적화를 통해 성능을 40% 향상시켰습니다. PhysioNet 데이터셋을 활용하여 94%의 F1-score를 기록한 1D ResNet 기반 ECG 심장 이상 탐지 모델을 독자적으로 개발했습니다. 연구 성과를 실제 서비스로 구현하는 데 강점이 있습니다."
+    "summary_ko": "실무 경험을 보유한 Python 및 AI/ML 엔지니어로, 의료 AI 및 생체 신호 처리 분야에 전문성을 갖추고 있습니다. Logixbuilt Infotech에서 일일 1만 건 이상의 요청을 처리하는 고가용성 REST API를 개발하고 PostgreSQL 쿼리 최적화를 통해 성능을 40% 향상시켰습니다. PhysioNet 데이터셋을 활용하여 94%의 F1-score를 기록한 1D ResNet 기반 ECG 심장 이상 탐지 모델을 독자적으로 개발했습니다. 연구 성과를 실제 서비스로 구현하는 데 강점이 있습니다."
   },
   "education": [
     {
@@ -127,12 +127,12 @@
   "projects": [
     {
       "id": "proj_2",
-      "name": "Parkinson’s Disease Detection System",
-      "summary": "Developed an AI-Based System based on Spiral Drawing Analysis. Applied image processing and machine learning techniques. Identified early-stage Parkinson’s symptoms. The model achieved 91% diagnostic accuracy on clinical datasets.",
+      "name": "Parkinson's Disease Detection System",
+      "summary": "Developed an AI-based system for early-stage Parkinson's detection using voice frequency analysis and spiral drawing patterns. Achieved 89% diagnostic accuracy using XGBoost and image processing techniques.",
       "role": "Developer",
       "techStack": "AI, ML, Image Processing",
       "visible": true,
-      "period": "2024 - 2025",
+      "period": "Jan 2024 - Dec 2025",
       "github": "https://github.com/dv5198/Parkinson-Disease-Detection"
     },
     {
@@ -141,7 +141,7 @@
       "techStack": "React, Tailwind CSS, FastAPI, Playwright, SQLite",
       "role": "Full Stack / Lead Developer",
       "visible": true,
-      "period": "2024 - 2025",
+      "period": "Oct 2024 - Present",
       "github": "https://github.com/dv5198/AI-Engineer-Portfolio"
     }
   ],
@@ -153,7 +153,7 @@
       "issuer": "Gujarat University",
       "description": "Academic excellence award in Data Structures",
       "visible": true,
-      "month": "05"
+      "month": "03"
     },
     {
       "id": "ach_award_2",
@@ -171,7 +171,7 @@
       "issuer": "Gujarat University",
       "description": "Awarded Student of the Year across the department",
       "visible": true,
-      "month": "11"
+      "month": "09"
     },
     {
       "id": "ach_award_4",
@@ -180,7 +180,7 @@
       "issuer": "Logixbuilt Infotech",
       "description": "Recognized for exceptional commitment and performance.",
       "visible": true,
-      "month": "08"
+      "month": "11"
     }
   ],
   "languages": [
@@ -363,8 +363,10 @@
     "germany": "With a deep focus on Healthcare AI and 3+ years of experience in building scalable machine learning systems, I am eager to join Germany's leading medical technology sector. My background in signal processing and FastAPI optimization positions me well for Industry 4.0 and MedTech roles in Europe. I am eligible for the EU Blue Card and require sponsorship for relocation to Germany.",
     "india": "As an AI/ML Engineer with 3+ years of experience in the Indian and international tech ecosystems, I have developed a strong track record in building high-throughput APIs and accurate deep learning models. I am immediately available to join a forward-thinking Indian organization and drive impact through data-driven solutions.",
     "uae": "I am excited by the UAE's ambitious AI Strategy 2031 and wish to contribute my 3+ years of experience in machine learning and backend engineering to the Gulf region's digital transformation. My expertise in building scalable, real-time AI systems is well-suited for the smart city and healthcare initiatives in the UAE. I am willing to relocate and require UAE employment visa sponsorship.",
-    "china": "I am writing to express my strong interest in AI/ML roles within China's leading healthcare AI market. I have followed work from Tsinghua, Peking University, Alibaba DAMO Academy, Baidu Health, and Ping An Good Doctor, and I am studying Mandarin Chinese to support effective communication in a Chinese engineering team. I require Z-visa sponsorship for employment in China and am fully prepared to relocate.",
-    "china_en": "Dear Hiring Manager,\n\nI am writing to express my strong interest in AI/ML roles within China's leading healthcare AI market. I have followed work from Tsinghua and Alibaba DAMO Academy, and I am studying Mandarin Chinese to support effective communication in a Chinese engineering team. I would require Z work visa sponsorship through the hiring company and am fully prepared to relocate to China.\n\nI believe my experience building high-reliability FastAPI backends and validating 1D ResNet cardiac AI models is well-suited to teams focused on medical imaging and predictive health services in China.\n\nBest regards,\n\nDivya Nirankari\ndvnirankari@gmail.com | {phone}",
-    "china_zh": "尊敬的招聘负责人：\n\n作为专注于医疗AI和生产级机器学习系统的AI/ML工程师，我曾在PhysioNet数据集上开发并验证了94% F1-score的1D ResNet心电图异常检测模型，并在Logixbuilt Infotech构建了日均1万+请求的高可用REST API。\n\n我具备从模型验证到生产部署的端到端经验，包括FastAPI后端、PostgreSQL性能优化以及实时AI服务的稳定交付。\n\n我关注清华大学、北京大学、阿里巴巴达摩院、百度健康和平安好医生在医学影像与心脏AI领域的实际应用进展，并正在学习普通话以便更好地融入中国团队。\n\n我还计划通过贵公司申请Z类工作签证，并已做好赴华工作的充分准备。希望能够在贵公司推动医疗AI产品落地，并支持从研发到部署的全流程交付。此致敬礼。"
-  }
+    "china": "Dear Hiring Manager,\n\nAs an AI/ML engineer specializing in healthcare AI and production-grade machine learning systems, I developed and validated a 1D ResNet ECG anomaly detection model achieving a 94% F1-score on the PhysioNet dataset, and built high-availability REST APIs handling 10,000+ daily requests at Logixbuilt Infotech.\n\nI possess end-to-end experience spanning from model validation to production deployment, including FastAPI backends, PostgreSQL query optimization, and the stable delivery of real-time AI services.\n\nI closely follow the clinical application advancements of Tsinghua University, Peking University, Alibaba DAMO Academy, Baidu Health, and Ping An Good Doctor in the fields of medical imaging and cardiac AI.\n\nI also plan to apply for a Class Z work visa through your company and am fully prepared to relocate to China. I hope to drive the production realization of healthcare AI products and support your team across the entire development and deployment lifecycle.\n\nBest regards,\n\nDivya Nirankari\ndvnirankari@gmail.com | +91 9265768306",
+    "china_en": "Dear Hiring Manager,\n\nAs an AI/ML engineer specializing in healthcare AI and production-grade machine learning systems, I developed and validated a 1D ResNet ECG anomaly detection model achieving a 94% F1-score on the PhysioNet dataset, and built high-availability REST APIs handling 10,000+ daily requests at Logixbuilt Infotech.\n\nI possess end-to-end experience spanning from model validation to production deployment, including FastAPI backends, PostgreSQL query optimization, and the stable delivery of real-time AI services.\n\nI closely follow the clinical application advancements of Tsinghua University, Peking University, Alibaba DAMO Academy, Baidu Health, and Ping An Good Doctor in the fields of medical imaging and cardiac AI.\n\nI also plan to apply for a Class Z work visa through your company and am fully prepared to relocate to China. I hope to drive the production realization of healthcare AI products and support your team across the entire development and deployment lifecycle.\n\nBest regards,\n\nDivya Nirankari\ndvnirankari@gmail.com | +91 9265768306",
+    "china_zh": "尊敬的招聘负责人：\n\n作为专注于医疗AI和生产级机器学习系统的AI/ML工程师，我曾在PhysioNet数据集上开发并验证了94% F1-score的1D ResNet心电图异常检测模型，并在Logixbuilt Infotech构建了日均1万+请求的高可用REST API。\n\n我具备从模型验证到生产部署的端到端经验，包括FastAPI后端、PostgreSQL性能优化以及实时AI服务的稳定交付。\n\n我关注清华大学、北京大学、阿里巴巴达摩院、百度健康和平安好医生在医学影像与心脏AI领域的实际应用进展。\n\n我还计划通过贵公司申请Z类工作签证，并已做好赴华工作的充分准备。希望能够在贵公司推动医疗AI产品落地，并支持从研发到部署的全流程交付。\n\n此致\n敬礼\n\nDivya Nirankari\ndvnirankari@gmail.com | +91 9265768306"
+  },
+  "analytics": [],
+  "activityLog": []
 }

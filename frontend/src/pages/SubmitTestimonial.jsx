@@ -90,16 +90,18 @@ const SubmitTestimonial = () => {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Full Name</label>
-                                    <input 
+                                    <label htmlFor="testimonial-name" className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Full Name</label>
+                                    <input
+                                        id="testimonial-name"
                                         required name="name" value={formData.name} onChange={handleChange}
                                         className="w-full bg-transparent border-b border-ivory/10 text-ivory py-3 focus:outline-none focus:border-accent font-serif placeholder:italic placeholder:text-ivory/20 transition-colors"
                                         placeholder="Jane Doe"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Role / Title</label>
-                                    <input 
+                                    <label htmlFor="testimonial-role" className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Role / Title</label>
+                                    <input
+                                        id="testimonial-role"
                                         required name="role" value={formData.role} onChange={handleChange}
                                         className="w-full bg-transparent border-b border-ivory/10 text-ivory py-3 focus:outline-none focus:border-accent font-serif placeholder:italic placeholder:text-ivory/20 transition-colors"
                                         placeholder="Senior Engineer"
@@ -109,16 +111,18 @@ const SubmitTestimonial = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Company / Organization</label>
-                                    <input 
+                                    <label htmlFor="testimonial-company" className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Company / Organization</label>
+                                    <input
+                                        id="testimonial-company"
                                         required name="company" value={formData.company} onChange={handleChange}
                                         className="w-full bg-transparent border-b border-ivory/10 text-ivory py-3 focus:outline-none focus:border-accent font-serif placeholder:italic placeholder:text-ivory/20 transition-colors"
                                         placeholder="Tech Corp"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Relation / Context</label>
-                                    <input 
+                                    <label htmlFor="testimonial-relation" className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2">Relation / Context</label>
+                                    <input
+                                        id="testimonial-relation"
                                         required name="relation" value={formData.relation} onChange={handleChange}
                                         className="w-full bg-transparent border-b border-ivory/10 text-ivory py-3 focus:outline-none focus:border-accent font-serif placeholder:italic placeholder:text-ivory/20 transition-colors"
                                         placeholder="Manager, Peer, Client"
@@ -127,15 +131,18 @@ const SubmitTestimonial = () => {
                             </div>
 
                             <div>
-                                <label className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2 flex justify-between">
-                                    <span>Endorsement / Quote</span>
-                                    <span className="text-ivory/20">{formData.quote.length}/500</span>
-                                </label>
-                                <textarea 
-                                    required name="quote" value={formData.quote} onChange={handleChange} maxLength="500"
-                                    className="w-full bg-ivory/5 border border-ivory/10 text-ivory p-4 focus:outline-none focus:border-accent font-serif placeholder:italic placeholder:text-ivory/20 transition-colors resize-none h-32"
-                                    placeholder="Briefly describe your experience working together..."
-                                />
+                                    <label htmlFor="testimonial-quote" className="block font-mono text-[9px] uppercase tracking-widest text-ivory/40 mb-2 flex justify-between">
+                                        <span>Endorsement / Quote</span>
+                                        <span className="text-ivory/20">{formData.quote.length}/500</span>
+                                    </label>
+                                    <textarea 
+                                        id="testimonial-quote"
+                                        name="quote"
+                                        value={formData.quote}
+                                        onChange={handleChange}
+                                        className="w-full bg-ivory/5 border border-ivory/10 text-ivory p-4 focus:outline-none focus:border-accent font-serif placeholder:italic placeholder:text-ivory/20 transition-colors resize-none h-32"
+                                        placeholder="Briefly describe your experience working together..."
+                                    />
                             </div>
 
                             <button 

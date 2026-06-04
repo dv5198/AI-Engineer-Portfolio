@@ -3,19 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
 import { X } from 'lucide-react';
 
-const Experience = () => {
-  const { data } = useContext(PortfolioContext);
-  const [showAll, setShowAll] = useState(false);
-
-  if (!data || !data.sections_visibility?.experience) return null;
-
-  const visibleExperience = data.experience.filter(job => job.visible !== false);
-  const latestExperience = visibleExperience.slice(0, 6);
-  const hasMore = visibleExperience.length > 6;
-
-  const ExperienceItem = ({ job, idx, isModal = false }) => (
-    <motion.div 
-      key={idx}
+const ExperienceItem = ({ job, idx, isModal = false }) => (
+  <motion.div 
+    key={idx}
       animate={!isModal ? { y: [0, -12, 0] } : {}}
       transition={!isModal ? {
         duration: 5,
@@ -58,6 +48,16 @@ const Experience = () => {
       </ul>
     </motion.div>
   );
+
+const Experience = () => {
+  const { data } = useContext(PortfolioContext);
+  const [showAll, setShowAll] = useState(false);
+
+  if (!data || !data.sections_visibility?.experience) return null;
+
+  const visibleExperience = data.experience.filter(job => job.visible !== false);
+  const latestExperience = visibleExperience.slice(0, 6);
+  const hasMore = visibleExperience.length > 6;
 
   return (
     <section id="experience" className="pt-8 pb-16 px-6 bg-background">

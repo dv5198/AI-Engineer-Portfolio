@@ -214,6 +214,7 @@ async def regenerate_all(triggered_by: str = "manual") -> dict:
                 }
                 status_icon = "OK" if success else "FAIL"
                 print(f"[pregenerator] {status_icon} {filename} ({elapsed}s)")
+                await asyncio.sleep(2.0)
 
             all_ok = all(v["ok"] for v in results.values())
             meta.update({

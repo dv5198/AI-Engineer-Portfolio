@@ -811,8 +811,8 @@ async def translate_text(text: str, target_lang: str, field_name: str = "generic
     # 2. Call deep-translator (asynchronous wrapper)
     try:
         translator = get_translator(target_lang)
-        # deep-translator is synchronous, but we can run it in a thread to avoid blocking
-        translated = await asyncio.to_thread(translator.translate, text)
+        # Call translator.translate synchronously to avoid threading and event loop executor shutdown issues in Playwright tasks
+        translated = translator.translate(text)
         translated = translated.strip()
         
         # 3. Save to Cache
@@ -882,8 +882,8 @@ async def translate_batch(items: List[Dict[str, str]], target_lang: str, verifie
     # 2. Call deep-translator batch
     try:
         translator = get_translator(target_lang)
-        # deep-translator translate_batch handles list of strings
-        translated_list = await asyncio.to_thread(translator.translate_batch, texts_to_translate)
+        # Call translator.translate_batch synchronously to avoid threading and event loop executor shutdown issues in Playwright tasks
+        translated_list = translator.translate_batch(texts_to_translate)
         
         for idx, translated_text in zip(to_translate_indices, translated_list):
             if not translated_text:

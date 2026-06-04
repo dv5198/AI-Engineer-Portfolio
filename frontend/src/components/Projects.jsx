@@ -1,19 +1,13 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
 import { GithubIcon, ExternalLinkIcon } from 'lucide-react';
 import { generateProjectCover } from '../utils/imageGenerator';
 
 const ProjectCard = ({ project, idx }) => {
-  const [cover, setCover] = useState(null);
-
-  useEffect(() => {
-    if (!project.image) {
-      setCover(generateProjectCover(project.name));
-    } else {
-      setCover(null); // Clear cover to use actual image
-    }
-  }, [project.name, project.image]);
+  const cover = useMemo(() => {
+    return project.image ? null : generateProjectCover(project.name);
+  }, [project.image, project.name]);
 
   const [imageError, setImageError] = useState(false);
 

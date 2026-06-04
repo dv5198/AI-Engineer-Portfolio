@@ -108,7 +108,7 @@ COUNTRY_CONFIGS = {
     },
     "GLOBAL": {
         "country_name": "international markets",
-        "ecosystem": "This letter will be read by companies across multiple countries and sectors. Frame the candidate as someone with strong fundamentals who can contribute across healthcare AI and production ML regardless of geography. Do not reference any specific country or physics labs like CERN.",
+        "ecosystem": "This letter will be read by companies across multiple countries and sectors. Frame the candidate as someone with strong fundamentals who can contribute across healthcare AI and production ML regardless of geography. Do not reference any specific country, physics labs like CERN, or specific universities like UC Berkeley.",
         "tone": "Neutral and universally professional. Avoid anything culturally specific. Clear, confident, clean.",
         "visa_statement": "I am open to relocating anywhere in the world and will require work visa sponsorship depending on the country. I am familiar with international hiring processes.",
         "language_note": ""
@@ -206,6 +206,15 @@ SECTIONED_COVER_CODES = frozenset({"KR_KO"})
 
 # Phrase polish rules applied after generation/translation
 _PHRASE_POLISH = [
+    (r"\bI am excited by\b", "I welcome"),
+    (r"\bworld-class\b", "high-calibre"),
+    (r"\bdrive impact\b", "deliver results"),
+    (r"\bforward-thinking organization\b", "this organization"),
+    (r"\bforward-thinking\b", "progressive"),
+    (r"\bdrive meaningful change\b", "deliver results"),
+    (r"\bleverage my expertise\b", "apply my skills"),
+    (r"\bUniversity of California,\s*Berkeley\b", "leading research institutions"),
+    (r"\bUC Berkeley\b", "leading research institutions"),
     (r"make me a strong fit for this ecosystem", "make me a strong candidate for roles in this space"),
     (r"make me a strong fit", "make me a strong candidate"),
     (r"navigating the necessary arrangements", "complete the necessary visa process"),
@@ -265,6 +274,12 @@ _PHRASE_POLISH = [
      "I follow advances in 1D ResNet architectures for ECG classification and FDA guidance on machine-learning medical devices, applying those insights to production PyTorch and FastAPI systems"),
     (r"this ecosystem\.\s*I am impressed by the work being done in this field and believe my skills and experience make me a strong fit for this ecosystem",
      "this market. I am impressed by the work being done in this field and believe my skills and experience make me a strong candidate for roles in this space"),
+    (r"follow advances in the latest advancements", "follow latest advancements"),
+    (r"advances in advancements", "advancements"),
+    (r"I would require Z work visa sponsorship through the hiring company\.\s*I require Z-visa sponsorship for employment in China\.",
+     "I would require Z work visa sponsorship through the hiring company."),
+    (r"I require Z-visa sponsorship for employment in China\.\s*I would require Z work visa sponsorship through the hiring company\.",
+     "I would require Z work visa sponsorship through the hiring company."),
     (r"地元の機関", "日本の著名な研究機関"),
     (r"영어를 계속 배우면서", "한국어를 계속 공부하면서"),
     (r"영어를 배우면서", "한국어를 공부하면서"),
@@ -393,10 +408,10 @@ def _append_kr_en_visa(body: str) -> str:
     return "\n\n".join(paragraphs)
 
 
-def _append_cn_en_requirements(body: str) -> str:
+def _append_cn_en_requirements(body: str, allow_language_note: bool = False) -> str:
     if not body:
         return body
-    has_visa = bool(re.search(r"Z[-\s]?visa|Z签证", body, re.IGNORECASE))
+    has_visa = bool(re.search(r"\bZ(?:[-\s]?work)?\s*visa\b|\bZ[-\s]?visa\b|Z签证", body, re.IGNORECASE))
     has_language = bool(re.search(r"Mandarin|Mandarin Chinese|普通话|Chinese", body, re.IGNORECASE))
     companies = ["Tsinghua", "Peking University", "Alibaba DAMO Academy", "Baidu Health", "Ping An Good Doctor"]
     present = [c for c in companies if c in body]
@@ -407,7 +422,7 @@ def _append_cn_en_requirements(body: str) -> str:
             append_parts.append(f"I have followed work from {missing[0]} and {missing[1]}.")
         elif missing:
             append_parts.append(f"I have followed work from {missing[0]}.")
-    if not has_language:
+    if not has_language and allow_language_note:
         append_parts.append("I am currently studying Mandarin Chinese and committed to steady progress.")
     if not has_visa:
         append_parts.append("I require Z-visa sponsorship for employment in China.")
@@ -463,7 +478,7 @@ def _deduplicate_sentences(text: str) -> str:
     return "\n\n".join(cleaned_paras)
 
 
-def _polish_cover_letter_body(body: str, country_code: str) -> str:
+def _polish_cover_letter_body(body: str, country_code: str, has_chinese_language: bool = False) -> str:
     if not body:
         return body
 
@@ -516,6 +531,11 @@ def _polish_cover_letter_body(body: str, country_code: str) -> str:
         body = re.sub(r'非常期待[^。]*。', '', body)
         body = re.sub(r'我非常有信心[^。]*。', '', body)
         body = re.sub(r'期待与您[^。]*。', '', body)
+    if country_code == 'CN_CN' and '平安好医生' not in body:
+        if '百度健康' in body:
+            body = body.replace('百度健康', '百度健康、平安好医生', 1)
+        elif '阿里巴巴达摩院' in body:
+            body = body.replace('阿里巴巴达摩院', '阿里巴巴达摩院、平安好医生', 1)
 
     # English cover letters for Japan/Korea: remove out-of-context FDA references
     if country_code in ('JP_EN', 'KR_EN'):
@@ -526,7 +546,7 @@ def _polish_cover_letter_body(body: str, country_code: str) -> str:
     if country_code == 'KR_EN':
         body = _append_kr_en_visa(body)
     if country_code == 'CN_EN':
-        body = _append_cn_en_requirements(body)
+        body = _append_cn_en_requirements(body, allow_language_note=has_chinese_language)
 
     # Chinese cover letters: remove repeated institution mentions and tighten tone
     if country_code == 'CN_CN':
@@ -563,15 +583,68 @@ def _sanitize_cover_letter_body(body: str) -> str:
                     paragraphs[i] = paragraphs[i].replace(company, "that organization")
                 else:
                     seen.add(company)
+
+    z_visa_pattern = re.compile(r'[^.?!]*\b(?:Z(?:[-\s]?work)?\s*visa|Z[-\s]?visa|Z签证)\b[^.?!]*[.?!]', re.IGNORECASE)
+    z_visa_sentence = None
+    for i, paragraph in enumerate(paragraphs):
+        if z_visa_sentence is None:
+            match = z_visa_pattern.search(paragraph)
+            if match:
+                z_visa_sentence = match.group(0).strip()
+        paragraphs[i] = z_visa_pattern.sub('', paragraph).strip()
+    if z_visa_sentence and paragraphs:
+        last_idx = len(paragraphs) - 1
+        last_para = paragraphs[last_idx].strip()
+        if last_para and last_para[-1] not in '.!?':
+            last_para += '.'
+        paragraphs[last_idx] = (last_para + ' ' + z_visa_sentence).strip()
+
+    if len(paragraphs) >= 3 and "Ping An Good Doctor" not in body:
+        p3 = paragraphs[2]
+        if any(name in p3 for name in ["Tsinghua", "Peking University", "Alibaba DAMO Academy", "Baidu Health"]):
+            paragraphs[2] = p3.strip() + " I also follow Ping An Good Doctor and its medical AI work in China."
     if len(paragraphs) >= 4:
         p4 = paragraphs[3]
         p4 = re.sub(r"\b(I am confident that|I am excited (about|to)|I am delighted to|By joining|I am eager to)[^.]*\\.\\s*", "", p4, flags=re.IGNORECASE)
         sentences = re.split(r'(?<=[.!?])\s+', p4.strip())
         if len(sentences) > 4 or "welcome the opportunity to discuss" not in p4.lower():
             p4 = "I welcome the opportunity to discuss how I can contribute to your team and support the visa process. I am prepared to relocate to China and can begin once sponsorship is arranged."
+        p4 = re.sub(r'\bprogress(?:ion)?\s+I am prepared\b', r'progress. I am prepared', p4)
         paragraphs[3] = p4.strip()
 
+    paragraphs = [p for p in paragraphs if p]
     return "\n\n".join(paragraphs)
+
+
+def _remove_mandarin_language_reference(body: str) -> str:
+    if not body:
+        return body
+    # Aggressively remove any Mandarin/Chinese study mentions in many phrasings
+    body = re.sub(r'\s*I am currently studying Mandarin Chinese[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*As a beginner-level Mandarin speaker[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*As a beginner level Mandarin speaker[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I[\'’]m currently studying Mandarin Chinese[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently studying Mandarin[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently learning Mandarin[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently studying Chinese[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently learning Chinese[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*My proficiency in languages? such as [^.?!]*\bChinese\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*My language proficiency[^.?!]*\bChinese\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'[^.?!]*\b(?:Chinese|Mandarin)\b[^.?!]*\b(?:language|languages|proficiency|speak|speaking|study|studying|learn|learning|ability|integration|genuine)\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently studying Mandarin Chinese[^.?!]*?\b(?:language|ability|integration|genuine|team)\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently learning Mandarin Chinese[^.?!]*?\b(?:language|ability|integration|genuine|team)\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently studying Mandarin[^.?!]*?\b(?:language|ability|integration|genuine|team)\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*I am currently learning Mandarin[^.?!]*?\b(?:language|ability|integration|genuine|team)\b[^.?!]*?(?:[.?!]|$)', '', body, flags=re.IGNORECASE)
+    body = re.sub(r'\s*目前[，,]?我正在(?:系统)?学习普通话[^。]*。', '', body)
+    body = re.sub(r'\s*我正在(?:系统)?学习普通话[^。]*。', '', body)
+    body = re.sub(r'\s*普通话[^。]*学习[^。]*。', '', body)
+    body = re.sub(r'[^。！？]*(?:语言学习|学习语言|语言能力|语言技能|继续学习|提升语言|继续提升语言能力)[^。！？]*[。！？]', '', body)
+    # Fix grammar where a missing period joins clauses like "steady progress I am prepared"
+    body = re.sub(r'(progress)\s+I\s+am\s+prepared', r'\1. I am prepared', body, flags=re.IGNORECASE)
+    body = re.sub(r'(progress)\s+I\'m\s+prepared', r'\1. I\'m prepared', body, flags=re.IGNORECASE)
+    # Remove any leftover short mentions of 'Mandarin' or 'Chinese' that stand alone
+    body = re.sub(r'\b(Mandarin|Chinese|普通话|汉语|中文)\b', '', body, flags=re.IGNORECASE)
+    return re.sub(r'\n{2,}', '\n\n', body).strip()
 
 # ─── HELPER: STRIP AI PREAMBLE ────────────────────────────────────────────────
 STRIP_PREFIXES = (
@@ -778,9 +851,13 @@ def _assemble_letter(country_code: str, body: str, phone: str, date_str: str) ->
     signoff_template = SIGNOFFS.get(country_code, SIGNOFFS["US"])
     signoff = signoff_template.format(phone=phone, date_str=date_str)
     body = body.strip()
-    letter = f"{salutation}{body}{signoff}"
+    
+    # Strip leading/trailing newlines from signoff to control spacing explicitly
+    signoff_clean = signoff.strip()
+    letter = f"{salutation}{body}\n\n{signoff_clean}"
+    
     # Collapse runaway blank lines before the valediction (pre-wrap renders each as a full line).
-    valediction = signoff.lstrip("\n").split("\n", 1)[0]
+    valediction = signoff_clean.split("\n", 1)[0]
     if valediction:
         letter = re.sub(
             rf"\n{{3,}}({re.escape(valediction)})",
@@ -801,11 +878,10 @@ async def generate_dynamic_cover_letter(
     Returns a fully assembled letter (salutation + body + signoff).
     """
 
-    # 1. Resolve country code
     region_key_map = {
         'japan': 'JP', 'korea': 'KR', 'china': 'CN',
         'germany': 'DE', 'uk': 'UK', 'usa': 'US',
-        'india': 'IN', 'uae': 'AE', 'international': 'GLOBAL'
+        'india': 'IN', 'uae': 'AE', 'middleeast': 'AE', 'international': 'GLOBAL'
     }
     base_code = region_key_map.get(region.lower(), 'GLOBAL')
 
@@ -824,6 +900,20 @@ async def generate_dynamic_cover_letter(
 
     # 2. Extract minimal resume payload to avoid token bloat
     config = COUNTRY_CONFIGS.get(country_code, COUNTRY_CONFIGS["US"])
+    resume_languages = []
+    for lang_item in resume_data.get('languages', []):
+        if isinstance(lang_item, dict):
+            if lang_item.get('visible') is False:
+                continue
+            label = lang_item.get('label') or lang_item.get('name') or ''
+        else:
+            label = str(lang_item)
+        if label:
+            resume_languages.append(label)
+    has_chinese_language = any(
+        re.search(r'\b(mandarin|chinese|普通话|汉语|中文)\b', label, flags=re.IGNORECASE)
+        for label in resume_languages
+    )
     
     min_data = {
         "personal": {
@@ -854,6 +944,7 @@ async def generate_dynamic_cover_letter(
             for r in resume_data.get('research', [])[:3]
         ],
         "skills": [c.get('label') for c in resume_data.get('skillCategories', [])],
+        "languages": resume_languages,
         "visa_statement": resume_data.get('profile', {}).get('visa', {}).get(
             'CN' if country_code == 'CN_CN' else
             'KR' if country_code == 'KR_KO' else
@@ -874,24 +965,12 @@ async def generate_dynamic_cover_letter(
     
     clean_body = None
     if base_cache_key in CL_CACHE:
-        cached_body, cached_at = CL_CACHE[base_cache_key]
-        if time.time() - cached_at < CL_CACHE_TTL:
-            clean_body = cached_body
-        else:
-            del CL_CACHE[base_cache_key]
+        clean_body, cache_time = CL_CACHE[base_cache_key]
+        if time.time() - cache_time > 3600:
+            clean_body = None
 
-    # 4. Build prompts if cache miss
     if not clean_body:
-        full_system_prompt = SYSTEM_PROMPT
-        if country_code in NATIVE_LANG_ADDITIONS:
-            full_system_prompt += NATIVE_LANG_ADDITIONS[country_code]
-        extra_instructions = ""
-        if country_code == 'KR_EN':
-            extra_instructions = "- Paragraph 4 MUST explicitly include the sentence: I require E-7 Specially Designated Activities visa sponsorship to work in Korea.\n"
-        if country_code == 'CN_EN':
-            extra_instructions = "- Paragraph 1 MUST begin with 'I' and open with the candidate's strongest technical achievement.\n- Paragraph 3 MUST mention Ping An Good Doctor plus at least one other institution from Tsinghua, Peking University, Alibaba DAMO Academy, or Baidu Health.\n- Paragraph 4 MUST include a Mandarin study sentence such as: I am currently studying Mandarin Chinese and committed to steady progress.\n- Paragraph 4 MUST include a Z-visa sponsorship sentence such as: I would require Z work visa sponsorship through the hiring company.\n- Paragraph 4 MUST include the phrase: I welcome the opportunity to discuss.\n- Do NOT write bullet points. Write a professional cover letter with full paragraphs and a proper closing.\n"
-        if country_code == 'CN_CN':
-            extra_instructions = "- Paragraph 3 MUST mention at least two of these by name: 清华大学、北京大学、阿里巴巴达摩院、百度健康、平安好医生.\n- Paragraph 4 MUST include 普通话 and Z类工作签证 and express willingness to discuss next steps.\n- Avoid repeating the same institution name across paragraphs. Mention each company or university only once.\n- Avoid generic marketing language about China’s AI market and keep the tone professional, specific, and project-focused.\n"
+        language_note = config['language_note'] if has_chinese_language else ""
         user_prompt = f"""Generate a cover letter body for this candidate applying to companies in {config['country_name']}.
 
 --- CANDIDATE DATA ---
@@ -902,9 +981,8 @@ Country: {config['country_name']}
 Ecosystem: {config['ecosystem']}
 Tone: {config['tone']}
 Visa: {min_data['visa_statement']}
-{f"Language note: {config['language_note']}" if config['language_note'] else ""}
+{f"Language note: {language_note}" if language_note else ""}
 
-{extra_instructions}
 --- REMINDER ---
 - Each paragraph must be 4–5 sentences. Do not truncate outputs early.
 - Do NOT mention years of experience as a number.
@@ -920,11 +998,12 @@ Visa: {min_data['visa_statement']}
         if not api_key:
             return ""
 
+        system_content = SYSTEM_PROMPT
+        if country_code in NATIVE_LANG_ADDITIONS:
+            system_content += NATIVE_LANG_ADDITIONS[country_code]
+
         model_to_use = "llama-3.3-70b-versatile"
         for attempt in range(3):
-            if attempt > 0:
-                model_to_use = "llama-3.1-8b-instant"
-                
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
@@ -936,19 +1015,25 @@ Visa: {min_data['visa_statement']}
                         json={
                             "model": model_to_use,
                             "messages": [
-                                {"role": "system", "content": full_system_prompt},
+                                {"role": "system", "content": system_content},
                                 {"role": "user", "content": user_prompt}
                             ],
                             "temperature": 0.75,
-                            "max_tokens": 2500
+                            "max_tokens": 3500
                         },
-                        timeout=30.0
+                        timeout=90.0
                     )
 
                     if response.status_code == 429:
-                        print(f"Rate limit hit on {model_to_use}. Falling back to llama-3.1-8b-instant...")
-                        model_to_use = "llama-3.1-8b-instant"
-                        continue
+                        if attempt < 2:
+                            wait_time = (attempt + 1) * 5
+                            print(f"Rate limit hit on {model_to_use}. Waiting {wait_time}s before retry...")
+                            await asyncio.sleep(wait_time)
+                            continue
+                        else:
+                            print(f"Rate limit hit on {model_to_use} after retries. Falling back to llama-3.1-8b-instant...")
+                            model_to_use = "llama-3.1-8b-instant"
+                            continue
 
                     res_json = response.json()
                     if 'choices' not in res_json:
@@ -975,13 +1060,19 @@ Visa: {min_data['visa_statement']}
     # 6. Prose format + phrase polish (English base)
     if country_code not in SECTIONED_COVER_CODES:
         clean_body = _to_prose_paragraphs(clean_body)
-    clean_body = _polish_cover_letter_body(clean_body, country_code)
+    clean_body = _strip_years_phrasing(clean_body)
+    clean_body = _polish_cover_letter_body(clean_body, country_code, has_chinese_language=has_chinese_language)
 
     # 7. Translate the clean body if target language is not English
     if lang != 'en':
         clean_body = await translate_cover_letter_body(clean_body, lang, country_code)
     elif country_code not in SECTIONED_COVER_CODES:
         clean_body = _to_prose_paragraphs(clean_body)
+
+    if not has_chinese_language and country_code in ('CN_EN', 'CN_CN'):
+        clean_body = _remove_mandarin_language_reference(clean_body)
+
+
 
     # 7.5. Dynamic Signoff/Date info
     profile = resume_data.get('profile', {})
@@ -1019,9 +1110,9 @@ def _strip_years_phrasing(text: str) -> str:
     Removes 'X+ years', 'X years of experience' etc.
     """
     patterns = [
-        r'\b\d+\+?\s+years?\s+of\s+experience\b',
+        r'\b\d+\+?\s+years?\s+of\s+(?:experience|expertise)\b',
         r'\bover\s+\d+\+?\s+years?\b',
-        r'\b\d+\+\s+years?\b',
+        r'\b\d+\+?\s+years?\b',
         r'\bwith\s+\d+\+?\s+years?\b',
     ]
     for pattern in patterns:

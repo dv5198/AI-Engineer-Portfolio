@@ -479,15 +479,17 @@ const Admin = () => {
                                 <h3 className="font-serif text-xl border-b border-warmBrown/5 pb-4 italic">Identity Matrix</h3>
                                 {['name', 'role', 'email', 'phone', 'alternate_phone', 'location', 'summary', 'bio'].map(field => (
                                     <div key={field}>
-                                        <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field}</label>
+                                        <label htmlFor={`profile-${field}`} className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field}</label>
                                         {field === 'summary' || field === 'bio' ? (
                                             <textarea
+                                                id={`profile-${field}`}
                                                 className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif bg-transparent resize-none h-20"
                                                 value={formData.profile[field] || ''}
                                                 onChange={e => handleChange('profile', field, e.target.value)}
                                             />
                                         ) : (
                                             <input
+                                                id={`profile-${field}`}
                                                 className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif bg-transparent"
                                                 value={formData.profile[field] || ''}
                                                 onChange={e => handleChange('profile', field, e.target.value)}
@@ -519,15 +521,17 @@ const Admin = () => {
                                             { key: 'marital_status', label: 'Marital Status', type: 'select', options: ['Single', 'Married', 'Divorced'] },
                                         ].map(field => (
                                             <div key={field.key}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
+                                                <label htmlFor={`personal-${field.key}`} className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
                                                 {field.type === 'static' ? (
                                                     <input
+                                                        id={`personal-${field.key}`}
                                                         className="w-full border-b border-warmBrown/10 py-2 font-sans text-xs bg-transparent text-warmBrown/50 cursor-not-allowed"
                                                         value={field.value}
                                                         disabled
                                                     />
                                                 ) : field.type === 'select' ? (
                                                     <select
+                                                        id={`personal-${field.key}`}
                                                         className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
                                                         value={formData.profile?.personal?.[field.key] || ''}
                                                         onChange={e => {
@@ -542,6 +546,7 @@ const Admin = () => {
                                                     </select>
                                                 ) : (
                                                     <input
+                                                        id={`personal-${field.key}`}
                                                         type={field.type}
                                                         className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
                                                         value={formData.profile?.personal?.[field.key] || ''}
@@ -564,8 +569,9 @@ const Admin = () => {
                                             { key: 'political_status', label: 'Political Status (Global/China)', placeholder: 'Enter Political Status' },
                                         ].map(field => (
                                             <div key={field.key}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
+                                                <label htmlFor={`personal-${field.key}`} className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
                                                 <input
+                                                    id={`personal-${field.key}`}
                                                     className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
                                                     value={formData.profile?.personal?.[field.key] || ''}
                                                     placeholder={field.placeholder}
@@ -592,8 +598,9 @@ const Admin = () => {
                                             { key: 'GLOBAL', label: 'Global Default Visa', placeholder: 'Relocation sponsorship required' },
                                         ].map(field => (
                                             <div key={field.key}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
+                                                <label htmlFor={`visa-${field.key}`} className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
                                                 <input
+                                                    id={`visa-${field.key}`}
                                                     className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
                                                     value={formData.profile?.visa?.[field.key] || ''}
                                                     placeholder={field.placeholder}
@@ -621,9 +628,10 @@ const Admin = () => {
                                             { key: 'desired_conditions_ja', label: '本人希望 (Desired Conditions)', type: 'textarea', placeholder: '貴社の規定に従います。' },
                                         ].map(field => (
                                             <div key={field.key} className={field.type === 'textarea' ? "col-span-2" : ""}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
+                                                <label htmlFor={`personal-${field.key}`} className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest">{field.label}</label>
                                                 {field.type === 'textarea' ? (
                                                     <textarea
+                                                        id={`personal-${field.key}`}
                                                         className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-sans text-xs bg-transparent min-h-[80px]"
                                                         value={formData.profile?.personal?.[field.key] || ''}
                                                         placeholder={field.placeholder || `Enter ${field.label}`}
@@ -634,6 +642,7 @@ const Admin = () => {
                                                     />
                                                 ) : field.type === 'boolean' ? (
                                                     <select
+                                                        id={`personal-${field.key}`}
                                                         className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
                                                         value={formData.profile?.personal?.[field.key] ? 'true' : 'false'}
                                                         onChange={e => {
@@ -646,6 +655,7 @@ const Admin = () => {
                                                     </select>
                                                 ) : (
                                                     <input
+                                                        id={`personal-${field.key}`}
                                                         type={field.type === 'number' ? 'number' : 'text'}
                                                         className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs bg-transparent"
                                                         value={formData.profile?.personal?.[field.key] || ''}
@@ -703,7 +713,7 @@ const Admin = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest flex justify-between">
+                                    <label htmlFor="profile-summary" className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest flex justify-between">
                                         Professional Summary (For Resume)
                                         <button
                                             onClick={() => handleAIAction('rewrite-summary', { about_list: formData.about }, (newText) => handleChange('profile', 'summary', newText))}
@@ -711,14 +721,16 @@ const Admin = () => {
                                         >✦ auto-gen from narrative</button>
                                     </label>
                                     <textarea
+                                        id="profile-summary"
                                         className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-sans text-xs h-20 bg-ivory/20"
                                         value={formData.profile.summary || ''}
                                         onChange={e => handleChange('profile', 'summary', e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest">Typewriter Titles (Comma Separated)</label>
+                                    <label htmlFor="profile-titles" className="block text-[9px] font-mono text-warmBrown/40 mb-2 uppercase tracking-widest">Typewriter Titles (Comma Separated)</label>
                                     <textarea
+                                        id="profile-titles"
                                         className="w-full border border-warmBrown/10 p-3 focus:outline-none focus:border-accent font-mono text-[10px] h-20 bg-ivory/20"
                                         value={(formData.profile.titles || []).join(', ')}
                                         onChange={e => {
@@ -763,8 +775,9 @@ const Admin = () => {
                                     <div className="grid grid-cols-2 gap-6">
                                         {Object.keys(formData.stats || {}).map(stat => (
                                             <div key={stat}>
-                                                <label className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest truncate">{stat.replace('_', ' ')}</label>
+                                                <label htmlFor={`stats-${stat}`} className="block text-[9px] font-mono text-warmBrown/40 mb-1 uppercase tracking-widest truncate">{stat.replace('_', ' ')}</label>
                                                 <input
+                                                    id={`stats-${stat}`}
                                                     className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-center text-accent"
                                                     value={formData.stats[stat]}
                                                     onChange={e => handleChange('stats', stat, e.target.value)}
@@ -973,8 +986,9 @@ const Admin = () => {
                             <div className="flex items-center gap-6 bg-white/80 backdrop-blur-xl p-6 border border-warmBrown/10 shadow-lg rounded-xl">
                                 <div className="flex items-center gap-6">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="font-mono text-[8px] uppercase tracking-[0.3em] text-accent font-bold">Country Context</label>
+                                        <label htmlFor="preview-country" className="font-mono text-[8px] uppercase tracking-[0.3em] text-accent font-bold">Country Context</label>
                                         <select
+                                            id="preview-country"
                                             className="border-none py-1 focus:outline-none focus:ring-0 font-serif text-xl bg-transparent italic text-warmBrown cursor-pointer hover:text-accent transition-all"
                                             value={previewCountry}
                                             onChange={(e) => {
@@ -1337,7 +1351,7 @@ const Admin = () => {
                                         <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Description for AI (e.g. what you did)" value={editingItem.item.description || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, description: e.target.value } })} />
 
                                         <div className="flex justify-between items-center mt-2">
-                                            <label className="text-[9px] font-mono text-warmBrown/40 uppercase tracking-widest">Bullets</label>
+                                            <label htmlFor="edit-bullets" className="text-[9px] font-mono text-warmBrown/40 uppercase tracking-widest">Bullets</label>
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
@@ -1350,7 +1364,7 @@ const Admin = () => {
                                                 className="text-accent hover:underline lowercase italic"
                                             >✦ generate bullets</button>
                                         </div>
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Bullets (One per line)" value={(editingItem.item.bullets || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
+                                        <textarea id="edit-bullets" className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Bullets (One per line)" value={(editingItem.item.bullets || []).join('\n')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, bullets: e.target.value.split('\n').filter(l => l.trim() !== '') } })} />
 
                                         <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold mt-4 pt-4 border-t border-warmBrown/10">Japan Metadata</h4>
                                         <div className="grid grid-cols-2 gap-4">
@@ -1370,14 +1384,14 @@ const Admin = () => {
 
                                 {editingItem.type === 'education' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="University" defaultValue={editingItem.item.university} onChange={e => editingItem.item.university = e.target.value} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Degree" defaultValue={editingItem.item.degree} onChange={e => editingItem.item.degree = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="University" value={editingItem.item.university || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, university: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Degree" value={editingItem.item.degree || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, degree: e.target.value } })} />
                                         <div className="grid grid-cols-3 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Year (e.g. 2020 - 2022)" defaultValue={editingItem.item.year} onChange={e => editingItem.item.year = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Awarded" defaultValue={editingItem.item.awarded} onChange={e => editingItem.item.awarded = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GPA" defaultValue={editingItem.item.gpa} onChange={e => editingItem.item.gpa = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Year (e.g. 2020 - 2022)" value={editingItem.item.year || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, year: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Awarded" value={editingItem.item.awarded || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, awarded: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GPA" value={editingItem.item.gpa || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, gpa: e.target.value } })} />
                                         </div>
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32 mt-4" placeholder="Notes (Optional)" defaultValue={editingItem.item.notes} onChange={e => editingItem.item.notes = e.target.value} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32 mt-4" placeholder="Notes (Optional)" value={editingItem.item.notes || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, notes: e.target.value } })} />
                                     </>
                                 )}
 
@@ -1385,27 +1399,27 @@ const Admin = () => {
 
                                 {editingItem.type === 'certifications' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Certification Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Issuer (e.g. Coursera)" defaultValue={editingItem.item.issuer} onChange={e => editingItem.item.issuer = e.target.value} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Year" defaultValue={editingItem.item.year} onChange={e => editingItem.item.year = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Certification Name" value={editingItem.item.name || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, name: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Issuer (e.g. Coursera)" value={editingItem.item.issuer || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, issuer: e.target.value } })} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Year" value={editingItem.item.year || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, year: e.target.value } })} />
                                     </>
                                 )}
 
                                 {editingItem.type === 'projects' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Project Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Project Name" value={editingItem.item.name || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, name: e.target.value } })} />
                                         <div className="grid grid-cols-3 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Role (e.g. ML Developer)" defaultValue={editingItem.item.role} onChange={e => editingItem.item.role = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Period (e.g. 2023.01 - 2023.06)" defaultValue={editingItem.item.period} onChange={e => editingItem.item.period = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Team Size (e.g. 3名 / Individual)" defaultValue={editingItem.item.team_size} onChange={e => editingItem.item.team_size = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Role (e.g. ML Developer)" value={editingItem.item.role || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, role: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Period (e.g. 2023.01 - 2023.06)" value={editingItem.item.period || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, period: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Team Size (e.g. 3名 / Individual)" value={editingItem.item.team_size || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, team_size: e.target.value } })} />
                                         </div>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Tech Stack (Comma Separated)" defaultValue={editingItem.item.techStack?.join(', ')} onChange={e => editingItem.item.techStack = e.target.value.split(',').map(s => s.trim()).filter(s => s)} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Tech Stack (Comma Separated)" value={(editingItem.item.techStack || []).join(', ')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, techStack: e.target.value.split(',').map(s => s.trim()).filter(s => s) } })} />
                                         <div className="grid grid-cols-2 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GitHub Link" defaultValue={editingItem.item.github} onChange={e => editingItem.item.github = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Live Link" defaultValue={editingItem.item.demo} onChange={e => editingItem.item.demo = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="GitHub Link" value={editingItem.item.github || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, github: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Live Link" value={editingItem.item.demo || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, demo: e.target.value } })} />
                                         </div>
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Project Description" defaultValue={editingItem.item.description} onChange={e => editingItem.item.description = e.target.value} />
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Outcomes & Key Achievements (Shown on Shokumu resume)" defaultValue={editingItem.item.summary} onChange={e => editingItem.item.summary = e.target.value} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Project Description" value={editingItem.item.description || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, description: e.target.value } })} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-24" placeholder="Outcomes & Key Achievements (Shown on Shokumu resume)" value={editingItem.item.summary || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, summary: e.target.value } })} />
 
                                         <div className="mt-4 p-4 border border-warmBrown/10 bg-ivory/20 space-y-4">
                                             <h4 className="font-mono text-[10px] uppercase tracking-widest text-accent font-bold">Image Override</h4>
@@ -1460,25 +1474,25 @@ const Admin = () => {
 
                                 {editingItem.type === 'achievements' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Achievement Title" defaultValue={editingItem.item.title} onChange={e => editingItem.item.title = e.target.value} />
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Brief Summary" defaultValue={editingItem.item.description} onChange={e => editingItem.item.description = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Achievement Title" value={editingItem.item.title || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, title: e.target.value } })} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Brief Summary" value={editingItem.item.description || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, description: e.target.value } })} />
                                     </>
                                 )}
 
                                 {editingItem.type === 'testimonials' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Name" value={editingItem.item.name || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, name: e.target.value } })} />
                                         <div className="grid grid-cols-2 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Role" defaultValue={editingItem.item.role} onChange={e => editingItem.item.role = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Company" defaultValue={editingItem.item.company} onChange={e => editingItem.item.company = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Role" value={editingItem.item.role || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, role: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Company" value={editingItem.item.company || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, company: e.target.value } })} />
                                         </div>
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Quote" defaultValue={editingItem.item.quote} onChange={e => editingItem.item.quote = e.target.value} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Quote" value={editingItem.item.quote || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, quote: e.target.value } })} />
                                     </>
                                 )}
 
                                 {editingItem.type === 'research' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Topic" defaultValue={editingItem.item.topic} onChange={e => editingItem.item.topic = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Topic" value={editingItem.item.topic || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, topic: e.target.value } })} />
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Date" value={editingItem.item.date || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, date: e.target.value } })} />
                                     </>
                                 )}
@@ -1488,12 +1502,13 @@ const Admin = () => {
                                         {/* New Language Wizard */}
                                         {(!editingItem.item.id && (!editingItem.item.wizardStep || editingItem.item.wizardStep === 1)) && (
                                             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                                                <label className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Step 1: Language Identity</label>
+                                                <label htmlFor="lang-name-input" className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Step 1: Language Identity</label>
                                                 <input
+                                                    id="lang-name-input"
                                                     className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif text-xl"
                                                     placeholder="Language Name (e.g. Japanese)"
-                                                    defaultValue={editingItem.item.name}
-                                                    onChange={e => { editingItem.item.name = e.target.value; setEditingItem({ ...editingItem }); }}
+                                                    value={editingItem.item.name || ''}
+                                                    onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, name: e.target.value } })}
                                                 />
                                                 <button
                                                     onClick={() => {
@@ -1533,8 +1548,8 @@ const Admin = () => {
                                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
                                                 <label className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Proficiency Calibration</label>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" defaultValue={editingItem.item.level} onChange={e => { editingItem.item.level = e.target.value; setEditingItem({ ...editingItem }); }} />
-                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage (0-100)" defaultValue={editingItem.item.percentage} onChange={e => { editingItem.item.percentage = Number(e.target.value); setEditingItem({ ...editingItem }); }} />
+                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" value={editingItem.item.level || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, level: e.target.value } })} />
+                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage (0-100)" value={editingItem.item.percentage || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, percentage: Number(e.target.value) } })} />
                                                 </div>
                                                 <button onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 2 } })} className="text-[9px] font-mono text-warmBrown/30 uppercase hover:text-accent tracking-widest block">← Back to Choice</button>
                                             </div>
@@ -1543,16 +1558,16 @@ const Admin = () => {
                                         {(!editingItem.item.id && editingItem.item.wizardStep === 4) && (
                                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
                                                 <label className="font-mono text-[10px] uppercase tracking-widest text-warmBrown/40">Certification Registry</label>
-                                                <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Exam/Certification Name (e.g. JLPT N2)" defaultValue={editingItem.item.exam_name} onChange={e => { editingItem.item.exam_name = e.target.value; setEditingItem({ ...editingItem }); }} />
+                                                <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Exam/Certification Name (e.g. JLPT N2)" value={editingItem.item.exam_name || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, exam_name: e.target.value } })} />
                                                 <div className="grid grid-cols-3 gap-4">
                                                     <div className="flex flex-col gap-1">
-                                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" type="date" placeholder="Date" defaultValue={editingItem.item.date} onChange={e => { editingItem.item.date = e.target.value; setEditingItem({ ...editingItem }); }} />
+                                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" type="date" placeholder="Date" value={editingItem.item.date || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, date: e.target.value } })} />
                                                         {editingItem.item.date && new Date(editingItem.item.date) > new Date() && (
                                                             <span className="text-[8px] text-red-500 font-mono uppercase tracking-tighter">Must be past date</span>
                                                         )}
                                                     </div>
-                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Score" defaultValue={editingItem.item.score} onChange={e => { editingItem.item.score = e.target.value; setEditingItem({ ...editingItem }); }} />
-                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Resulting Level" defaultValue={editingItem.item.level} onChange={e => { editingItem.item.level = e.target.value; setEditingItem({ ...editingItem }); }} />
+                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Score" value={editingItem.item.score || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, score: e.target.value } })} />
+                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px]" placeholder="Resulting Level" value={editingItem.item.level || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, level: e.target.value } })} />
                                                 </div>
                                                 <button onClick={() => setEditingItem({ ...editingItem, item: { ...editingItem.item, wizardStep: 2 } })} className="text-[9px] font-mono text-warmBrown/30 uppercase hover:text-accent tracking-widest block">← Back to Choice</button>
                                             </div>
@@ -1561,10 +1576,10 @@ const Admin = () => {
                                         {/* Existing Edit View */}
                                         {editingItem.item.id && (
                                             <>
-                                                <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Language Name" defaultValue={editingItem.item.name} onChange={e => editingItem.item.name = e.target.value} />
+                                                <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Language Name" value={editingItem.item.name || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, name: e.target.value } })} />
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" defaultValue={editingItem.item.level} onChange={e => editingItem.item.level = e.target.value} />
-                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage" defaultValue={editingItem.item.percentage} onChange={e => editingItem.item.percentage = Number(e.target.value)} />
+                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Level (e.g. Native)" value={editingItem.item.level || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, level: e.target.value } })} />
+                                                    <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="number" placeholder="Percentage" value={editingItem.item.percentage || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, percentage: Number(e.target.value) } })} />
                                                 </div>
                                             </>
                                         )}
@@ -1573,12 +1588,12 @@ const Admin = () => {
 
                                 {editingItem.type === 'skills' && (
                                     <>
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Category Label (e.g. ML & AI)" defaultValue={editingItem.item.label} onChange={e => editingItem.item.label = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif" placeholder="Category Label (e.g. ML & AI)" value={editingItem.item.label || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, label: e.target.value } })} />
                                         <div className="flex gap-4 items-center">
-                                            <input className="flex-1 border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Years of Experience (e.g. 5)" defaultValue={editingItem.item.years} onChange={e => editingItem.item.years = e.target.value} />
+                                            <input className="flex-1 border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-sans text-xs" placeholder="Years of Experience (e.g. 5)" value={editingItem.item.years || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, years: e.target.value } })} />
                                             <span className="font-mono text-[9px] text-warmBrown/40 uppercase tracking-wider bg-ivory/30 px-3 py-1 border border-warmBrown/5">✓ Proficiency Auto-calculated</span>
                                         </div>
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Skills (Comma Separated)" defaultValue={editingItem.item.items?.join(', ')} onChange={e => editingItem.item.items = e.target.value.split(',').map(s => s.trim()).filter(s => s)} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-sans text-sm h-32" placeholder="Skills (Comma Separated)" value={(editingItem.item.items || []).join(', ')} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, items: e.target.value.split(',').map(s => s.trim()).filter(s => s) } })} />
                                     </>
                                 )}
 
@@ -1587,18 +1602,22 @@ const Admin = () => {
                                         <input
                                             className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-serif"
                                             placeholder="Post Title"
-                                            defaultValue={editingItem.item.title}
+                                            value={editingItem.item.title || ''}
                                             onChange={e => {
-                                                editingItem.item.title = e.target.value;
-                                                // Auto slug injection
-                                                if (!editingItem.item.id) {
-                                                    editingItem.item.slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-                                                }
+                                                const nextTitle = e.target.value;
+                                                setEditingItem({
+                                                    ...editingItem,
+                                                    item: {
+                                                        ...editingItem.item,
+                                                        title: nextTitle,
+                                                        slug: !editingItem.item.id ? nextTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : editingItem.item.slug
+                                                    }
+                                                });
                                             }}
                                         />
                                         <div className="grid grid-cols-3 gap-4">
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Category" defaultValue={editingItem.item.category} onChange={e => editingItem.item.category = e.target.value} />
-                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="date" defaultValue={editingItem.item.date} onChange={e => editingItem.item.date = e.target.value} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="Category" value={editingItem.item.category || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, category: e.target.value } })} />
+                                            <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" type="date" value={editingItem.item.date || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, date: e.target.value } })} />
                                             <div className="flex items-center justify-end">
                                                 <button
                                                     onClick={(e) => {
@@ -1613,8 +1632,8 @@ const Admin = () => {
                                             </div>
                                         </div>
                                         <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-[10px] text-warmBrown/40" placeholder="Slug (Auto-generated)" value={editingItem.item.slug || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, slug: e.target.value } })} />
-                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="External URL (Optional - Redirects instead of opening modal)" defaultValue={editingItem.item.url} onChange={e => editingItem.item.url = e.target.value} />
-                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-mono text-xs h-64" placeholder="Content (Markdown Supported)" defaultValue={editingItem.item.content} onChange={e => editingItem.item.content = e.target.value} />
+                                        <input className="w-full border-b border-warmBrown/10 py-2 focus:outline-none focus:border-accent font-mono text-xs" placeholder="External URL (Optional - Redirects instead of opening modal)" value={editingItem.item.url || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, url: e.target.value } })} />
+                                        <textarea className="w-full border border-warmBrown/10 p-4 focus:outline-none focus:border-accent font-mono text-xs h-64" placeholder="Content (Markdown Supported)" value={editingItem.item.content || ''} onChange={e => setEditingItem({ ...editingItem, item: { ...editingItem.item, content: e.target.value } })} />
                                     </>
                                 )}
 

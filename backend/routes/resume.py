@@ -274,7 +274,7 @@ async def serve_pdf(region_info: dict, request: Request, background_tasks: Backg
         if q_cover is not None:
             include_cover = q_cover.lower() == "true"
         else:
-            include_cover = False if region_name.lower() in ATS_COUNTRIES else True
+            include_cover = False if (region_name.lower() in ATS_COUNTRIES and region_name.lower() != 'germany') else True
 
     # ── Background analytics ──────────────────────────────────────────────────
     client_ip = get_visitor_ip(request)

@@ -1,8 +1,10 @@
 import sqlite3
 import json
+import os
 
-db_path = 'd:/project/backend/portfolio.db'
-output_path = 'd:/project/current_data.json'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, 'backend', 'portfolio.db')
+output_path = os.path.join(BASE_DIR, 'current_data.json')
 
 conn = sqlite3.connect(db_path)
 data_str = conn.execute('SELECT data FROM portfolio_data WHERE id=1').fetchone()[0]
