@@ -48,18 +48,30 @@ pnpm-debug.log*
 backend/uploads/*
 !backend/uploads/.gitkeep
 backend/test_*.py
-backend/*.pdf
-*.log
+backend/data.json.bak*
+backend/*.bak1
+backend/*.bak2
+backend/*.bak3
+backend/*.tmp
+
+# Databases and SQLite runtime files
+backend/portfolio.db
+backend/portfolio.db-wal
+backend/portfolio.db-shm
+backend/portfolio.db.lock
+backend/temp_portfolio.db
+*.db
+*.db-wal
+*.db-shm
+*.db.lock
+*.sqlite
+*.sqlite3
+
+# PDFs
+*.pdf
+backend/test_outputs/*.pdf
+backend/generated_pdfs/*.pdf
 
 # OS
 .DS_Store
 Thumbs.db
-"backend/data.json" 
-"backend/data.json.bak*" 
-"backend/*.bak1" 
-"backend/*.bak2" 
-"backend/*.bak3" 
-"backend/*.tmp" 
-"backend/data.json" 
-"backend/data.json.bak*" 
-"backend/uploads/" 
