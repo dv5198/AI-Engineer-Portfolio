@@ -20,8 +20,7 @@
 
 | 🖥️ Portfolio Core | 🛠️ Secure Admin Vault |
 | :--- | :--- |
-| ![Portfolio Home](./portfolio_mockup.png) | ![Admin Dashboard](./admin_preview.png) |
-| *High-end minimalist landing with glassmorphism.* | *The neural command center for artifact management.* |
+| ![Portfolio Home](./portfolio_mockup.jpg) || *High-end minimalist landing with glassmorphism.* | *The neural command center for artifact management.* |
 
 ---
 
