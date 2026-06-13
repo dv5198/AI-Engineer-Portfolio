@@ -167,14 +167,16 @@ async def github_webhook(request: Request, x_hub_signature_256: str = Header(Non
     try:
         payload = json.loads(body)
         repo_name = payload.get("repository", {}).get("name")
+        from services.github import clear_github_repos_cache
+        clear_github_repos_cache()
         if repo_name:
             from services.github import clear_readme_cache_for_repo
             clear_readme_cache_for_repo(repo_name)
-            print(f"GitHub Push detected for {repo_name}. Invalidated README cache.")
+            print(f"GitHub Push detected for {repo_name}. Invalidated README cache and repos cache.")
         else:
             from services.github import clear_readme_image_cache
             clear_readme_image_cache()
-            print("GitHub Push detected but repo name not found. Cleared all README caches.")
+            print("GitHub Push detected but repo name not found. Cleared all README caches and repos cache.")
     except Exception as e:
         print(f"Error parsing webhook payload: {e}")
         

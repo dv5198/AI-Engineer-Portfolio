@@ -5,11 +5,13 @@ import { GithubIcon, ExternalLinkIcon } from 'lucide-react';
 import { generateProjectCover } from '../utils/imageGenerator';
 
 const ProjectCard = ({ project, idx }) => {
-  const cover = useMemo(() => {
-    return project.image ? null : generateProjectCover(project.name);
-  }, [project.image, project.name]);
-
   const [imageError, setImageError] = useState(false);
+
+  const cover = useMemo(() => {
+    return generateProjectCover(project.name);
+  }, [project.name]);
+
+  const showCover = !project.image || imageError;
 
   return (
     <motion.div
@@ -19,28 +21,24 @@ const ProjectCard = ({ project, idx }) => {
       viewport={{ once: true }}
       transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
     >
-      {!imageError && (
-        <div className="h-56 overflow-hidden relative border-b border-textPrimary/5 bg-[#f2ede0]">
-          {project.image ? (
-            <img 
-              src={project.image} 
-              alt={project.name} 
-              loading="lazy"
-              onError={() => setImageError(true)}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
-            />
-          ) : cover ? (
-            <img 
-              src={cover} 
-              alt={project.name} 
-              loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
-            />
-          ) : (
-            <div className="w-full h-full animate-pulse" />
-          )}
-        </div>
-      )}
+      <div className="h-56 overflow-hidden relative border-b border-textPrimary/5 bg-[#f2ede0]">
+        {!showCover ? (
+          <img 
+            src={project.image} 
+            alt={project.name} 
+            loading="lazy"
+            onError={() => setImageError(true)}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
+          />
+        ) : (
+          <img 
+            src={cover} 
+            alt={project.name} 
+            loading="lazy"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] group-hover:grayscale-0"
+          />
+        )}
+      </div>
       
       <div className="p-8 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-4">
