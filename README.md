@@ -28,10 +28,11 @@ The entire platform runs from a single source of truth — `data.json`. Whatever
 
 ## Visual Showcase
 
-| Portfolio Interface | Research Foundation | Admin Panel |
-|---|---|---|
-| ![Portfolio Cover](portfolio_mockup.jpg) | ![Research Thinking](Frontend%20panel.png) | ![Admin Panel](Admin%20panel.png) |
-| *Warm ivory editorial aesthetic with antigravity particle system, levitating cards, and live GitHub project integration* | *The research-first philosophy behind the system — designed for engineers who think in signal flows and model architectures* | *AI-powered admin panel for real-time dynamic portfolio and resume generation control* |
+| Portfolio Interface | Research Foundation |
+|---|---|
+| ![Portfolio Cover](portfolio_mockup.jpg) | ![Research Thinking](Frontend panel.png) |
+[Admin Panel](Admin panel.png) |
+| *Warm ivory editorial aesthetic with antigravity particle system, levitating cards, and live GitHub project integration* | *The research-first philosophy behind the system — designed for engineers who think in signal flows and model architectures* |
 
 ---
 
@@ -64,7 +65,7 @@ FastAPI Backend (Python)
       ├──► Jinja2 + Playwright ──► Regional PDF generation
       │                            (fresh on every download)
       │
-      ├──► Groq API (Llama models) ──► Bio rewriting
+      ├──► Grok API (xAI) ───────► Bio rewriting
       │                            Bullet generation
       │                            Project summaries
       │                            Admin commands
@@ -81,10 +82,10 @@ FastAPI Backend (Python)
 Detects visitor's country from IP address using `ip-api.com`. Automatically generates the correct regional PDF — no dropdowns, no manual selection. Template A is ATS-optimised single column with no photo for western markets. Template B includes photo, date of birth, and regional personal fields for East Asia, Europe, and Middle East. Both templates render from the same `data.json` via Jinja2 + Playwright.
 
 ### 🔴 Live GitHub Integration
-Projects are fetched in real time from GitHub REST API. Forked repos are filtered out. Groq API (Llama models) generates a one to two sentence summary per repo on first fetch and caches it permanently. A GitHub webhook invalidates the cache the moment a new push lands. Contribution heatmap rendered from GitHub GraphQL API as an SVG grid.
+Projects are fetched in real time from GitHub REST API. Forked repos are filtered out. Grok API generates a one to two sentence summary per repo on first fetch and caches it permanently. A GitHub webhook invalidates the cache the moment a new push lands. Contribution heatmap rendered from GitHub GraphQL API as an SVG grid.
 
 ### 🤖 AI Admin Panel
-Accessible only at `/admin` — no link exists anywhere on the visible site. Contains 19 management sections including a natural language command center powered by Groq API. Type `hide the flask project` or `rewrite my bio` and the system executes the action directly. All changes persist in `data.json` and reflect immediately on both the website and the next resume download.
+Accessible only at `/admin` — no link exists anywhere on the visible site. Contains 19 management sections including a natural language command center powered by Grok API. Type `hide the flask project` or `rewrite my bio` and the system executes the action directly. All changes persist in `data.json` and reflect immediately on both the website and the next resume download.
 
 ### 📄 Dynamic Resume — Always Current
 The resume PDF is generated fresh on every download. It reads `data.json` at request time, fetches live GitHub repos, and builds the PDF through Playwright. If any section in `data.json` is empty it is silently skipped. Nothing is invented. Nothing is hardcoded. Education is fully dynamic and supports future degrees without code changes.
@@ -108,8 +109,8 @@ Tracks page views, resume downloads (with hashed IP and detected country), proje
 | Particles | HTML5 Canvas API | Antigravity upward particle system |
 | Backend | FastAPI + Python | Async REST API layer |
 | PDF | Jinja2 + Playwright | HTML template → regional PDF |
-| AI | Groq API (Llama) | Bio rewriting, summaries, commands |
-| Data | data.json | Single source of truth |
+| AI | Groq API (Llama 3.3/3.1) | Bio rewriting, summaries, commands |
+| Data | data.json + SQLite | Single source of truth / active cache |
 | Geo | ip-api.com | IP → country → resume template |
 | Email | SMTP (Gmail) | Contact form + download alerts |
 | Webhooks | GitHub Webhooks | Auto-invalidate project cache |
@@ -169,7 +170,7 @@ npm run dev
 ### Environment Variables
 
 ```env
-GROQ_API_KEY=gsk_your_key_here
+GROQ_API_KEY=gsk_your-key-here
 GITHUB_TOKEN=your-github-personal-access-token
 GITHUB_WEBHOOK_SECRET=your-webhook-secret
 SMTP_HOST=smtp.gmail.com
@@ -189,41 +190,31 @@ divya-ai/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── About.jsx          ← stat cards + language bars
-│   │   │   ├── Achievements.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Hero.jsx           ← typewriter component
+│   │   │   ├── HeroCanvas.jsx     ← Three.js hero canvas
+│   │   │   ├── About.jsx          ← stats + description section
+│   │   │   ├── Experience.jsx     ← animated work history
+│   │   │   ├── Skills.jsx         ← levitating pill tags
 │   │   │   ├── ActivityHeatmap.jsx ← GitHub contribution heatmap
-│   │   │   ├── ActivityLog.jsx
-│   │   │   ├── AnalyticsDashboard.jsx
+│   │   │   ├── Projects.jsx       ← live GitHub project cards
+│   │   │   ├── Testimonials.jsx
 │   │   │   ├── Blog.jsx
-│   │   │   ├── CanvasParticles.jsx ← antigravity canvas
-│   │   │   ├── CollectionEditor.jsx
-│   │   │   ├── Contact.jsx
-│   │   │   ├── ContactForm.jsx    ← working contact form UI
-│   │   │   ├── CurrentlyExploring.jsx
+│   │   │   ├── Research.jsx
+│   │   │   ├── Contact.jsx        ← contact section container
+│   │   │   ├── ContactForm.jsx    ← contact form with validation
+│   │   │   ├── Footer.jsx
 │   │   │   ├── Cursor.jsx
 │   │   │   ├── CustomCursor.jsx
-│   │   │   ├── Experience.jsx      ← animated work history
-│   │   │   ├── Footer.jsx         ← social links
-│   │   │   ├── Hero.jsx           ← typewriter effect
-│   │   │   ├── HeroCanvas.jsx     ← Three.js hero geometry
-│   │   │   ├── LanguageSkills.jsx
-│   │   │   ├── Loader.jsx
-│   │   │   ├── MessageInbox.jsx
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Particles.jsx
-│   │   │   ├── Projects.jsx       ← live GitHub projects
-│   │   │   ├── Research.jsx
-│   │   │   ├── ResearchDirection.jsx
-│   │   │   ├── ScrollToTop.jsx
-│   │   │   ├── Skills.jsx         ← levitating pill tags
-│   │   │   └── Testimonials.jsx
+│   │   │   ├── CanvasParticles.jsx ← antigravity upward canvas
+│   │   │   └── ScrollToTop.jsx
 │   │   ├── hooks/
 │   │   │   ├── useTypewriter.js
 │   │   │   └── useProjectImage.js ← deterministic cover images
 │   │   ├── pages/
 │   │   │   ├── Home.jsx
-│   │   │   ├── Admin.jsx          ← dashboard interface
-│   │   │   ├── NotFound.jsx       ← 404 handler page
+│   │   │   ├── Admin.jsx          ← 19-section admin dashboard
+│   │   │   ├── NotFound.jsx
 │   │   │   └── SubmitTestimonial.jsx
 │   │   └── context/
 │   │       ├── PortfolioContext.jsx
@@ -231,35 +222,28 @@ divya-ai/
 │   └── vite.config.js
 ├── backend/
 │   ├── routes/
-│   │   ├── admin.py
-│   │   ├── dynamic_sections.py
-│   │   ├── platform.py
 │   │   ├── portfolio.py
 │   │   ├── projects.py
-│   │   └── resume.py              ← region detection + PDF serving
+│   │   ├── resume.py              ← region detection + PDF serving
+│   │   ├── admin.py
+│   │   ├── dynamic_sections.py
+│   │   └── platform.py
 │   ├── services/
-│   │   ├── cache_service.py
-│   │   ├── cover_letter_service.py
-│   │   ├── email_service.py       ← SMTP email delivery
+│   │   ├── groq_service.py        ← AI integration (xAI Grok API via Groq client)
+│   │   ├── github.py              ← REST & GraphQL metrics
 │   │   ├── geo.py                 ← IP → country mapping
-│   │   ├── geo_rules.py
-│   │   ├── github.py              ← REST client
-│   │   ├── github_graphql.py      ← contribution heatmap
-│   │   ├── groq_service.py        ← AI integration (Groq API + Llama models)
-│   │   ├── pdf_generator.py       ← PDF generation pipeline
-│   │   ├── pdf_playwright.py      ← Jinja2 + Playwright backend
-│   │   ├── pregenerator.py        ← cold-start pre-generation
-│   │   └── translations.py        ← localisation logic
+│   │   ├── geo_rules.py           ← template selection rules
+│   │   └── pdf_generator.py       ← Playwright PDF pipeline
 │   ├── resume_templates/
-│   │   ├── template_ats.html      ← ATS international template
-│   │   ├── template_china.html    ← Chinese regional template
-│   │   ├── template_japan_rirekisho.html ← Japanese format A
-│   │   ├── template_japan_shokumu.html   ← Japanese format B
-│   │   ├── Korean_resume_template.html   ← Korean regional template
+│   │   ├── template_ats.html      ← ATS-friendly international (Template A)
+│   │   ├── Korean_resume_template.html ← Detailed with photo (Template B)
+│   │   ├── template_china.html
+│   │   ├── template_japan_rirekisho.html
+│   │   ├── template_japan_shokumu.html
 │   │   ├── sections/              ← shared Jinja2 partials
 │   │   └── css/                   ← base + regional stylesheets
 │   ├── data.json                  ← single source of truth (defaults)
-│   ├── portfolio.db               ← SQLite database (main storage)
+│   ├── portfolio.db               ← active SQLite data cache & database
 │   └── .env
 └── README.md
 ```

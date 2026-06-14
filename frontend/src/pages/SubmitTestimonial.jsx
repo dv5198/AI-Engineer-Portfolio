@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, Check, Loader2 } from 'lucide-react';
 
@@ -21,7 +22,7 @@ const SubmitTestimonial = () => {
         e.preventDefault();
         setStatus('loading');
         try {
-            const res = await fetch('http://localhost:8000/api/dynamic/testimonials/public', {
+            const res = await fetch(`${API_BASE_URL}/api/dynamic/testimonials/public`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

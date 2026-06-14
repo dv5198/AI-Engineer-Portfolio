@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { motion } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
 import { GithubIcon, LinkedinIcon, Download } from 'lucide-react';
@@ -33,7 +34,7 @@ const Hero = () => {
   ];
   const typewriterText = useTypewriter(titles);
 
-  const downloadUrl = `http://localhost:8000/api/resume/download?download=true`;
+  const downloadUrl = `${API_BASE_URL}/api/resume/download?download=true`;
 
   if (!data) return <div className="min-h-[80vh] flex items-center justify-center">Loading...</div>;
   const { profile } = data;

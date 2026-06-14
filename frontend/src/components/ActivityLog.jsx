@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { ScrollText, Globe, Download, Mail, Activity } from 'lucide-react';
 
 const ActivityLog = () => {
@@ -6,7 +7,7 @@ const ActivityLog = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/platform/activity/')
+    fetch(`${API_BASE_URL}/api/platform/activity/`)
       .then(res => res.json())
       .then(data => {
         setLogs(data);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import About from '../components/About';
@@ -26,7 +27,7 @@ const Home = () => {
     }
 
     // Log Analytics Event
-    fetch('http://localhost:8000/api/platform/event/', {
+    fetch(`${API_BASE_URL}/api/platform/event/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event: 'page_view', data: { path: '/' } })

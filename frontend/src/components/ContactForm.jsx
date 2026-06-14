@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ContactForm = () => {
@@ -23,7 +24,7 @@ const ContactForm = () => {
 
     setStatus('loading');
     try {
-      const res = await fetch('http://localhost:8000/api/platform/contact/send/', {
+      const res = await fetch(`${API_BASE_URL}/api/platform/contact/send/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

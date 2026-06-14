@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 export const AdminContext = createContext();
 
@@ -7,7 +8,7 @@ export const AdminProvider = ({ children }) => {
 
   const login = async (password) => {
     try {
-      const res = await fetch('http://localhost:8000/api/admin/login/', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })

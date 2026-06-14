@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { AdminContext } from '../context/AdminContext';
 import { PortfolioContext } from '../context/PortfolioContext';
@@ -86,7 +87,7 @@ const Admin = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            fetch('http://localhost:8000/api/admin/projects/all/')
+            fetch(`${API_BASE_URL}/api/admin/projects/all/`)
                 .then(res => {
                     if (!res.ok) throw new Error('Failed to fetch projects');
                     return res.json();
@@ -144,7 +145,7 @@ const Admin = () => {
         e.preventDefault();
         setCmdResult('Processing...');
         try {
-            const res = await fetch('http://localhost:8000/api/admin/command/', {
+            const res = await fetch(`${API_BASE_URL}/api/admin/command/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command })
@@ -160,7 +161,7 @@ const Admin = () => {
     const fetchTranslations = async () => {
         setIsLoadingTranslations(true);
         try {
-            const res = await fetch('http://localhost:8000/api/admin/translations/');
+            const res = await fetch(`${API_BASE_URL}/api/admin/translations/`);
             const data = await res.json();
             setTranslations(data);
         } catch (err) {
@@ -172,7 +173,7 @@ const Admin = () => {
 
     const updateTranslation = async (id, text, verified) => {
         try {
-            await fetch('http://localhost:8000/api/admin/translations/update/', {
+            await fetch(`${API_BASE_URL}/api/admin/translations/update/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, translated_text: text, is_verified: verified })
@@ -192,7 +193,7 @@ const Admin = () => {
     const deleteTranslation = async (id) => {
         if (!window.confirm('Terminate this translation signal?')) return;
         try {
-            await fetch(`http://localhost:8000/api/admin/translations/${id}`, { method: 'DELETE' });
+            await fetch(`${API_BASE_URL}/api/admin/translations/${id}`, { method: 'DELETE' });
             showToast('Signal Terminated');
             fetchTranslations();
         } catch (err) {
@@ -203,7 +204,7 @@ const Admin = () => {
     const clearUnverified = async () => {
         if (!window.confirm('Wipe all unverified translation signals?')) return;
         try {
-            await fetch('http://localhost:8000/api/admin/translations/clear-cache/', { method: 'POST' });
+            await fetch(`${API_BASE_URL}/api/admin/translations/clear-cache/`, { method: 'POST' });
             showToast('Neural Cache Purged');
             fetchTranslations();
         } catch (err) {
@@ -219,7 +220,7 @@ const Admin = () => {
 
     const fetchATSScore = async () => {
         try {
-            const res = await fetch(`http://localhost:8000/api/resume/ats-score/${previewCountry}`);
+            const res = await fetch(`${API_BASE_URL}/api/resume/ats-score/${previewCountry}`);
             const data = await res.json();
             setAtsScore(data.score);
             setAtsChecks(data.checks);
@@ -236,7 +237,7 @@ const Admin = () => {
 
     const handleAIAction = async (endpoint, payload, callback) => {
         try {
-            const res = await fetch(`http://localhost:8000/api/admin/${endpoint}/`, {
+            const res = await fetch(`${API_BASE_URL}/api/admin/${endpoint}/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -255,7 +256,7 @@ const Admin = () => {
 
     const handleSynthesize = async (section, fieldName, originalText, locale) => {
         try {
-            const res = await fetch('http://localhost:8000/api/admin/translations/synthesize/', {
+            const res = await fetch(`${API_BASE_URL}/api/admin/translations/synthesize/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -375,7 +376,7 @@ const Admin = () => {
         if (isDownloading) return;
         setIsDownloading(true);
         try {
-            const url = `http://localhost:8000/api/resume/download/${previewCountry}?lang=${lang}&cover=${includeCoverLetter}&download=true&v=${Date.now()}`;
+            const url = `${API_BASE_URL}/api/resume/download/${previewCountry}?lang=${lang}&cover=${includeCoverLetter}&download=true&v=${Date.now()}`;
             // Use window.location.href for direct download or fetch and then download to track state better
             // For simplicity and standard behavior, we use a hidden link click
             const link = document.createElement('a');
@@ -678,7 +679,7 @@ const Admin = () => {
                                     <div className="flex items-center gap-6 bg-ivory/20 p-4 border border-warmBrown/5">
                                         <div className="w-20 h-24 bg-white border border-warmBrown/10 overflow-hidden flex items-center justify-center">
                                             {formData.profile.photo ? (
-                                                <img src={`http://localhost:8000/${formData.profile.photo}?t=${Date.now()}`} alt="Profile" className="w-full h-full object-cover" />
+                                                <img src={`${API_BASE_URL}/${formData.profile.photo}?t=${Date.now()}`} alt="Profile" className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="text-[8px] font-mono text-warmBrown/20 uppercase text-center p-2">No Photo Signal</span>
                                             )}
@@ -695,7 +696,7 @@ const Admin = () => {
                                                     if (!file) return;
                                                     const uploadData = new FormData();
                                                     uploadData.append('file', file);
-                                                    const res = await fetch('http://localhost:8000/api/admin/profile-photo/', {
+                                                    const res = await fetch(`${API_BASE_URL}/api/admin/profile-photo/`, {
                                                         method: 'POST',
                                                         body: uploadData
                                                     });
@@ -1065,7 +1066,7 @@ const Admin = () => {
 
                                     <button
                                         onClick={() => {
-                                            navigator.clipboard.writeText(`http://localhost:8000/api/resume/preview/${previewCountry}?lang=${previewLanguage}&cover=${includeCoverLetter}`);
+                                            navigator.clipboard.writeText(`${API_BASE_URL}/api/resume/preview/${previewCountry}?lang=${previewLanguage}&cover=${includeCoverLetter}`);
                                             showToast('Preview link copied to clipboard');
                                         }}
                                         className="p-3.5 border border-warmBrown/10 rounded-full text-warmBrown/40 hover:text-accent hover:border-accent/30 transition-all bg-white shadow-sm"
@@ -1108,7 +1109,7 @@ const Admin = () => {
                                         </div>
                                         <div className="mx-auto bg-white/80 px-4 py-1 rounded-md border border-warmBrown/5 flex items-center gap-2">
                                             <ShieldCheck size={10} className="text-accent" />
-                                            <span className="font-mono text-[9px] text-warmBrown/30 lowercase">localhost:8000/api/resume/preview/{previewCountry}?lang={previewLanguage}&cover={includeCoverLetter.toString()}</span>
+                                            <span className="font-mono text-[9px] text-warmBrown/30 lowercase">{API_BASE_URL.replace(/^https?:\/\//, '')}/api/resume/preview/{previewCountry}?lang={previewLanguage}&cover={includeCoverLetter.toString()}</span>
                                         </div>
                                         <button className="text-warmBrown/20 hover:text-accent transition-colors">
                                             <Maximize2 size={14} />
@@ -1126,7 +1127,7 @@ const Admin = () => {
                                         )}
                                         <iframe
                                             id="preview-iframe"
-                                            src={`http://localhost:8000/api/resume/preview/${previewCountry}?lang=${previewLanguage}&cover=${includeCoverLetter}`}
+                                            src={`${API_BASE_URL}/api/resume/preview/${previewCountry}?lang=${previewLanguage}&cover=${includeCoverLetter}`}
                                             className="w-full h-full border-none bg-white custom-scrollbar"
                                             onLoad={() => setIsRefreshing(false)}
                                             title="Resume Preview"
@@ -1458,7 +1459,7 @@ const Admin = () => {
 
                                             {editingItem.item.image_override && (
                                                 <div className="h-32 bg-white border border-warmBrown/10 flex items-center justify-center overflow-hidden">
-                                                    <img src={editingItem.item.image_override.startsWith('http') ? editingItem.item.image_override : `http://localhost:8000/${editingItem.item.image_override}`} alt="Preview" className="max-h-full object-contain" />
+                                                    <img src={editingItem.item.image_override.startsWith('http') ? editingItem.item.image_override : `${API_BASE_URL}/${editingItem.item.image_override}`} alt="Preview" className="max-h-full object-contain" />
                                                 </div>
                                             )}
 
@@ -1476,7 +1477,7 @@ const Admin = () => {
                                                         const uploadData = new FormData();
                                                         uploadData.append('file', file);
                                                         try {
-                                                            const res = await fetch('http://localhost:8000/api/admin/project-image/', {
+                                                            const res = await fetch(`${API_BASE_URL}/api/admin/project-image/`, {
                                                                 method: 'POST',
                                                                 body: uploadData
                                                             });
@@ -1921,7 +1922,7 @@ const Admin = () => {
                                                     <iframe
                                                         id="verification-iframe-en"
                                                         name="verification-iframe-en"
-                                                        src={`http://localhost:8000/api/resume/preview/${previewCountry}?lang=en&cover=${includeCoverLetter}&v=${Date.now()}`}
+                                                        src={`${API_BASE_URL}/api/resume/preview/${previewCountry}?lang=en&cover=${includeCoverLetter}&v=${Date.now()}`}
                                                         className="flex-1 w-full border border-warmBrown/10 bg-white shadow-sm"
                                                     />
                                                 </div>
@@ -1938,7 +1939,7 @@ const Admin = () => {
                                                     <iframe
                                                         id="verification-iframe-target"
                                                         name="verification-iframe-target"
-                                                        src={`http://localhost:8000/api/resume/preview/${previewCountry}?lang=${verificationLang}&cover=${includeCoverLetter}&v=${Date.now()}`}
+                                                        src={`${API_BASE_URL}/api/resume/preview/${previewCountry}?lang=${verificationLang}&cover=${includeCoverLetter}&v=${Date.now()}`}
                                                         className="flex-1 w-full border border-accent/20 bg-white shadow-xl"
                                                     />
                                                 </div>

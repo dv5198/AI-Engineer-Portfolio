@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { Mail, User, Clock, Trash2, Reply, CheckCircle, Circle } from 'lucide-react';
 
 const MessageInbox = () => {
@@ -7,7 +8,7 @@ const MessageInbox = () => {
 
     const fetchMessages = () => {
         setLoading(true);
-        fetch('http://localhost:8000/api/platform/messages')
+        fetch(`${API_BASE_URL}/api/platform/messages`)
             .then(res => res.json())
             .then(data => {
                 setMessages(data);
@@ -22,7 +23,7 @@ const MessageInbox = () => {
 
     const deleteMessage = async (id) => {
         try {
-            const res = await fetch(`http://localhost:8000/api/platform/messages/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/platform/messages/${id}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -35,7 +36,7 @@ const MessageInbox = () => {
 
     const toggleRead = async (id) => {
         try {
-            const res = await fetch(`http://localhost:8000/api/platform/messages/${id}/toggle-read`, {
+            const res = await fetch(`${API_BASE_URL}/api/platform/messages/${id}/toggle-read`, {
                 method: 'POST'
             });
             if (res.ok) {

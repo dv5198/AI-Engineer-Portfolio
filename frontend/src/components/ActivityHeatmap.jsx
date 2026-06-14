@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import { API_BASE_URL } from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
 
@@ -11,7 +12,7 @@ const ActivityHeatmap = () => {
   useEffect(() => {
     if (portfolioData?.profile?.github) {
       const username = portfolioData.profile.github.split('/').pop();
-      fetch(`http://localhost:8000/api/platform/github/contributions/?username=${username}`)
+      fetch(`${API_BASE_URL}/api/platform/github/contributions/?username=${username}`)
         .then(res => res.json())
         .then(data => {
           setContributions(data);

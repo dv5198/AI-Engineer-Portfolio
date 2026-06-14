@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { motion } from 'framer-motion';
 import { PortfolioContext } from '../context/PortfolioContext';
 import { GithubIcon, ExternalLinkIcon } from 'lucide-react';
@@ -24,7 +25,7 @@ const ProjectCard = ({ project, idx }) => {
       <div className="h-56 overflow-hidden relative border-b border-textPrimary/5 bg-[#f2ede0]">
         {!showCover ? (
           <img 
-            src={project.image} 
+            src={project.image.startsWith('http') ? project.image : `${API_BASE_URL}/${project.image}`} 
             alt={project.name} 
             loading="lazy"
             onError={() => setImageError(true)}
@@ -87,7 +88,7 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/projects/');
+        const res = await fetch(`${API_BASE_URL}/api/projects/`);
         if (!res.ok) throw new Error();
         const githubRepos = await res.json();
         
